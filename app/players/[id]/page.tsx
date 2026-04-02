@@ -35,7 +35,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
     <main className="page-shell space-y-8">
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section style={{ border: '1px solid var(--border)' }}>
+      <section className="player-hero-shell" style={{ border: '1px solid var(--border)' }}>
 
         {/* Header */}
         <div
@@ -46,6 +46,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
           }}
         >
           <div
+            className="player-hero-header-grid"
             style={{
               display: 'grid',
               gridTemplateColumns: 'auto 1fr',
@@ -118,7 +119,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
 
         {/* Metric strip — newspaper grid */}
         <div
-          className="grid-ruled"
+          className="grid-ruled player-metric-strip"
           style={{ gridTemplateColumns: 'repeat(3, 1fr)', border: 'none', borderTop: '1px solid var(--border)' }}
         >
           {[
@@ -190,7 +191,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
       <TrendChart data={player.recentTrend} title="Recent Scoring Trend" />
 
       {/* ── Insight + Splits ─────────────────────────────────────────── */}
-      <section style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1.2fr 0.8fr' }}>
+      <section className="player-insight-grid" style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1.2fr 0.8fr' }}>
         <div className="card-ruled">
           <p className="eyebrow mb-3">BIQ Insight</p>
           <h2 className="display" style={{ fontSize: '1.5rem', marginBottom: '0.875rem' }}>

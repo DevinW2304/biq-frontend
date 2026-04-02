@@ -19,12 +19,12 @@ export function GameLogTable({ rows }: GameLogTableProps) {
         </p>
       </div>
 
-      <div className="table-shell overflow-x-auto">
-        <table className="min-w-full text-sm">
+      <div className="table-shell game-log-table-shell overflow-x-auto">
+        <table className="game-log-table min-w-full text-sm">
           <thead className="border-b border-white/10 bg-white/[0.03]">
             <tr className="text-left text-[11px] uppercase tracking-[0.14em] text-zinc-500">
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Matchup</th>
+              <th className="px-4 py-3 sticky-col sticky-col-left">Date</th>
+              <th className="px-4 py-3 sticky-col sticky-col-mid">Matchup</th>
               <th className="px-4 py-3">Result</th>
               <th className="px-4 py-3">MIN</th>
               <th className="px-4 py-3">PTS</th>
@@ -45,8 +45,8 @@ export function GameLogTable({ rows }: GameLogTableProps) {
                 key={`${row.gameDate}-${row.matchup}-${index}`}
                 className="border-b border-white/5 text-zinc-300"
               >
-                <td className="px-4 py-3 text-zinc-400">{row.gameDate}</td>
-                <td className="px-4 py-3 font-medium text-zinc-100">{row.matchup}</td>
+                <td className="px-4 py-3 text-zinc-400 sticky-col sticky-col-left">{row.gameDate}</td>
+                <td className="px-4 py-3 font-medium text-zinc-100 sticky-col sticky-col-mid">{row.matchup}</td>
                 <td className="px-4 py-3">
                   <span
                     className={

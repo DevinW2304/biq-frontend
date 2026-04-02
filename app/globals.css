@@ -6,9 +6,6 @@
 
 /* ─── Tokens ─── */
 
-
-
-
 :root {
   color-scheme: dark;
 
@@ -40,7 +37,6 @@
   --font-mono:    'DM Mono', monospace;
   --font-serif:   'Newsreader', Georgia, serif;
 
-  /* Intentionally tight — editorial, not bubbly */
   --r-sm: 2px;
   --r-md: 4px;
   --r-lg: 6px;
@@ -72,16 +68,14 @@ input::placeholder { color: var(--faint); }
   .page-shell { @apply px-4 py-6; }
 }
 
-/* ─── Court Line Draw Animation ─────────────────────────────────────────────
-   Apply to SVG paths via inline style:
-     style="--dash-len: 800; stroke-dasharray: 800; stroke-dashoffset: 800;
-            animation: draw-court-line 4s ease-out 0.5s forwards;"
-─────────────────────────────────────────────────────────────────────────── */
+/* ─── Court Line Draw Animation ───────────────────────────────────────────── */
 
 @keyframes draw-court-line {
   from { stroke-dashoffset: var(--dash-len, 800); }
   to   { stroke-dashoffset: 0; }
 }
+
+/* ─── Hero Layout ─── */
 
 .hero-two-col {
   display: grid;
@@ -90,21 +84,178 @@ input::placeholder { color: var(--faint); }
   align-items: stretch;
   padding-top: 3rem;
   padding-bottom: 2.5rem;
+  position: relative;
+  z-index: 10;
 }
 
 .hero-copy {
   padding-bottom: 1rem;
+  position: relative;
+  z-index: 12;
+}
+
+.hero-two-col,
+.hero-copy,
+.hero-copy > * {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.hero-motion-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.hero-dribble-lane {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 72px;
+  height: 120px;
+  opacity: 0.95;
+}
+
+.hero-dribble-lane::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 62px;
+  border-top: 1px dashed rgba(201, 168, 76, 0.18);
+}
+
+.hero-basketball {
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 35%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.02) 22%, transparent 24%),
+    linear-gradient(90deg, transparent 46%, rgba(34, 19, 5, 0.85) 47%, rgba(34, 19, 5, 0.85) 53%, transparent 54%),
+    linear-gradient(0deg, transparent 46%, rgba(34, 19, 5, 0.85) 47%, rgba(34, 19, 5, 0.85) 53%, transparent 54%),
+    radial-gradient(circle at 50% 50%, #ef8e2f 0%, #d56c16 65%, #9c4706 100%);
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+  animation:
+    dribble-across 10s ease-in-out infinite,
+    dribble-bounce 1.1s ease-in-out infinite,
+    ball-spin 2.2s linear infinite;
+}
+
+.hero-basketball-shadow {
+  position: absolute;
+  left: 0;
+  top: 84px;
+  width: 34px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.28);
+  filter: blur(3px);
+  animation:
+    dribble-across 10s ease-in-out infinite,
+    dribble-shadow 1.1s ease-in-out infinite;
+}
+
+@keyframes dribble-across {
+  0%   { transform: translateX(0); }
+  50%  { transform: translateX(calc(100vw - 420px)); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes dribble-bounce {
+  0%, 100% { transform: translateY(0) scaleX(1) scaleY(1); }
+  50%      { transform: translateY(58px) scaleX(1.03) scaleY(0.97); }
+}
+
+@keyframes dribble-shadow {
+  0%, 100% { transform: scale(0.82); opacity: 0.2; }
+  50%      { transform: scale(1.15); opacity: 0.38; }
+}
+
+@keyframes ball-spin {
+  from { rotate: 0deg; }
+  to   { rotate: 360deg; }
 }
 
 .hero-spotlight {
   min-height: 520px;
   padding: 1.5rem;
-  background: linear-gradient(180deg, rgba(17, 20, 24, 0.92) 0%, rgba(10, 12, 15, 0.96) 100%);
+  background: linear-gradient(180deg, rgba(17, 20, 24, 0.88) 0%, rgba(10, 12, 15, 0.95) 100%);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
   overflow: hidden;
+  z-index: 11;
+}
+
+.hero-spotlight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(10,12,15,0.12) 0%, rgba(10,12,15,0.72) 100%),
+    linear-gradient(90deg, rgba(10,12,15,0.78) 0%, rgba(10,12,15,0.48) 45%, rgba(10,12,15,0.78) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero-spotlight-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.25;
+}
+
+.hero-spotlight-bg-track {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  width: max-content;
+  padding: 0 18px;
+  animation: portrait-drift 24s linear infinite;
+}
+
+.hero-spotlight-bg-track--alt {
+  animation-direction: reverse;
+  animation-duration: 30s;
+  top: 18px;
+}
+
+.hero-spotlight-bg-card {
+  position: relative;
+  width: 132px;
+  height: 100%;
+  min-height: 520px;
+  overflow: hidden;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255,255,255,0.02);
+}
+
+.hero-spotlight-bg-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(0.15) contrast(1.05) brightness(0.7);
+}
+
+.hero-spotlight-top,
+.hero-spotlight-player,
+.hero-spotlight-reason,
+.hero-spotlight-footer,
+.hero-spotlight-content {
+  position: relative;
+  z-index: 2;
 }
 
 .hero-spotlight-top {
@@ -149,15 +300,253 @@ input::placeholder { color: var(--faint); }
   margin-top: 1.25rem;
 }
 
+@keyframes portrait-drift {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
+}
+
+/* ─── Highlights Rail ─── */
+
+.highlights-shell {
+  position: relative;
+  z-index: 11;
+  margin-top: -0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+
+.highlight-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(17, 20, 24, 0.94) 0%, rgba(10, 12, 15, 0.98) 100%);
+  min-height: 172px;
+  padding: 1rem 1rem 0.95rem;
+  transition: transform 0.22s ease, background 0.22s ease;
+}
+
+.highlight-card:hover {
+  transform: translateY(-2px);
+  background:
+    linear-gradient(180deg, rgba(22, 27, 34, 0.96) 0%, rgba(10, 12, 15, 0.99) 100%);
+}
+
+.highlight-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top right, rgba(201, 168, 76, 0.12), transparent 38%);
+  pointer-events: none;
+}
+
+.highlight-card--teal::before {
+  background:
+    radial-gradient(circle at top right, rgba(61, 158, 135, 0.14), transparent 38%);
+}
+
+.highlight-card--neutral::before {
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,0.06), transparent 38%);
+}
+
+.highlight-card-inner {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.highlight-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 0.85rem;
+}
+
+.highlight-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.highlight-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.highlight-live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.35);
+  animation: pulse-dot 1.8s ease-out infinite;
+}
+
+.highlight-card--teal .highlight-live {
+  color: var(--teal);
+}
+
+.highlight-card--neutral .highlight-live {
+  color: var(--text);
+}
+
+@keyframes pulse-dot {
+  0%   { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.35); }
+  70%  { box-shadow: 0 0 0 8px rgba(201, 168, 76, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0); }
+}
+
+.highlight-main {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 0.95rem;
+}
+
+.highlight-headshot {
+  width: 62px;
+  height: 62px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid var(--border-strong);
+  background: var(--s2);
+}
+
+.highlight-headshot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.highlight-name {
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+}
+
+.highlight-meta {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.highlight-bottom {
+  margin-top: auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.highlight-score-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.highlight-score-label {
+  font-family: var(--font-mono);
+  font-size: 0.53rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.highlight-score {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  line-height: 0.92;
+  letter-spacing: 0.03em;
+  color: var(--gold);
+}
+
+.highlight-card--teal .highlight-score {
+  color: var(--teal);
+}
+
+.highlight-card--neutral .highlight-score {
+  color: var(--text);
+}
+
+.highlight-trail {
+  width: 90px;
+  height: 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.highlight-trail::before,
+.highlight-trail::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+}
+
+.highlight-puck {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  translate: 0 -50%;
+  border-radius: 999px;
+  background: var(--gold);
+  box-shadow: 0 0 14px rgba(201, 168, 76, 0.22);
+  animation: highlight-scan 2.6s ease-in-out infinite;
+}
+
+.highlight-card--teal .highlight-puck {
+  background: var(--teal);
+  box-shadow: 0 0 14px rgba(61, 158, 135, 0.22);
+}
+
+.highlight-card--neutral .highlight-puck {
+  background: var(--text);
+  box-shadow: 0 0 14px rgba(221, 225, 231, 0.18);
+}
+
+@keyframes highlight-scan {
+  0%   { transform: translateX(0) scale(0.95); opacity: 0.75; }
+  50%  { transform: translateX(78px) scale(1.1); opacity: 1; }
+  100% { transform: translateX(0) scale(0.95); opacity: 0.75; }
+}
+
 /* ─── BIQ Ticker ─── */
 
 @keyframes biq-ticker {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(-50%, 0, 0);
-  }
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
 }
 
 .ticker-track {
@@ -223,6 +612,20 @@ input::placeholder { color: var(--faint); }
   font-variant-numeric: tabular-nums;
 }
 
+@media (max-width: 1100px) {
+  .hero-basketball,
+  .hero-basketball-shadow,
+  .hero-dribble-lane {
+    opacity: 0.7;
+  }
+
+  @keyframes dribble-across {
+    0%   { transform: translateX(0); }
+    50%  { transform: translateX(calc(100vw - 320px)); }
+    100% { transform: translateX(0); }
+  }
+}
+
 @media (max-width: 980px) {
   .hero-two-col {
     grid-template-columns: 1fr;
@@ -230,6 +633,20 @@ input::placeholder { color: var(--faint); }
 
   .hero-spotlight {
     min-height: auto;
+  }
+
+  .hero-spotlight-bg-card {
+    min-height: 420px;
+  }
+
+  .hero-dribble-lane {
+    bottom: 24px;
+    left: 8%;
+    right: 8%;
+  }
+
+  .highlights-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -259,6 +676,41 @@ input::placeholder { color: var(--faint); }
     align-items: flex-start;
     gap: 0.75rem;
   }
+
+  .hero-dribble-lane {
+    display: none;
+  }
+
+  .hero-spotlight-bg {
+    opacity: 0.18;
+  }
+
+  .hero-spotlight-bg-card {
+    width: 96px;
+    min-height: 100%;
+  }
+
+  .highlight-name {
+    font-size: 1.4rem;
+  }
+
+  .highlight-score {
+    font-size: 1.9rem;
+  }
+
+  .highlight-bottom {
+    gap: 0.75rem;
+  }
+
+  .highlight-trail {
+    width: 72px;
+  }
+
+  @keyframes highlight-scan {
+    0%   { transform: translateX(0) scale(0.95); opacity: 0.75; }
+    50%  { transform: translateX(60px) scale(1.1); opacity: 1; }
+    100% { transform: translateX(0) scale(0.95); opacity: 0.75; }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -274,7 +726,10 @@ input::placeholder { color: var(--faint); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.animate-enter { animation: fade-up 0.5s ease-out both; }
+.animate-enter {
+  opacity: 1;
+  animation: fade-up 0.5s ease-out both;
+}
 
 .animate-stagger > * {
   opacity: 0;
@@ -302,16 +757,7 @@ input::placeholder { color: var(--faint); }
 
 .animated-surface { animation: surface-float 7s ease-in-out infinite; }
 
-/* ─── Newspaper Grid ─────────────────────────────────────────────────────────
-   Sections divided by 1px gaps over a border-colored background.
-   Creates a print-editorial / data-table feel without individual card borders.
-
-   Usage:
-     <div class="grid-ruled" style="grid-template-columns: repeat(3, 1fr)">
-       <div>…</div>
-       <div>…</div>
-     </div>
-─────────────────────────────────────────────────────────────────────────── */
+/* ─── Newspaper Grid ─── */
 
 .grid-ruled {
   display: grid;
@@ -341,7 +787,6 @@ input::placeholder { color: var(--faint); }
   border-radius: var(--r-lg);
 }
 
-/* Left-rule callout card */
 .card-ruled {
   background: var(--s1);
   border: 1px solid var(--border);
@@ -761,9 +1206,22 @@ thead .sticky-col {
   .hero-title-glow,
   .animated-surface,
   .home-leader-card,
-  .btn-animated {
+  .btn-animated,
+  .hero-basketball,
+  .hero-basketball-shadow,
+  .hero-spotlight-bg-track,
+  .highlight-puck,
+  .highlight-live::before {
     animation: none !important;
     transform: none !important;
     transition: none !important;
+  }
+
+  .animate-stagger > * {
+    opacity: 1 !important;
+  }
+
+  .hero-dribble-lane {
+    display: none !important;
   }
 }

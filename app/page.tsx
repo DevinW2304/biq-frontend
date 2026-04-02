@@ -163,8 +163,8 @@ export default async function HomePage() {
                 marginBottom: '1.75rem',
               }}
             >
-              Player profiles, recent form, efficiency, burden, and BIQ rankings — built for analysts,
-              not just fans.
+              Player profiles, recent form, efficiency, burden, and BIQ rankings - all you need to evaluate your player
+              (Does not inlcude the eye test!)
             </p>
 
             <div style={{ maxWidth: 420, marginBottom: '1.25rem' }}>

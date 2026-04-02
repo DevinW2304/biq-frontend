@@ -276,6 +276,32 @@ input::placeholder { color: var(--faint); }
 
 .animate-enter { animation: fade-up 0.5s ease-out both; }
 
+.animate-stagger > * {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fade-up 0.55s ease-out forwards;
+}
+
+.animate-stagger > *:nth-child(1) { animation-delay: 0.06s; }
+.animate-stagger > *:nth-child(2) { animation-delay: 0.14s; }
+.animate-stagger > *:nth-child(3) { animation-delay: 0.22s; }
+.animate-stagger > *:nth-child(4) { animation-delay: 0.3s; }
+.animate-stagger > *:nth-child(5) { animation-delay: 0.38s; }
+
+@keyframes title-glow {
+  0%, 100% { text-shadow: 0 0 0 rgba(201, 168, 76, 0); }
+  50% { text-shadow: 0 0 16px rgba(201, 168, 76, 0.2); }
+}
+
+.hero-title-glow { animation: title-glow 6s ease-in-out infinite; }
+
+@keyframes surface-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animated-surface { animation: surface-float 7s ease-in-out infinite; }
+
 /* ─── Newspaper Grid ─────────────────────────────────────────────────────────
    Sections divided by 1px gaps over a border-colored background.
    Creates a print-editorial / data-table feel without individual card borders.
@@ -524,6 +550,22 @@ input::placeholder { color: var(--faint); }
 .table-shell tbody tr:last-child td { border-bottom: none; }
 .table-shell tbody tr:hover td { background: var(--s1); }
 
+.game-log-table { min-width: 980px; }
+
+.sticky-col {
+  position: sticky;
+  z-index: 1;
+  background: var(--bg);
+}
+
+thead .sticky-col {
+  z-index: 3;
+  background: var(--s1);
+}
+
+.sticky-col-left { left: 0; }
+.sticky-col-mid { left: 108px; }
+
 .td-display {
   font-family: var(--font-display);
   font-size: 1.05rem;
@@ -585,9 +627,24 @@ input::placeholder { color: var(--faint); }
 
 .btn-ghost:hover { color: var(--text); border-color: var(--gold-border); }
 
+.btn-animated {
+  transition: opacity 0.15s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-animated:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
 /* ─── Leader Card ─── */
 
 .leader-card { display: block; padding: 1.25rem; cursor: pointer; }
+
+.home-leader-card {
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.home-leader-card:hover { transform: translateY(-2px); }
 
 .leader-rank {
   font-family: var(--font-mono);
@@ -672,3 +729,41 @@ input::placeholder { color: var(--faint); }
 .teal-text    { color: var(--teal); }
 .muted-text   { color: var(--muted); }
 .tabular      { font-variant-numeric: tabular-nums; }
+
+/* ─── Player page + table responsive polish ─── */
+
+@media (max-width: 900px) {
+  .player-insight-grid { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 768px) {
+  .player-hero-header-grid {
+    grid-template-columns: 1fr !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+
+  .player-metric-strip { grid-template-columns: 1fr !important; }
+
+  .game-log-table-shell { border-radius: 6px; }
+
+  .game-log-table th,
+  .game-log-table td {
+    padding: 0.5rem 0.7rem !important;
+    font-size: 0.68rem !important;
+  }
+
+  .sticky-col-mid { left: 82px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-stagger > *,
+  .hero-title-glow,
+  .animated-surface,
+  .home-leader-card,
+  .btn-animated {
+    animation: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

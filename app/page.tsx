@@ -25,6 +25,14 @@ const features = [
   },
 ];
 
+type HighlightItem = {
+  label: string;
+  metricLabel: string;
+  accentClass: string;
+  player: BIQLeaderboardEntry | null;
+  value: number;
+};
+
 function getPlayerHeadshotUrl(playerId: number) {
   return `https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/${playerId}.png`;
 }
@@ -35,11 +43,65 @@ function getBiqBadge(score: number): { label: string; cls: string } {
   return { label: 'Solid Tier', cls: 'badge-neutral' };
 }
 
+function buildBackdropPlayers(players: BIQLeaderboardEntry[]) {
+  const safePlayers = players.length ? players : [];
+  return [...safePlayers, ...safePlayers, ...safePlayers];
+}
+
+function getTopByMetric(
+  players: BIQLeaderboardEntry[],
+  metric: (player: BIQLeaderboardEntry) => number
+): BIQLeaderboardEntry | null {
+  if (!players.length) return null;
+
+  return players.reduce((best, current) => {
+    if (metric(current) > metric(best)) return current;
+    return best;
+  });
+}
+
+function buildHighlights(players: BIQLeaderboardEntry[]): HighlightItem[] {
+  const bestEngine = getTopByMetric(players, (player) => player.engineScore);
+  const bestCreation = getTopByMetric(players, (player) => player.creationScore);
+  const bestImpact = getTopByMetric(players, (player) => player.impactScore);
+
+  return [
+    {
+      label: 'Best Engine',
+      metricLabel: 'Engine Score',
+      accentClass: '',
+      player: bestEngine,
+      value: bestEngine?.engineScore ?? 0,
+    },
+    {
+      label: 'Best Creation',
+      metricLabel: 'Creation Score',
+      accentClass: 'highlight-card--teal',
+      player: bestCreation,
+      value: bestCreation?.creationScore ?? 0,
+    },
+    {
+      label: 'Best Impact',
+      metricLabel: 'Impact Score',
+      accentClass: 'highlight-card--neutral',
+      player: bestImpact,
+      value: bestImpact?.impactScore ?? 0,
+    },
+  ];
+}
+
 export default async function HomePage() {
-  const [biqLeaders, tickerPlayers] = await Promise.all([
-    fetchJSON<BIQLeaderboardEntry[]>('/api/players/biq-leaders?limit=3'),
-    fetchJSON<BIQLeaderboardEntry[]>('/api/players/biq-leaders?limit=12'),
-  ]);
+  let biqLeaders: BIQLeaderboardEntry[] = [];
+  let tickerPlayers: BIQLeaderboardEntry[] = [];
+
+  try {
+    [biqLeaders, tickerPlayers] = await Promise.all([
+      fetchJSON<BIQLeaderboardEntry[]>('/api/players/biq-leaders?limit=3'),
+      fetchJSON<BIQLeaderboardEntry[]>('/api/players/biq-leaders?limit=12'),
+    ]);
+  } catch (error) {
+    console.error('Failed to load homepage BIQ data', error);
+  }
 
   const avgBiq =
     biqLeaders.reduce((sum, player) => sum + player.biqScore, 0) / Math.max(biqLeaders.length, 1);
@@ -52,6 +114,8 @@ export default async function HomePage() {
 
   const heroLeader = biqLeaders[0];
   const heroBadge = heroLeader ? getBiqBadge(heroLeader.biqScore) : null;
+  const backdropPlayers = buildBackdropPlayers(tickerPlayers.slice(0, 6));
+  const highlights = buildHighlights(tickerPlayers);
 
   return (
     <main className="page-shell space-y-10">
@@ -61,8 +125,15 @@ export default async function HomePage() {
       >
         <CourtBackground />
 
-        <div className="hero-two-col relative z-10 animate-enter">
-          <div className="hero-copy animate-stagger">
+        <div className="hero-motion-layer" aria-hidden="true">
+          <div className="hero-dribble-lane">
+            <div className="hero-basketball" />
+            <div className="hero-basketball-shadow" />
+          </div>
+        </div>
+
+        <div className="hero-two-col relative z-10">
+          <div className="hero-copy">
             <p className="eyebrow mb-4">Basketball Intelligence Quotient</p>
 
             <h1
@@ -111,9 +182,45 @@ export default async function HomePage() {
           </div>
 
           <div className="hero-spotlight card animated-surface">
+            {backdropPlayers.length > 0 && (
+              <div className="hero-spotlight-bg" aria-hidden="true">
+                <div className="hero-spotlight-bg-track">
+                  {backdropPlayers.map((player, index) => (
+                    <div
+                      className="hero-spotlight-bg-card"
+                      key={`${player.id}-bg-a-${index}`}
+                    >
+                      <img
+                        src={getPlayerHeadshotUrl(player.id)}
+                        alt=""
+                        width={132}
+                        height={520}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="hero-spotlight-bg-track hero-spotlight-bg-track--alt">
+                  {backdropPlayers.map((player, index) => (
+                    <div
+                      className="hero-spotlight-bg-card"
+                      key={`${player.id}-bg-b-${index}`}
+                    >
+                      <img
+                        src={getPlayerHeadshotUrl(player.id)}
+                        alt=""
+                        width={132}
+                        height={520}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {heroLeader && heroBadge ? (
               <>
-                <div>
+                <div className="hero-spotlight-content">
                   <div className="hero-spotlight-top">
                     <span className="leader-rank" style={{ marginBottom: 0 }}>
                       Current BIQ Leader
@@ -183,6 +290,58 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <section className="highlights-shell">
+        <div className="highlights-grid">
+          {highlights.map((item) => (
+            <Link
+              key={item.label}
+              href={item.player ? `/players/${item.player.id}` : '/players?q='}
+              className={`highlight-card ${item.accentClass}`.trim()}
+            >
+              <div className="highlight-card-inner">
+                <div className="highlight-topline">
+                  <span className="highlight-kicker">{item.label}</span>
+                  <span className="highlight-live">Live Signal</span>
+                </div>
+
+                {item.player ? (
+                  <>
+                    <div className="highlight-main">
+                      <div className="highlight-headshot">
+                        <img
+                          src={getPlayerHeadshotUrl(item.player.id)}
+                          alt={`${item.player.name} headshot`}
+                          width={62}
+                          height={62}
+                        />
+                      </div>
+
+                      <div>
+                        <div className="highlight-name">{item.player.name}</div>
+                        <div className="highlight-meta">{item.player.team}</div>
+                      </div>
+                    </div>
+
+                    <div className="highlight-bottom">
+                      <div className="highlight-score-wrap">
+                        <span className="highlight-score-label">{item.metricLabel}</span>
+                        <span className="highlight-score">{item.value.toFixed(1)}</span>
+                      </div>
+
+                      <div className="highlight-trail" aria-hidden="true">
+                        <span className="highlight-puck" />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="muted-copy">No highlight data available.</div>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <BiqTicker players={tickerPlayers} />
 
       <section>
@@ -226,7 +385,11 @@ export default async function HomePage() {
             const badge = getBiqBadge(player.biqScore);
 
             return (
-              <Link key={player.id} href={`/players/${player.id}`} className="leader-card home-leader-card">
+              <Link
+                key={player.id}
+                href={`/players/${player.id}`}
+                className="leader-card home-leader-card"
+              >
                 <div className="leader-rank">
                   #{String(index + 1).padStart(2, '0')} BIQ Leader
                 </div>

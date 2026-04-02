@@ -1,36 +1,122 @@
 import Link from 'next/link';
 
+const navStyles = `
+  .nav-link:hover { color: var(--text) !important; }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0.875rem;
+    right: 0.875rem;
+    height: 1px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transition: transform 0.2s ease;
+    transform-origin: left;
+  }
+  .nav-link:hover::after { transform: scaleX(1); }
+`;
+
 export function Navbar() {
   return (
-    <header className="border-b border-white/10 bg-[#0f1115]">
-      <div className="page-shell flex items-center justify-between py-4">
-        <Link href="/" className="flex items-baseline gap-2">
-          <span className="text-2xl font-black tracking-[-0.05em] text-zinc-100">
+    <header
+      className="navbar"
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 200,
+        background: 'rgba(6, 7, 9, 0.88)',
+        backdropFilter: 'blur(20px) saturate(1.4)',
+        borderBottom: '1px solid var(--border)',
+      }}
+    >
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '2px',
+          background:
+            'linear-gradient(90deg, transparent 0%, var(--gold) 30%, var(--teal) 70%, transparent 100%)',
+          opacity: 0.7,
+        }}
+      />
+
+      <div
+        className="page-shell"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingTop: '0.875rem',
+          paddingBottom: '0.875rem',
+          position: 'relative',
+        }}
+      >
+        <Link href="/" style={{ display: 'flex', alignItems: 'baseline', gap: '0.625rem' }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '2rem',
+              letterSpacing: '0.06em',
+              color: 'var(--gold)',
+              lineHeight: 1,
+            }}
+          >
             BIQ
           </span>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d6b25e]">
+          <span
+            style={{
+              fontFamily: 'var(--font-condensed)',
+              fontSize: '0.6rem',
+              fontWeight: 700,
+              letterSpacing: '0.22em',
+              textTransform: 'uppercase',
+              color: 'var(--muted)',
+            }}
+          >
             Basketball Intelligence
           </span>
         </Link>
 
-        <nav className="flex items-center gap-6 text-sm font-medium text-zinc-400">
-          <Link href="/players?q=" className="transition-colors hover:text-zinc-100">
-            Players
-          </Link>
-          <Link href="/leaderboard" className="transition-colors hover:text-zinc-100">
-            Leaderboard
-          </Link>
-          <Link href="/teams/1610612738" className="transition-colors hover:text-zinc-100">
-            Teams
-          </Link>
-          <Link
-            href="/compare?a=2544&b=201939"
-            className="transition-colors hover:text-zinc-100"
-          >
-            Compare
-          </Link>
+        <nav
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem',
+          }}
+        >
+          {[
+            { href: '/players?q=', label: 'Players' },
+            { href: '/leaderboard', label: 'Leaderboard' },
+            { href: '/teams/1610612738', label: 'Teams' },
+            { href: '/compare?a=2544&b=201939', label: 'Compare' },
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="nav-link"
+              style={{
+                fontFamily: 'var(--font-condensed)',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: 'var(--muted)',
+                padding: '0.4rem 0.875rem',
+                transition: 'color 0.15s ease',
+                position: 'relative',
+              }}
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
       </div>
+
+      <style dangerouslySetInnerHTML={{ __html: navStyles }} />
     </header>
   );
 }

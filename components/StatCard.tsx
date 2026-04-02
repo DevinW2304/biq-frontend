@@ -2,21 +2,86 @@ import { StatCardData } from '@/lib/types';
 
 export function StatCard({ label, value, subtext, description }: StatCardData) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5 transition-colors hover:border-white/15">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+    <div
+      className="stat-card"
+      style={{
+        background: 'rgba(255,255,255,0.02)',
+        border: '1px solid var(--border)',
+        padding: '1.375rem',
+        transition: 'border-color 0.15s ease, background 0.15s ease',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Subtle top-left corner accent */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: 40,
+          height: 40,
+          background: 'radial-gradient(circle at top left, rgba(201,168,76,0.07), transparent 70%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <p
+        style={{
+          fontFamily: 'var(--font-condensed)',
+          fontSize: '0.58rem',
+          fontWeight: 700,
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          color: 'var(--muted)',
+          marginBottom: '0.875rem',
+        }}
+      >
         {label}
       </p>
 
-      <h3 className="mt-3 text-3xl font-bold tracking-[-0.03em] text-zinc-100">
+      <h3
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: '2.4rem',
+          letterSpacing: '0.04em',
+          lineHeight: 1,
+          color: 'var(--text)',
+          marginBottom: subtext ? '0.5rem' : 0,
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
         {value}
       </h3>
 
       {subtext ? (
-        <p className="mt-2 text-sm font-medium text-zinc-300">{subtext}</p>
+        <p
+          style={{
+            fontFamily: 'var(--font-condensed)',
+            fontSize: '0.7rem',
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            color: 'var(--text-2)',
+            marginBottom: description ? '0.625rem' : 0,
+          }}
+        >
+          {subtext}
+        </p>
       ) : null}
 
       {description ? (
-        <p className="mt-3 text-xs leading-5 text-zinc-500">{description}</p>
+        <p
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontStyle: 'italic',
+            fontSize: '0.78rem',
+            lineHeight: 1.65,
+            color: 'var(--muted)',
+          }}
+        >
+          {description}
+        </p>
       ) : null}
     </div>
   );

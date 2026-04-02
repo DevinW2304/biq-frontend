@@ -62,11 +62,11 @@ export default async function HomePage() {
         <CourtBackground />
 
         <div className="hero-two-col relative z-10 animate-enter">
-          <div className="hero-copy">
+          <div className="hero-copy animate-stagger">
             <p className="eyebrow mb-4">Basketball Intelligence Quotient</p>
 
             <h1
-              className="display"
+              className="display hero-title-glow"
               style={{
                 fontSize: 'clamp(3.5rem, 8vw, 7rem)',
                 color: 'var(--text)',
@@ -101,16 +101,16 @@ export default async function HomePage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Link href="/compare?a=2544&b=201939" className="btn btn-primary">
+              <Link href="/compare?a=2544&b=201939" className="btn btn-primary btn-animated">
                 Compare Players
               </Link>
-              <Link href="/players?q=" className="btn btn-ghost">
+              <Link href="/players?q=" className="btn btn-ghost btn-animated">
                 Explore All Players
               </Link>
             </div>
           </div>
 
-          <div className="hero-spotlight card">
+          <div className="hero-spotlight card animated-surface">
             {heroLeader && heroBadge ? (
               <>
                 <div>
@@ -226,7 +226,7 @@ export default async function HomePage() {
             const badge = getBiqBadge(player.biqScore);
 
             return (
-              <Link key={player.id} href={`/players/${player.id}`} className="leader-card">
+              <Link key={player.id} href={`/players/${player.id}`} className="leader-card home-leader-card">
                 <div className="leader-rank">
                   #{String(index + 1).padStart(2, '0')} BIQ Leader
                 </div>

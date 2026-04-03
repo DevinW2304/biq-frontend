@@ -91,7 +91,7 @@ export function Navbar() {
           {[
             { href: '/players?q=', label: 'Players' },
             { href: '/leaderboard', label: 'Leaderboard' },
-            { href: '/teams/1610612738', label: 'Teams' },
+            { href: '/teams', label: 'Teams' },
             { href: '/compare?a=2544&b=201939', label: 'Compare' },
           ].map((link) => (
             <Link

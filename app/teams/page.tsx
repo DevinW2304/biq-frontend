@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { fetchJSON } from '@/lib/api';
 import { TeamLeaderboardEntry } from '@/lib/types';
 
 export default function TeamsPage() {
@@ -20,7 +19,15 @@ export default function TeamsPage() {
         setLoading(true);
         setError(null);
 
-        const data = await fetchJSON<TeamLeaderboardEntry[]>('/teams/leaders?limit=30');
+        const res = await fetch('/api/teams/search-page', {
+          cache: 'no-store',
+        });
+
+        if (!res.ok) {
+          throw new Error(`Request failed: ${res.status}`);
+        }
+
+        const data: TeamLeaderboardEntry[] = await res.json();
 
         if (isMounted) {
           setTeams(data);
@@ -54,12 +61,7 @@ export default function TeamsPage() {
         const matchesQuery =
           normalizedQuery.length === 0
             ? true
-            : [
-                team.name,
-                team.abbreviation,
-                team.conference,
-                team.division,
-              ]
+            : [team.name, team.abbreviation, team.conference, team.division]
                 .filter(Boolean)
                 .some((value) => value.toLowerCase().includes(normalizedQuery));
 

@@ -6,8 +6,8 @@ export type TrendPoint = {
 export type StatCardData = {
   label: string;
   value: string;
-  subtext?: string;
-  description?: string;
+  subtext?: string | null;
+  description?: string | null;
 };
 
 export type SplitStat = {
@@ -97,12 +97,46 @@ export type PlayerProfile = {
   biqBreakdown: BIQComponent[];
 };
 
+export type TeamSearchResult = {
+  id: number;
+  name: string;
+  abbreviation: string;
+  conference: string;
+  division: string;
+};
+
+export type TeamRosterPlayer = {
+  id: number;
+  name: string;
+  number: string;
+  position: string;
+};
+
+export type TeamLeaderboardEntry = {
+  id: number;
+  name: string;
+  abbreviation: string;
+  conference: string;
+  division: string;
+  wins: number;
+  losses: number;
+  winPct: number;
+  netRating: number;
+  offRating: number;
+  defRating: number;
+  pace: number;
+  reason: string;
+};
+
 export type TeamProfile = {
   id: number;
   name: string;
+  abbreviation?: string;
   conference: string;
+  division?: string;
   stats: StatCardData[];
   lineupInsight: string;
+  rosterPreview?: TeamRosterPlayer[];
 };
 
 export type CompareResponse = {

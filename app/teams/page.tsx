@@ -23,14 +23,18 @@ export default function TeamsPage() {
           cache: 'no-store',
         });
 
+        const payload = await res.json().catch(() => null);
+
         if (!res.ok) {
-          throw new Error(`Request failed: ${res.status}`);
+          const message =
+            payload?.error ||
+            payload?.detail ||
+            `Request failed: ${res.status}`;
+          throw new Error(message);
         }
 
-        const data: TeamLeaderboardEntry[] = await res.json();
-
         if (isMounted) {
-          setTeams(data);
+          setTeams(payload as TeamLeaderboardEntry[]);
         }
       } catch (err) {
         if (isMounted) {
@@ -67,7 +71,7 @@ export default function TeamsPage() {
 
         return matchesConference && matchesQuery;
       })
-      .sort((a, b) => b.netRating - a.netRating);
+      .sort((a, b) => Number(b.netRating ?? 0) - Number(a.netRating ?? 0));
   }, [teams, query, conference]);
 
   return (

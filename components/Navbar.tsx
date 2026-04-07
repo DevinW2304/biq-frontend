@@ -93,6 +93,7 @@ export function Navbar() {
             { href: '/leaderboard', label: 'Leaderboard' },
             { href: '/teams', label: 'Teams' },
             { href: '/compare?a=2544&b=201939', label: 'Compare' },
+            { href: '/model', label: 'Model' },
           ].map((link) => (
             <Link
               key={link.href}

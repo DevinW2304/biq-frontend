@@ -1,0 +1,11 @@
+.whyGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 820px) {
+  .whyGrid {
+    grid-template-columns: 1fr;
+  }
+}

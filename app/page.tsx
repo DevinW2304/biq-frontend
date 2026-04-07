@@ -7,6 +7,7 @@ import { CourtBackground } from '@/components/CourtBackground';
 import { BiqTicker } from '@/components/BiqTicker';
 import { fetchCachedJSON } from '@/lib/api';
 import { BIQLeaderboardEntry } from '@/lib/types';
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const features = [
   {

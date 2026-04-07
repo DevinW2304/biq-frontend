@@ -7,6 +7,8 @@ import { StatCard } from '@/components/StatCard';
 import { TrendChart } from '@/components/TrendChart';
 import { ScoreCard } from '@/components/ScoreCard';
 
+import { SpeedInsights } from "@vercel/speed-insights/next"
+
 export default async function ComparePage({
   searchParams,
 }: {

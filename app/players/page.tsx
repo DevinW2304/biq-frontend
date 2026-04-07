@@ -3,6 +3,7 @@ import { PlayerSearchBar } from '@/components/PlayerSearchBar';
 import { fetchCachedJSON, fetchLiveJSON } from '@/lib/api';
 import { SearchPlayerResult, BIQLeaderboardEntry } from '@/lib/types';
 
+import { SpeedInsights } from "@vercel/speed-insights/next"
 export const revalidate = 300;
 
 export default async function PlayersPage({

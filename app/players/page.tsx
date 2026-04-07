@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { PlayerSearchBar } from '@/components/PlayerSearchBar';
-import { fetchJSON } from '@/lib/api';
+import { fetchCachedJSON, fetchLiveJSON } from '@/lib/api';
 import { SearchPlayerResult, BIQLeaderboardEntry } from '@/lib/types';
+
+export const revalidate = 300;
 
 export default async function PlayersPage({
   searchParams,
@@ -11,11 +13,12 @@ export default async function PlayersPage({
   const q = (searchParams.q ?? '').trim();
 
   const results = q
-    ? await fetchJSON<SearchPlayerResult[]>(
+    ? await fetchLiveJSON<SearchPlayerResult[]>(
         `/api/players/search?q=${encodeURIComponent(q)}`
       )
-    : await fetchJSON<BIQLeaderboardEntry[]>(
-        '/api/players/biq-leaders?limit=12'
+    : await fetchCachedJSON<BIQLeaderboardEntry[]>(
+        '/api/players/biq-leaders?limit=12',
+        300
       );
 
   return (

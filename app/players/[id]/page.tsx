@@ -1,7 +1,8 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
+import Image from 'next/image';
 import Link from 'next/link';
-import { fetchJSON } from '@/lib/api';
+import { fetchCachedJSON } from '@/lib/api';
 import { PlayerProfile } from '@/lib/types';
 import { GameLogTable } from '@/components/GameLogTable';
 import { SplitTile } from '@/components/SplitTile';
@@ -9,17 +10,17 @@ import { StatCard } from '@/components/StatCard';
 import { TrendChart } from '@/components/TrendChart';
 
 function buildPlayerTagline(player: PlayerProfile) {
-  if (player.biqScore >= 90)    return 'An elite franchise-level utility profile with top-tier BIQ support.';
-  if (player.biqScore >= 80)    return 'A high-level team utility profile backed by strong BIQ indicators.';
+  if (player.biqScore >= 90) return 'An elite franchise-level utility profile with top-tier BIQ support.';
+  if (player.biqScore >= 80) return 'A high-level team utility profile backed by strong BIQ indicators.';
   if (player.recentFormScore >= 88) return 'Playing at a high level with strong recent form and measurable season impact.';
   return 'A productive season profile with enough detail to support deeper BIQ evaluation.';
 }
 
 function getBiqBadge(score: number): { label: string; cls: string } {
-  if (score >= 90) return { label: 'Elite Tier',  cls: 'badge-gold' };
+  if (score >= 90) return { label: 'Elite Tier', cls: 'badge-gold' };
   if (score >= 80) return { label: 'High Impact', cls: 'badge-teal' };
-  if (score >= 70) return { label: 'Solid Tier',  cls: 'badge-neutral' };
-  return             { label: 'Developing',  cls: 'badge-neutral' };
+  if (score >= 70) return { label: 'Solid Tier', cls: 'badge-neutral' };
+  return { label: 'Developing', cls: 'badge-neutral' };
 }
 
 function getPlayerHeadshotUrl(playerId: number) {
@@ -27,17 +28,13 @@ function getPlayerHeadshotUrl(playerId: number) {
 }
 
 export default async function PlayerPage({ params }: { params: { id: string } }) {
-  const player = await fetchJSON<PlayerProfile>(`/api/players/${params.id}`);
+  const player = await fetchCachedJSON<PlayerProfile>(`/api/players/${params.id}`, 300);
   const headshotUrl = getPlayerHeadshotUrl(player.id);
   const biqBadge = getBiqBadge(player.biqScore);
 
   return (
     <main className="page-shell space-y-8">
-
-      {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section className="player-hero-shell" style={{ border: '1px solid var(--border)' }}>
-
-        {/* Header */}
         <div
           style={{
             borderBottom: '1px solid var(--border)',
@@ -54,7 +51,6 @@ export default async function PlayerPage({ params }: { params: { id: string } })
               alignItems: 'flex-end',
             }}
           >
-            {/* Headshot — no border-radius, sharp */}
             <div
               style={{
                 width: 120,
@@ -65,7 +61,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
                 border: '1px solid var(--border-strong)',
               }}
             >
-              <img
+              <Image
                 src={headshotUrl}
                 alt={`${player.name} headshot`}
                 width={120}
@@ -74,7 +70,6 @@ export default async function PlayerPage({ params }: { params: { id: string } })
               />
             </div>
 
-            {/* Info */}
             <div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                 <span className={`badge ${biqBadge.cls}`}>{biqBadge.label}</span>
@@ -117,15 +112,14 @@ export default async function PlayerPage({ params }: { params: { id: string } })
           </div>
         </div>
 
-        {/* Metric strip — newspaper grid */}
         <div
           className="grid-ruled player-metric-strip"
           style={{ gridTemplateColumns: 'repeat(3, 1fr)', border: 'none', borderTop: '1px solid var(--border)' }}
         >
           {[
-            { label: 'BIQ Score',    value: player.biqScore.toFixed(1),         sub: player.biqTier,                 gold: true },
-            { label: 'Recent Form',  value: player.recentFormScore.toFixed(1),   sub: 'Weighted signal' },
-            { label: 'Consistency',  value: player.consistencyScore.toFixed(1),  sub: 'Game-to-game stability' },
+            { label: 'BIQ Score', value: player.biqScore.toFixed(1), sub: player.biqTier, gold: true },
+            { label: 'Recent Form', value: player.recentFormScore.toFixed(1), sub: 'Weighted signal' },
+            { label: 'Consistency', value: player.consistencyScore.toFixed(1), sub: 'Game-to-game stability' },
           ].map((m) => (
             <div key={m.label} className="stat-block" style={{ background: 'var(--bg)' }}>
               <span className="stat-label">{m.label}</span>
@@ -136,7 +130,6 @@ export default async function PlayerPage({ params }: { params: { id: string } })
         </div>
       </section>
 
-      {/* ── BIQ Breakdown ────────────────────────────────────────────── */}
       <section className="card p-6">
         <div className="section-head">
           <span className="section-title">BIQ Breakdown</span>
@@ -172,7 +165,6 @@ export default async function PlayerPage({ params }: { params: { id: string } })
         </div>
       </section>
 
-      {/* ── Core Stats ───────────────────────────────────────────────── */}
       <section>
         <div className="section-head">
           <span className="section-title">Core Season Indicators</span>
@@ -187,10 +179,8 @@ export default async function PlayerPage({ params }: { params: { id: string } })
         </div>
       </section>
 
-      {/* ── Trend Chart ──────────────────────────────────────────────── */}
       <TrendChart data={player.recentTrend} title="Recent Scoring Trend" />
 
-      {/* ── Insight + Splits ─────────────────────────────────────────── */}
       <section className="player-insight-grid" style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1.2fr 0.8fr' }}>
         <div className="card-ruled">
           <p className="eyebrow mb-3">BIQ Insight</p>
@@ -213,7 +203,6 @@ export default async function PlayerPage({ params }: { params: { id: string } })
         </div>
       </section>
 
-      {/* ── Deep Dive Blocks ─────────────────────────────────────────── */}
       {player.analyticsBlocks.map((block) => (
         <section key={block.title}>
           <div className="section-head">
@@ -230,14 +219,12 @@ export default async function PlayerPage({ params }: { params: { id: string } })
         </section>
       ))}
 
-      {/* ── Game Log ─────────────────────────────────────────────────── */}
       <section>
         <div className="section-head">
           <span className="section-title">Game Log</span>
         </div>
         <GameLogTable rows={player.gameLog} />
       </section>
-
     </main>
   );
 }

@@ -5,6 +5,8 @@ import { fetchJSON } from '@/lib/api';
 import { BIQLeaderboardEntry } from '@/lib/types';
 import StackedLeaderboard from '@/components/stacked-leaderboard';
 
+
+import { SpeedInsights } from "@vercel/speed-insights/next"
 // ─── helpers ──────────────────────────────────────────────────────────────────
 function getPlayerHeadshotUrl(playerId: number) {
   return `https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/${playerId}.png`;

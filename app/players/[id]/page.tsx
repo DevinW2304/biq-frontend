@@ -9,6 +9,9 @@ import { SplitTile } from '@/components/SplitTile';
 import { StatCard } from '@/components/StatCard';
 import { TrendChart } from '@/components/TrendChart';
 
+
+import { SpeedInsights } from "@vercel/speed-insights/next"
+
 function buildPlayerTagline(player: PlayerProfile) {
   if (player.biqScore >= 90) return 'An elite franchise-level utility profile with top-tier BIQ support.';
   if (player.biqScore >= 80) return 'A high-level team utility profile backed by strong BIQ indicators.';

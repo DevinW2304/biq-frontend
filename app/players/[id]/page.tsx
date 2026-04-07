@@ -1,7 +1,6 @@
-export const revalidate = 300;
-
 import Image from 'next/image';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { fetchCachedJSON } from '@/lib/api';
 import { PlayerProfile } from '@/lib/types';
 import { GameLogTable } from '@/components/GameLogTable';
@@ -9,8 +8,7 @@ import { SplitTile } from '@/components/SplitTile';
 import { StatCard } from '@/components/StatCard';
 import { TrendChart } from '@/components/TrendChart';
 
-
-import { SpeedInsights } from "@vercel/speed-insights/next"
+export const revalidate = 300;
 
 function buildPlayerTagline(player: PlayerProfile) {
   if (player.biqScore >= 90) return 'An elite franchise-level utility profile with top-tier BIQ support.';
@@ -31,7 +29,19 @@ function getPlayerHeadshotUrl(playerId: number) {
 }
 
 export default async function PlayerPage({ params }: { params: { id: string } }) {
-  const player = await fetchCachedJSON<PlayerProfile>(`/api/players/${params.id}`, 300);
+  let player: PlayerProfile | null = null;
+
+  try {
+    player = await fetchCachedJSON<PlayerProfile>(`/api/players/${params.id}`, 300);
+  } catch (error) {
+    console.error(`Failed to load player ${params.id}`, error);
+    notFound();
+  }
+
+  if (!player) {
+    notFound();
+  }
+
   const headshotUrl = getPlayerHeadshotUrl(player.id);
   const biqBadge = getBiqBadge(player.biqScore);
 
@@ -142,7 +152,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-          {player.biqBreakdown.map((component) => (
+          {(player.biqBreakdown ?? []).map((component) => (
             <div key={component.label} className="biq-bar-row">
               <span className="biq-bar-label">{component.label}</span>
               <div className="biq-bar-track">
@@ -176,13 +186,13 @@ export default async function PlayerPage({ params }: { params: { id: string } })
           className="grid-ruled"
           style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}
         >
-          {player.stats.map((stat) => (
+          {(player.stats ?? []).map((stat) => (
             <StatCard key={stat.label} {...stat} />
           ))}
         </div>
       </section>
 
-      <TrendChart data={player.recentTrend} title="Recent Scoring Trend" />
+      <TrendChart data={player.recentTrend ?? []} title="Recent Scoring Trend" />
 
       <section className="player-insight-grid" style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1.2fr 0.8fr' }}>
         <div className="card-ruled">
@@ -199,14 +209,14 @@ export default async function PlayerPage({ params }: { params: { id: string } })
             Situational production
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {player.splits.map((split) => (
+            {(player.splits ?? []).map((split) => (
               <SplitTile key={split.label} label={split.label} value={split.value} />
             ))}
           </div>
         </div>
       </section>
 
-      {player.analyticsBlocks.map((block) => (
+      {(player.analyticsBlocks ?? []).map((block) => (
         <section key={block.title}>
           <div className="section-head">
             <span className="section-title">{block.title}</span>
@@ -226,7 +236,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
         <div className="section-head">
           <span className="section-title">Game Log</span>
         </div>
-        <GameLogTable rows={player.gameLog} />
+        <GameLogTable rows={player.gameLog ?? []} />
       </section>
     </main>
   );

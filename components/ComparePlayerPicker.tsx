@@ -9,6 +9,11 @@ const API_BASE_URL =
 
 type PickerSlot = 'a' | 'b';
 
+type SelectedPlayer = {
+  id: string;
+  label: string;
+};
+
 export function ComparePlayerPicker() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -18,8 +23,8 @@ export function ComparePlayerPicker() {
 
   const [queryA, setQueryA] = useState('');
   const [queryB, setQueryB] = useState('');
-  const [selectedA, setSelectedA] = useState<{ id: string; label: string } | null>(null);
-  const [selectedB, setSelectedB] = useState<{ id: string; label: string } | null>(null);
+  const [selectedA, setSelectedA] = useState<SelectedPlayer | null>(null);
+  const [selectedB, setSelectedB] = useState<SelectedPlayer | null>(null);
   const [resultsA, setResultsA] = useState<SearchPlayerResult[]>([]);
   const [resultsB, setResultsB] = useState<SearchPlayerResult[]>([]);
   const [loadingA, setLoadingA] = useState(false);
@@ -148,122 +153,214 @@ export function ComparePlayerPicker() {
   }
 
   return (
-    <section className="card p-6">
-      <p className="text-sm uppercase tracking-[0.2em] text-accent">Compare Players</p>
-      <h1 className="mt-2 text-4xl font-bold">Choose two players</h1>
-      <p className="mt-3 max-w-2xl text-sm text-muted">
-        Search for any active NBA players, select both sides, then load the head-to-head BIQ comparison.
-      </p>
+    <section
+      className="relative overflow-hidden"
+      style={{
+        borderBottom: '1px solid var(--border)',
+        paddingBottom: 0,
+      }}
+    >
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background:
+            'radial-gradient(circle at 18% 18%, rgba(201,168,76,0.12), transparent 28%), radial-gradient(circle at 82% 20%, rgba(97,214,204,0.08), transparent 24%), linear-gradient(180deg, rgba(255,255,255,0.01), transparent 55%)',
+          pointerEvents: 'none',
+        }}
+      />
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="space-y-3">
-          <label className="text-sm font-semibold">Player A</label>
-          <input
-            value={queryA}
-            onChange={(e) => setQueryA(e.target.value)}
-            placeholder="Search Player A"
-            className="w-full rounded-xl border border-border bg-transparent px-4 py-3 outline-none focus:border-accent"
-          />
+      <div className="hero-two-col relative z-10">
+        <div className="hero-copy">
+          <p className="eyebrow mb-4">Player Comparison</p>
 
-          {selectedA && (
-            <div className="flex items-center justify-between rounded-xl border border-border px-4 py-3">
-              <span className="text-sm">{selectedA.label}</span>
-              <button
-                type="button"
-                onClick={() => clearPlayer('a')}
-                className="text-xs uppercase tracking-[0.15em] text-muted hover:text-accent"
-              >
-                Clear
-              </button>
-            </div>
-          )}
+          <h1
+            className="display hero-title-glow"
+            style={{
+              fontSize: 'clamp(3rem, 7vw, 6rem)',
+              color: 'var(--text)',
+              maxWidth: '11ch',
+              lineHeight: 0.94,
+              marginBottom: '1.25rem',
+            }}
+          >
+            BUILD A
+            <br />
+            BETTER
+            <br />
+            MATCHUP.
+          </h1>
 
-          {!selectedA && (loadingA || resultsA.length > 0) && (
-            <div className="rounded-xl border border-border">
-              {loadingA ? (
-                <div className="px-4 py-3 text-sm text-muted">Searching…</div>
-              ) : (
-                resultsA.map((player) => (
-                  <button
-                    key={player.id}
-                    type="button"
-                    onClick={() => choosePlayer('a', player)}
-                    className="block w-full border-b border-border px-4 py-3 text-left last:border-b-0 hover:bg-white/5"
-                  >
-                    <div className="font-medium">{player.name}</div>
-                    <div className="text-sm text-muted">
-                      {player.team} · {player.position}
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
+          <p
+            className="serif-italic"
+            style={{
+              fontSize: '1rem',
+              lineHeight: 1.7,
+              color: 'var(--muted)',
+              maxWidth: '460px',
+              marginBottom: '1.75rem',
+            }}
+          >
+            Choose any two active NBA players and compare BIQ utility, recent form,
+            trend shape, and headline statistical profile in one editorial view.
+          </p>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={submitCompare}
+              disabled={!canCompare}
+              className="btn btn-primary btn-animated disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Compare Selected Players
+            </button>
+
+            <button
+              type="button"
+              onClick={() => router.push('/compare?a=2544&b=201939')}
+              className="btn btn-ghost btn-animated"
+            >
+              Load LeBron vs Curry
+            </button>
+          </div>
         </div>
 
-        <div className="space-y-3">
-          <label className="text-sm font-semibold">Player B</label>
-          <input
-            value={queryB}
-            onChange={(e) => setQueryB(e.target.value)}
-            placeholder="Search Player B"
-            className="w-full rounded-xl border border-border bg-transparent px-4 py-3 outline-none focus:border-accent"
-          />
+        <div className="card animated-surface p-5 md:p-6">
+          <div className="section-head" style={{ marginBottom: '1rem' }}>
+            <span className="section-title">Select Your Matchup</span>
+          </div>
 
-          {selectedB && (
-            <div className="flex items-center justify-between rounded-xl border border-border px-4 py-3">
-              <span className="text-sm">{selectedB.label}</span>
-              <button
-                type="button"
-                onClick={() => clearPlayer('b')}
-                className="text-xs uppercase tracking-[0.15em] text-muted hover:text-accent"
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="space-y-3">
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.62rem',
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  color: 'var(--muted)',
+                }}
               >
-                Clear
-              </button>
-            </div>
-          )}
+                Player A
+              </div>
 
-          {!selectedB && (loadingB || resultsB.length > 0) && (
-            <div className="rounded-xl border border-border">
-              {loadingB ? (
-                <div className="px-4 py-3 text-sm text-muted">Searching…</div>
-              ) : (
-                resultsB.map((player) => (
+              <input
+                value={queryA}
+                onChange={(e) => setQueryA(e.target.value)}
+                placeholder="Search Player A"
+                className="w-full rounded-none border border-[var(--border)] bg-transparent px-4 py-3 text-sm outline-none transition"
+                style={{ color: 'var(--text)' }}
+              />
+
+              {selectedA && (
+                <div className="card-ruled p-3 flex items-center justify-between gap-3">
+                  <span className="text-sm" style={{ color: 'var(--text)' }}>
+                    {selectedA.label}
+                  </span>
                   <button
-                    key={player.id}
                     type="button"
-                    onClick={() => choosePlayer('b', player)}
-                    className="block w-full border-b border-border px-4 py-3 text-left last:border-b-0 hover:bg-white/5"
+                    onClick={() => clearPlayer('a')}
+                    className="section-link"
                   >
-                    <div className="font-medium">{player.name}</div>
-                    <div className="text-sm text-muted">
-                      {player.team} · {player.position}
-                    </div>
+                    Clear
                   </button>
-                ))
+                </div>
+              )}
+
+              {!selectedA && (loadingA || resultsA.length > 0) && (
+                <div className="card-ruled" style={{ maxHeight: 260, overflowY: 'auto' }}>
+                  {loadingA ? (
+                    <div className="p-3 text-sm text-muted">Searching…</div>
+                  ) : (
+                    resultsA.map((player) => (
+                      <button
+                        key={player.id}
+                        type="button"
+                        onClick={() => choosePlayer('a', player)}
+                        className="w-full border-b border-[var(--border)] px-4 py-3 text-left transition last:border-b-0 hover:bg-white/[0.03]"
+                      >
+                        <div className="leader-name" style={{ fontSize: '1rem', marginBottom: 4 }}>
+                          {player.name}
+                        </div>
+                        <div className="leader-meta">
+                          {player.team} · {player.position}
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
               )}
             </div>
+
+            <div className="space-y-3">
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.62rem',
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  color: 'var(--muted)',
+                }}
+              >
+                Player B
+              </div>
+
+              <input
+                value={queryB}
+                onChange={(e) => setQueryB(e.target.value)}
+                placeholder="Search Player B"
+                className="w-full rounded-none border border-[var(--border)] bg-transparent px-4 py-3 text-sm outline-none transition"
+                style={{ color: 'var(--text)' }}
+              />
+
+              {selectedB && (
+                <div className="card-ruled p-3 flex items-center justify-between gap-3">
+                  <span className="text-sm" style={{ color: 'var(--text)' }}>
+                    {selectedB.label}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => clearPlayer('b')}
+                    className="section-link"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+
+              {!selectedB && (loadingB || resultsB.length > 0) && (
+                <div className="card-ruled" style={{ maxHeight: 260, overflowY: 'auto' }}>
+                  {loadingB ? (
+                    <div className="p-3 text-sm text-muted">Searching…</div>
+                  ) : (
+                    resultsB.map((player) => (
+                      <button
+                        key={player.id}
+                        type="button"
+                        onClick={() => choosePlayer('b', player)}
+                        className="w-full border-b border-[var(--border)] px-4 py-3 text-left transition last:border-b-0 hover:bg-white/[0.03]"
+                      >
+                        <div className="leader-name" style={{ fontSize: '1rem', marginBottom: 4 }}>
+                          {player.name}
+                        </div>
+                        <div className="leader-meta">
+                          {player.team} · {player.position}
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {selectedA && selectedB && selectedA.id === selectedB.id && (
+            <p className="mt-4 text-sm" style={{ color: 'var(--muted)' }}>
+              Choose two different players to build the comparison.
+            </p>
           )}
         </div>
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={submitCompare}
-          disabled={!canCompare}
-          className="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Compare Selected Players
-        </button>
-
-        <button
-          type="button"
-          onClick={() => router.push('/compare?a=2544&b=201939')}
-          className="btn btn-ghost"
-        >
-          Load LeBron vs Curry
-        </button>
       </div>
     </section>
   );

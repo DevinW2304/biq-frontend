@@ -1,10 +1,11 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { PlayerSearchBar } from '@/components/PlayerSearchBar';
 import { CourtBackground } from '@/components/CourtBackground';
 import { BiqTicker } from '@/components/BiqTicker';
-import { fetchJSON } from '@/lib/api';
+import { fetchCachedJSON } from '@/lib/api';
 import { BIQLeaderboardEntry } from '@/lib/types';
 
 const features = [
@@ -45,7 +46,7 @@ function getBiqBadge(score: number): { label: string; cls: string } {
 
 function buildBackdropPlayers(players: BIQLeaderboardEntry[]) {
   const safePlayers = players.length ? players : [];
-  return [...safePlayers, ...safePlayers, ...safePlayers];
+  return [...safePlayers, ...safePlayers];
 }
 
 function getTopByMetric(
@@ -91,17 +92,18 @@ function buildHighlights(players: BIQLeaderboardEntry[]): HighlightItem[] {
 }
 
 export default async function HomePage() {
-  let biqLeaders: BIQLeaderboardEntry[] = [];
   let tickerPlayers: BIQLeaderboardEntry[] = [];
 
   try {
-    [biqLeaders, tickerPlayers] = await Promise.all([
-      fetchJSON<BIQLeaderboardEntry[]>('/api/players/biq-leaders?limit=3'),
-      fetchJSON<BIQLeaderboardEntry[]>('/api/players/biq-leaders?limit=12'),
-    ]);
+    tickerPlayers = await fetchCachedJSON<BIQLeaderboardEntry[]>(
+      '/api/players/biq-leaders?limit=12',
+      300
+    );
   } catch (error) {
     console.error('Failed to load homepage BIQ data', error);
   }
+
+  const biqLeaders = tickerPlayers.slice(0, 3);
 
   const avgBiq =
     biqLeaders.reduce((sum, player) => sum + player.biqScore, 0) / Math.max(biqLeaders.length, 1);
@@ -190,11 +192,12 @@ export default async function HomePage() {
                       className="hero-spotlight-bg-card"
                       key={`${player.id}-bg-a-${index}`}
                     >
-                      <img
+                      <Image
                         src={getPlayerHeadshotUrl(player.id)}
                         alt=""
                         width={132}
                         height={520}
+                        sizes="132px"
                       />
                     </div>
                   ))}
@@ -206,11 +209,12 @@ export default async function HomePage() {
                       className="hero-spotlight-bg-card"
                       key={`${player.id}-bg-b-${index}`}
                     >
-                      <img
+                      <Image
                         src={getPlayerHeadshotUrl(player.id)}
                         alt=""
                         width={132}
                         height={520}
+                        sizes="132px"
                       />
                     </div>
                   ))}
@@ -230,7 +234,7 @@ export default async function HomePage() {
 
                   <div className="hero-spotlight-player">
                     <div className="hero-spotlight-headshot">
-                      <img
+                      <Image
                         src={getPlayerHeadshotUrl(heroLeader.id)}
                         alt={`${heroLeader.name} headshot`}
                         width={84}
@@ -308,7 +312,7 @@ export default async function HomePage() {
                   <>
                     <div className="highlight-main">
                       <div className="highlight-headshot">
-                        <img
+                        <Image
                           src={getPlayerHeadshotUrl(item.player.id)}
                           alt={`${item.player.name} headshot`}
                           width={62}
@@ -412,7 +416,7 @@ export default async function HomePage() {
                       border: '1px solid var(--border-strong)',
                     }}
                   >
-                    <img
+                    <Image
                       src={getPlayerHeadshotUrl(player.id)}
                       alt={`${player.name} headshot`}
                       width={52}

@@ -17,6 +17,15 @@ const navStyles = `
   .nav-link:hover::after { transform: scaleX(1); }
 `;
 
+const navLinks = [
+  { href: '/players?q=',              label: 'Players',    external: false },
+  { href: '/leaderboard',             label: 'Leaderboard',external: false },
+  { href: '/teams',                   label: 'Teams',      external: false },
+  { href: '/compare?a=2544&b=201939', label: 'Compare',    external: false },
+  { href: '/model',                   label: 'Model',      external: false },
+  { href: 'https://biq-coach.vercel.app', label: 'HoopCoach', external: true },
+];
+
 export function Navbar() {
   return (
     <header
@@ -81,39 +90,45 @@ export function Navbar() {
           </span>
         </Link>
 
-        <nav
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.25rem',
-          }}
-        >
-          {[
-            { href: '/players?q=', label: 'Players' },
-            { href: '/leaderboard', label: 'Leaderboard' },
-            { href: '/teams', label: 'Teams' },
-            { href: '/compare?a=2544&b=201939', label: 'Compare' },
-            { href: '/model', label: 'Model' },
-          ].map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="nav-link"
-              style={{
-                fontFamily: 'var(--font-condensed)',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                letterSpacing: '0.16em',
-                textTransform: 'uppercase',
-                color: 'var(--muted)',
-                padding: '0.4rem 0.875rem',
-                transition: 'color 0.15s ease',
-                position: 'relative',
-              }}
-            >
-              {link.label}
-            </Link>
-          ))}
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+          {navLinks.map((link) => {
+            const baseStyle = {
+              fontFamily: 'var(--font-condensed)',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase' as const,
+              padding: '0.4rem 0.875rem',
+              transition: 'color 0.15s ease',
+              position: 'relative' as const,
+            };
+
+            if (link.external) {
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="nav-link"
+                  style={{ ...baseStyle, color: 'var(--gold)' }}
+                >
+                  {link.label}
+                </a>
+              );
+            }
+
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="nav-link"
+                style={{ ...baseStyle, color: 'var(--muted)' }}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 

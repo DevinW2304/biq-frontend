@@ -1001,7 +1001,7 @@ input::placeholder { color: var(--faint); }
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── Badges ──────────────────────────────────────────────────────────── */
+/* ─── Badges ───────────────── */
 
 .badge {
   display: inline-block;
@@ -1020,7 +1020,7 @@ input::placeholder { color: var(--faint); }
 .badge-danger  { background: var(--danger-bg); color: var(--danger);     border: 1px solid rgba(212,92,92,0.2); }
 .badge-neutral { background: rgba(255,255,255,0.03); color: var(--text-2); border: 1px solid var(--border); }
 
-/* ─── Table ───────────────────────────────────────────────────────────── */
+/* ─── Table ───────────────── */
 
 .table-shell {
   border: 1px solid var(--border);
@@ -1083,7 +1083,7 @@ thead .sticky-col {
   line-height: 1;
 }
 
-/* ─── Input ───────────────────────────────────────────────────────────── */
+/* ─── Input ──────────────────── */
 
 .search-input {
   width: 100%;
@@ -1104,7 +1104,7 @@ thead .sticky-col {
   box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.08);
 }
 
-/* ─── Buttons ─────────────────────────────────────────────────────────── */
+/* ─── Buttons ────────────────── */
 
 .btn {
   display: inline-flex;
@@ -1169,7 +1169,7 @@ thead .sticky-col {
   transform: translateY(-2px);
 }
 
-/* ─── Leader Card ─────────────────────────────────────────────────────── */
+/* ─── Leader Card ────────── */
 
 .leader-card {
   display: block;
@@ -1267,7 +1267,7 @@ thead .sticky-col {
   margin-bottom: 4px;
 }
 
-/* ─── Split Tile ──────────────────────────────────────────────────────── */
+/* ─── Split Tile ────────── */
 
 .split-tile {
   padding: 0.875rem 1rem;
@@ -1298,7 +1298,7 @@ thead .sticky-col {
   color: var(--text);
 }
 
-/* ─── Score Card ──────────────────────────────────────────────────────── */
+/* ─── Score Card ──────────── */
 
 .score-card {
   background: var(--s1);
@@ -1318,7 +1318,7 @@ thead .sticky-col {
   background: linear-gradient(90deg, transparent, var(--gold-border), transparent);
 }
 
-/* ─── Stat Card ───────────────────────────────────────────────────────── */
+/* ─── Stat Card ─────── */
 
 .stat-card {
   background: rgba(255, 255, 255, 0.02);
@@ -1334,7 +1334,7 @@ thead .sticky-col {
   background: var(--s1);
 }
 
-/* ─── Trend Chart ─────────────────────────────────────────────────────── */
+/* ─── Trend Chart ─────── */
 
 .trend-chart-wrap {
   background: var(--s1);
@@ -1342,7 +1342,7 @@ thead .sticky-col {
   padding: 1.75rem;
 }
 
-/* ─── Player Hero ─────────────────────────────────────────────────────── */
+/* ─── Player Hero ────────── */
 
 .player-hero {
   position: relative;
@@ -1438,7 +1438,7 @@ thead .sticky-col {
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── Responsive ──────────────────────────────────────────────────────── */
+/* ─── Responsive ──────── */
 
 @media (max-width: 1100px) {
   .hero-basketball,

@@ -8,207 +8,159 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
   const roster = team.rosterPreview ?? [];
 
   return (
-    <main style={{ maxWidth: 960, margin: '0 auto', padding: '2rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <main className="page-shell space-y-8">
+      <section className="card" style={{ padding: '1.5rem' }}>
+        <p className="eyebrow" style={{ marginBottom: '1rem' }}>
+          Team Dashboard
+        </p>
 
-      {/* ── Hero ── */}
-      <section style={{
-        background: 'var(--s1)',
-        border: '1px solid var(--border)',
-        borderRadius: 12,
-        overflow: 'hidden',
-      }}>
-        {/* Header band */}
-        <div style={{ padding: '1.75rem' }}>
-          <div style={{
+        <div
+          style={{
             display: 'flex',
             flexWrap: 'wrap',
-            alignItems: 'flex-start',
+            alignItems: 'flex-end',
             justifyContent: 'space-between',
             gap: '1rem',
-            marginBottom: '0.875rem',
-          }}>
-            {/* Label */}
-            <p style={{
-              fontSize: '0.65rem',
-              fontWeight: 700,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: 'var(--muted)',
-              margin: 0,
-            }}>
-              Team Dashboard
-            </p>
-            <Link href="/teams" style={{
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              color: 'var(--muted)',
-              textDecoration: 'none',
-              letterSpacing: '0.04em',
-            }}>
-              ← Back to teams
-            </Link>
-          </div>
+          }}
+        >
+          <div>
+            <h1
+              className="display"
+              style={{
+                fontSize: 'clamp(2.6rem, 5vw, 4.25rem)',
+                lineHeight: 0.95,
+                color: 'var(--text)',
+                margin: 0,
+              }}
+            >
+              {team.name}
+            </h1>
 
-          {/* Team name */}
-          <h1 style={{
-            fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
-            fontWeight: 700,
-            letterSpacing: '-0.02em',
-            color: 'var(--text)',
-            lineHeight: 1.1,
-            margin: 0,
-            marginBottom: 8,
-            fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-          }}>
-            {team.name}
-          </h1>
-
-          {/* Conference / division */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: '1rem' }}>
-            {[team.abbreviation, team.conference, team.division].filter(Boolean).map((tag) => (
-              <span key={tag} style={{
-                fontSize: '0.65rem',
-                fontWeight: 600,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                padding: '3px 10px',
-                borderRadius: 99,
-                background: 'var(--s2)',
+            <p
+              style={{
+                marginTop: '0.75rem',
+                marginBottom: 0,
                 color: 'var(--muted)',
-                border: '1px solid var(--border)',
-              }}>
-                {tag}
-              </span>
-            ))}
+                fontSize: '0.72rem',
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {team.abbreviation ?? ''}{team.abbreviation ? ' · ' : ''}
+              {team.conference}
+              {team.division ? ` · ${team.division}` : ''}
+            </p>
           </div>
 
-          {/* Insight */}
-          {team.lineupInsight && (
-            <p style={{
-              fontSize: '0.875rem',
-              color: 'var(--muted)',
-              lineHeight: 1.6,
-              maxWidth: 600,
-              margin: 0,
-            }}>
-              {team.lineupInsight}
-            </p>
-          )}
-
-          {/* Fallback insight field */}
-          {!team.lineupInsight && team.insight && (
-            <p style={{
-              fontSize: '0.875rem',
-              color: 'var(--muted)',
-              lineHeight: 1.6,
-              maxWidth: 600,
-              margin: 0,
-            }}>
-              {team.insight}
-            </p>
-          )}
+          <Link href="/teams" className="section-link">
+            Back to teams →
+          </Link>
         </div>
+
+        <p
+          style={{
+            marginTop: '1.25rem',
+            marginBottom: 0,
+            maxWidth: '78ch',
+            color: 'var(--muted)',
+            fontFamily: 'var(--font-serif)',
+            fontSize: '0.98rem',
+            lineHeight: 1.82,
+          }}
+        >
+          {team.lineupInsight}
+        </p>
       </section>
 
-      {/* ── Team Stats ── */}
       <section>
-        <SectionHeader title="Team Profile" />
-        <div className="grid-ruled" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+        <div className="section-head">
+          <span className="section-title">Team Profile</span>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {team.stats.map((stat) => (
             <StatCard key={stat.label} {...stat} />
           ))}
         </div>
       </section>
 
-      {/* ── Roster Preview ── */}
-      <section style={{
-        background: 'var(--s1)',
-        border: '1px solid var(--border)',
-        borderRadius: 12,
-        padding: '1.5rem',
-      }}>
-        <SectionHeader title="Roster Preview" />
+      <section className="card" style={{ padding: '1.5rem' }}>
+        <div className="section-head" style={{ marginBottom: '1rem' }}>
+          <span className="section-title">Roster Preview</span>
+        </div>
 
         {roster.length > 0 ? (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '0.75rem',
-          }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '0.9rem',
+            }}
+          >
             {roster.map((player) => (
               <Link
                 key={player.id}
                 href={`/players/${player.id}`}
+                className="card"
                 style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.3rem',
                   padding: '1rem',
-                  background: 'var(--s2)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 8,
                   textDecoration: 'none',
-                  transition: 'border-color 0.15s ease',
+                  display: 'grid',
+                  gap: '0.4rem',
                 }}
-                onMouseOver={(e) => (e.currentTarget.style.borderColor = 'var(--border-strong)')}
-                onMouseOut={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
               >
-                <span style={{
-                  fontSize: '0.62rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                }}>
+                <div
+                  style={{
+                    fontSize: '0.58rem',
+                    letterSpacing: '0.18em',
+                    textTransform: 'uppercase',
+                    color: 'var(--muted)',
+                  }}
+                >
                   #{player.number || '--'} · {player.position || 'Player'}
-                </span>
+                </div>
 
-                <span style={{
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  letterSpacing: '-0.01em',
-                  color: 'var(--text)',
-                  lineHeight: 1.2,
-                  fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                }}>
+                <div
+                  style={{
+                    color: 'var(--text)',
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '1.2rem',
+                    lineHeight: 1,
+                    letterSpacing: '0.02em',
+                  }}
+                >
                   {player.name}
-                </span>
+                </div>
 
-                <span style={{
-                  fontSize: '0.65rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  color: 'var(--gold, #C9A84C)',
-                  marginTop: 2,
-                }}>
-                  View profile →
-                </span>
+                <div
+                  style={{
+                    fontSize: '0.64rem',
+                    letterSpacing: '0.16em',
+                    textTransform: 'uppercase',
+                    color: 'var(--muted)',
+                    marginTop: '0.2rem',
+                  }}
+                >
+                  Open player dashboard →
+                </div>
               </Link>
             ))}
           </div>
         ) : (
-          <p style={{ fontSize: '0.875rem', color: 'var(--muted)', margin: 0 }}>
-            No roster preview is available for this team yet.
-          </p>
+          <div className="card" style={{ padding: '1rem' }}>
+            <p
+              style={{
+                margin: 0,
+                color: 'var(--muted)',
+                fontFamily: 'var(--font-serif)',
+                fontSize: '0.95rem',
+              }}
+            >
+              No roster preview is available for this team yet.
+            </p>
+          </div>
         )}
       </section>
     </main>
-  );
-}
-
-function SectionHeader({ title }: { title: string }) {
-  return (
-    <div style={{ marginBottom: '0.875rem' }}>
-      <h2 style={{
-        fontSize: '0.7rem',
-        fontWeight: 700,
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        color: 'var(--muted)',
-        margin: 0,
-      }}>
-        {title}
-      </h2>
-    </div>
   );
 }

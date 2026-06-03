@@ -9,6 +9,10 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
 
   return (
     <main style={{ maxWidth: 960, margin: '0 auto', padding: '2rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <style>{`
+        .roster-card { transition: border-color 0.15s ease; }
+        .roster-card:hover { border-color: var(--border-strong) !important; }
+      `}</style>
 
       {/* ── Hero ── */}
       <section style={{
@@ -17,7 +21,6 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
         borderRadius: 12,
         overflow: 'hidden',
       }}>
-        {/* Header band */}
         <div style={{ padding: '1.75rem' }}>
           <div style={{
             display: 'flex',
@@ -27,7 +30,6 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
             gap: '1rem',
             marginBottom: '0.875rem',
           }}>
-            {/* Label */}
             <p style={{
               fontSize: '0.65rem',
               fontWeight: 700,
@@ -63,7 +65,7 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
             {team.name}
           </h1>
 
-          {/* Conference / division */}
+          {/* Conference / division badges */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: '1rem' }}>
             {[team.abbreviation, team.conference, team.division].filter(Boolean).map((tag) => (
               <span key={tag} style={{
@@ -94,8 +96,6 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
               {team.lineupInsight}
             </p>
           )}
-
-
         </div>
       </section>
 
@@ -128,6 +128,7 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
               <Link
                 key={player.id}
                 href={`/players/${player.id}`}
+                className="roster-card"
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -137,10 +138,7 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
                   border: '1px solid var(--border)',
                   borderRadius: 8,
                   textDecoration: 'none',
-                  transition: 'border-color 0.15s ease',
                 }}
-                onMouseOver={(e) => (e.currentTarget.style.borderColor = 'var(--border-strong)')}
-                onMouseOut={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
               >
                 <span style={{
                   fontSize: '0.62rem',

@@ -153,210 +153,178 @@ export function ComparePlayerPicker() {
   }
 
   return (
-    <section
-      className="relative overflow-hidden"
-      style={{
-        borderBottom: '1px solid var(--border)',
-        paddingBottom: 0,
-      }}
-    >
+    <section style={{ padding: '56px 0 0', borderBottom: '1px solid var(--line)' }}>
+      <p className="biq-mono">Player comparison · 2025-26</p>
+
       <div
-        aria-hidden="true"
         style={{
-          position: 'absolute',
-          inset: 0,
-          background:
-            'radial-gradient(circle at 18% 18%, rgba(201,168,76,0.12), transparent 28%), radial-gradient(circle at 82% 20%, rgba(97,214,204,0.08), transparent 24%), linear-gradient(180deg, rgba(255,255,255,0.01), transparent 55%)',
-          pointerEvents: 'none',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+          gap: 48,
+          padding: '20px 0 48px',
         }}
-      />
-
-      <div className="hero-two-col relative z-10">
-        <div className="hero-copy">
-          <p className="eyebrow mb-4">Player Comparison</p>
-
-          <h1
-            className="display hero-title-glow"
-            style={{
-              fontSize: 'clamp(3rem, 7vw, 6rem)',
-              color: 'var(--text)',
-              maxWidth: '11ch',
-              lineHeight: 0.94,
-              marginBottom: '1.25rem',
-            }}
-          >
-            BUILD A
-            <br />
-            BETTER
-            <br />
-            MATCHUP.
+      >
+        <div>
+          <h1 className="biq-display biq-hero-size" style={{ maxWidth: '12ch' }}>
+            Build a better matchup.
           </h1>
 
-          <p
-            className="serif-italic"
-            style={{
-              fontSize: '1rem',
-              lineHeight: 1.7,
-              color: 'var(--muted)',
-              maxWidth: '460px',
-              marginBottom: '1.75rem',
-            }}
-          >
+          <p style={{ marginTop: 20, maxWidth: '52ch', fontSize: 15, lineHeight: 1.7, color: 'var(--ink-2)' }}>
             Choose any two active NBA players and compare BIQ utility, recent form,
-            trend shape, and headline statistical profile in one editorial view.
+            trend shape, and headline statistical profile in one view.
           </p>
 
-          <div className="flex flex-wrap gap-3">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 28, alignItems: 'center' }}>
             <button
               type="button"
               onClick={submitCompare}
               disabled={!canCompare}
-              className="btn btn-primary btn-animated disabled:cursor-not-allowed disabled:opacity-50"
+              className="biq-btn"
+              style={{
+                cursor: canCompare ? 'pointer' : 'not-allowed',
+                opacity: canCompare ? 1 : 0.4,
+              }}
             >
-              Compare Selected Players
+              Compare selected players
             </button>
 
             <button
               type="button"
               onClick={() => router.push('/compare?a=2544&b=201939')}
-              className="btn btn-ghost btn-animated"
+              className="biq-link"
+              style={{ background: 'transparent', border: 0, cursor: 'pointer', fontSize: 14 }}
             >
               Load LeBron vs Curry
             </button>
           </div>
         </div>
 
-        <div className="card animated-surface p-5 md:p-6">
-          <div className="section-head" style={{ marginBottom: '1rem' }}>
-            <span className="section-title">Select Your Matchup</span>
-          </div>
+        <div className="biq-card" style={{ padding: 24, alignSelf: 'start' }}>
+          <p className="biq-mono" style={{ marginBottom: 20 }}>Select your matchup</p>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="space-y-3">
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.62rem',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                }}
-              >
-                Player A
-              </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: 20,
+            }}
+          >
+            {([
+              {
+                slot: 'a' as const,
+                label: 'PLAYER A',
+                placeholder: 'Search Player A',
+                query: queryA,
+                setQuery: setQueryA,
+                selected: selectedA,
+                results: resultsA,
+                loading: loadingA,
+              },
+              {
+                slot: 'b' as const,
+                label: 'PLAYER B',
+                placeholder: 'Search Player B',
+                query: queryB,
+                setQuery: setQueryB,
+                selected: selectedB,
+                results: resultsB,
+                loading: loadingB,
+              },
+            ]).map((side) => (
+              <div key={side.slot}>
+                <p className="biq-mono" style={{ marginBottom: 10 }}>{side.label}</p>
 
-              <input
-                value={queryA}
-                onChange={(e) => setQueryA(e.target.value)}
-                placeholder="Search Player A"
-                className="w-full rounded-none border border-[var(--border)] bg-transparent px-4 py-3 text-sm outline-none transition"
-                style={{ color: 'var(--text)' }}
-              />
+                <input
+                  value={side.query}
+                  onChange={(e) => side.setQuery(e.target.value)}
+                  placeholder={side.placeholder}
+                  style={{
+                    width: '100%',
+                    background: '#fff',
+                    border: '1px solid var(--line)',
+                    borderRadius: 'var(--radius)',
+                    padding: '11px 14px',
+                    fontSize: 14,
+                    color: 'var(--ink)',
+                    outline: 'none',
+                  }}
+                />
 
-              {selectedA && (
-                <div className="card-ruled p-3 flex items-center justify-between gap-3">
-                  <span className="text-sm" style={{ color: 'var(--text)' }}>
-                    {selectedA.label}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => clearPlayer('a')}
-                    className="section-link"
+                {side.selected && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      background: 'var(--key-tint)',
+                      borderRadius: 'var(--radius)',
+                      padding: '10px 14px',
+                      marginTop: 8,
+                    }}
                   >
-                    Clear
-                  </button>
-                </div>
-              )}
+                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--key-deep)' }}>
+                      {side.selected.label}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => clearPlayer(side.slot)}
+                      className="biq-link"
+                      style={{ background: 'transparent', border: 0, cursor: 'pointer', fontSize: 12 }}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
 
-              {!selectedA && (loadingA || resultsA.length > 0) && (
-                <div className="card-ruled" style={{ maxHeight: 260, overflowY: 'auto' }}>
-                  {loadingA ? (
-                    <div className="p-3 text-sm text-muted">Searching…</div>
-                  ) : (
-                    resultsA.map((player) => (
-                      <button
-                        key={player.id}
-                        type="button"
-                        onClick={() => choosePlayer('a', player)}
-                        className="w-full border-b border-[var(--border)] px-4 py-3 text-left transition last:border-b-0 hover:bg-white/[0.03]"
-                      >
-                        <div className="leader-name" style={{ fontSize: '1rem', marginBottom: 4 }}>
-                          {player.name}
-                        </div>
-                        <div className="leader-meta">
-                          {player.team} · {player.position}
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-3">
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.62rem',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                }}
-              >
-                Player B
-              </div>
-
-              <input
-                value={queryB}
-                onChange={(e) => setQueryB(e.target.value)}
-                placeholder="Search Player B"
-                className="w-full rounded-none border border-[var(--border)] bg-transparent px-4 py-3 text-sm outline-none transition"
-                style={{ color: 'var(--text)' }}
-              />
-
-              {selectedB && (
-                <div className="card-ruled p-3 flex items-center justify-between gap-3">
-                  <span className="text-sm" style={{ color: 'var(--text)' }}>
-                    {selectedB.label}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => clearPlayer('b')}
-                    className="section-link"
+                {!side.selected && (side.loading || side.results.length > 0) && (
+                  <div
+                    data-native-scroll
+                    style={{
+                      background: '#fff',
+                      border: '1px solid var(--line)',
+                      borderRadius: 'var(--radius)',
+                      marginTop: 8,
+                      maxHeight: 260,
+                      overflowY: 'auto',
+                    }}
                   >
-                    Clear
-                  </button>
-                </div>
-              )}
-
-              {!selectedB && (loadingB || resultsB.length > 0) && (
-                <div className="card-ruled" style={{ maxHeight: 260, overflowY: 'auto' }}>
-                  {loadingB ? (
-                    <div className="p-3 text-sm text-muted">Searching…</div>
-                  ) : (
-                    resultsB.map((player) => (
-                      <button
-                        key={player.id}
-                        type="button"
-                        onClick={() => choosePlayer('b', player)}
-                        className="w-full border-b border-[var(--border)] px-4 py-3 text-left transition last:border-b-0 hover:bg-white/[0.03]"
-                      >
-                        <div className="leader-name" style={{ fontSize: '1rem', marginBottom: 4 }}>
-                          {player.name}
-                        </div>
-                        <div className="leader-meta">
-                          {player.team} · {player.position}
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
+                    {side.loading ? (
+                      <p style={{ padding: '12px 14px', fontSize: 13, color: 'var(--fog)' }}>Searching…</p>
+                    ) : (
+                      side.results.map((player) => (
+                        <button
+                          key={player.id}
+                          type="button"
+                          onClick={() => choosePlayer(side.slot, player)}
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            textAlign: 'left',
+                            background: 'transparent',
+                            border: 0,
+                            borderBottom: '1px solid var(--line)',
+                            padding: '10px 14px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <span style={{ display: 'block', fontSize: 14, color: 'var(--ink)' }}>
+                            {player.name}
+                          </span>
+                          <span style={{ display: 'block', marginTop: 3, fontSize: 12, color: 'var(--fog)' }}>
+                            {player.team} · {player.position}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
 
           {selectedA && selectedB && selectedA.id === selectedB.id && (
-            <p className="mt-4 text-sm" style={{ color: 'var(--muted)' }}>
+            <p style={{ marginTop: 16, fontSize: 13, color: 'var(--down)' }}>
               Choose two different players to build the comparison.
             </p>
           )}

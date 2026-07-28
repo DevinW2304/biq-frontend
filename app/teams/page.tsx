@@ -121,11 +121,11 @@ export default function TeamsPage() {
             aria-label="Search teams"
             style={{
               width: '100%',
-              background: 'rgba(255,255,255,0.03)',
+              background: '#fff',
               border: '1px solid var(--border)',
+              borderRadius: 'var(--r-md)',
               color: 'var(--text)',
               padding: '0.95rem 1rem',
-              borderRadius: '14px',
               outline: 'none',
               fontSize: '0.95rem',
             }}
@@ -139,11 +139,11 @@ export default function TeamsPage() {
             aria-label="Filter by conference"
             style={{
               width: '100%',
-              background: 'rgba(255,255,255,0.03)',
+              background: '#fff',
               border: '1px solid var(--border)',
+              borderRadius: 'var(--r-md)',
               color: 'var(--text)',
               padding: '0.95rem 1rem',
-              borderRadius: '14px',
               outline: 'none',
               fontSize: '0.95rem',
             }}
@@ -240,7 +240,7 @@ export default function TeamsPage() {
                   <div
                     style={{
                       textAlign: 'right',
-                      color: 'var(--gold)',
+                      color: 'var(--signal)',
                       fontFamily: 'var(--font-display)',
                       fontSize: '1.2rem',
                       lineHeight: 1,
@@ -304,8 +304,7 @@ export default function TeamsPage() {
                   style={{
                     margin: 0,
                     color: 'var(--muted)',
-                    fontFamily: 'var(--font-serif)',
-                    fontStyle: 'italic',
+                    fontFamily: 'var(--font-body)',
                     fontSize: '0.9rem',
                     lineHeight: 1.7,
                   }}

@@ -1,14 +1,16 @@
-import Image from 'next/image';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { fetchCachedJSON } from '@/lib/api';
-import { PlayerProfile } from '@/lib/types';
-import { GameLogTable } from '@/components/GameLogTable';
-import { SplitTile } from '@/components/SplitTile';
-import { StatCard } from '@/components/StatCard';
-import { TrendChart } from '@/components/TrendChart';
+// app/players/[id]/page.tsx — COURT PAPER player profile.
+// Server component; data flow unchanged (fetchCachedJSON, revalidate 300).
 
 export const revalidate = 300;
+
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { ApiError, fetchCachedJSON } from '@/lib/api';
+import { PlayerProfile } from '@/lib/types';
+import { MeterBar, ScoreMeter, SectionHeader } from '@/components/biq/BiqKit';
+import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
+import { RuleGrid, StatCell } from '@/components/biq/StatGrid';
+import { TrendBars } from '@/components/biq/TrendBars';
 
 function buildPlayerTagline(player: PlayerProfile) {
   if (player.biqScore >= 90) return 'An elite franchise-level utility profile with top-tier BIQ support.';
@@ -17,284 +19,250 @@ function buildPlayerTagline(player: PlayerProfile) {
   return 'A productive season profile with enough detail to support deeper BIQ evaluation.';
 }
 
-function getBiqBadge(score: number): { label: string; color: string } {
-  if (score >= 90) return { label: 'Elite Tier', color: 'var(--gold)' };
-  if (score >= 80) return { label: 'High Impact', color: 'var(--teal)' };
-  if (score >= 70) return { label: 'Solid Tier', color: 'var(--muted)' };
-  return { label: 'Developing', color: 'var(--muted)' };
-}
-
-function getPlayerHeadshotUrl(playerId: number) {
-  return `https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/${playerId}.png`;
-}
-
 export default async function PlayerPage({ params }: { params: { id: string } }) {
-  let player: PlayerProfile | null = null;
+  let player: PlayerProfile;
 
   try {
     player = await fetchCachedJSON<PlayerProfile>(`/api/players/${params.id}`, 300);
   } catch (error) {
+    // Only a real 404 means the player doesn't exist. Anything else is a
+    // backend problem and should surface as an error, not "not found".
+    if (error instanceof ApiError && error.isNotFound) {
+      notFound();
+    }
     console.error(`Failed to load player ${params.id}`, error);
-    notFound();
+    throw error;
   }
 
-  if (!player) notFound();
-
-  const headshotUrl = getPlayerHeadshotUrl(player.id);
-  const biqBadge = getBiqBadge(player.biqScore);
+  const sampleGames = (player.gameLog ?? []).length;
 
   return (
-    <main className="page-shell" style={{ maxWidth: 960, margin: '0 auto', padding: '2rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+      {/* ---------------- COVER ---------------- */}
+      <section style={{ padding: '56px 0 40px' }}>
+        <p className="biq-mono">Player profile · Evaluated 2025-26 season</p>
 
-      {/* ── Hero ── */}
-      <section style={{
-        background: 'var(--s1)',
-        border: '1px solid var(--border)',
-        borderRadius: 12,
-        overflow: 'hidden',
-      }}>
-        {/* Top band */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'auto 1fr',
-          gap: '1.5rem',
-          alignItems: 'center',
-          padding: '1.75rem',
-        }}>
-          {/* Headshot */}
-          <div style={{
-            width: 96,
-            height: 96,
-            borderRadius: 8,
-            overflow: 'hidden',
-            background: 'var(--s2)',
-            border: '1px solid var(--border)',
-            flexShrink: 0,
-          }}>
-            <Image
-              src={headshotUrl}
-              alt={`${player.name} headshot`}
-              width={96}
-              height={96}
-              style={{ width: 96, height: 96, objectFit: 'cover', display: 'block' }}
-            />
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'flex-end',
+            justifyContent: 'space-between',
+            gap: 40,
+            marginTop: 28,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 24, minWidth: 0 }}>
+            <SubjectPhoto id={player.id} name={player.name} size={132} />
+            <div style={{ minWidth: 0 }}>
+              <h1 className="biq-display biq-hero-size">{player.name}</h1>
+              <p style={{ marginTop: 8, fontSize: 15, color: 'var(--fog)' }}>
+                {player.team} · {player.position} · {sampleGames} games sampled
+              </p>
+            </div>
           </div>
 
-          {/* Name block */}
-          <div>
-            {/* Badges row */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
-              <span style={{
-                fontSize: '0.65rem',
-                fontWeight: 600,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                padding: '3px 10px',
-                borderRadius: 99,
-                background: 'color-mix(in srgb, var(--gold) 12%, transparent)',
-                color: biqBadge.color,
-                border: `1px solid color-mix(in srgb, ${biqBadge.color} 30%, transparent)`,
-              }}>
-                {biqBadge.label}
-              </span>
-              <span style={{
-                fontSize: '0.65rem',
-                fontWeight: 600,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                padding: '3px 10px',
-                borderRadius: 99,
-                background: 'var(--s2)',
-                color: 'var(--muted)',
-                border: '1px solid var(--border)',
-              }}>
-                {player.position}
-              </span>
-            </div>
+          <ScoreMeter
+            value={player.biqScore}
+            label="BIQ SCORE"
+            tier={player.biqTier}
+            size="xl"
+            align="right"
+            className="player-verdict"
+          />
+        </div>
 
-            {/* Player name — no cursive, clean sans */}
-            <h1 style={{
-              fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
-              fontWeight: 700,
-              letterSpacing: '-0.02em',
-              color: 'var(--text)',
-              lineHeight: 1.1,
-              marginBottom: 6,
-              fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-            }}>
-              {player.name}
-            </h1>
-
-            {/* Team */}
-            <p style={{
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: 'var(--muted)',
-              marginBottom: 10,
-            }}>
-              {player.team}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 16,
+            marginTop: 40,
+          }}
+        >
+          <div className="biq-card" style={{ padding: 20 }}>
+            <p className="biq-mono">Recent form</p>
+            <p className="biq-num" style={{ fontSize: 26, fontWeight: 600, margin: '10px 0 8px' }}>
+              {player.recentFormScore.toFixed(1)}
             </p>
-
-            <p style={{ fontSize: '0.875rem', color: 'var(--muted)', lineHeight: 1.5, maxWidth: 500 }}>
+            <MeterBar value={player.recentFormScore} />
+            <p className="biq-mono" style={{ marginTop: 8, fontSize: 10 }}>Weighted recent output</p>
+          </div>
+          <div className="biq-card" style={{ padding: 20 }}>
+            <p className="biq-mono">Consistency</p>
+            <p className="biq-num" style={{ fontSize: 26, fontWeight: 600, margin: '10px 0 8px' }}>
+              {player.consistencyScore.toFixed(1)}
+            </p>
+            <MeterBar value={player.consistencyScore} />
+            <p className="biq-mono" style={{ marginTop: 8, fontSize: 10 }}>Game-to-game stability</p>
+          </div>
+          <div className="biq-card" style={{ padding: 20, gridColumn: 'span 1' }}>
+            <p className="biq-mono">Read</p>
+            <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
               {buildPlayerTagline(player)}
             </p>
           </div>
         </div>
 
-        {/* Action buttons */}
-        <div style={{
-          padding: '0 1.75rem 1.25rem',
-          display: 'flex',
-          gap: 8,
-        }}>
-          <Link href={`/compare?a=${player.id}&b=201939`} className="btn btn-primary" style={{ fontSize: '0.8rem' }}>
-            Compare Player
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 28 }}>
+          <Link href={`/compare?a=${player.id}&b=201939`} className="biq-btn">
+            Compare this player
           </Link>
-          <Link href="/players?q=" className="btn btn-ghost" style={{ fontSize: '0.8rem' }}>
-            ← Back to Search
+          <Link href="/players?q=" className="biq-btn-ghost">
+            Back to search
           </Link>
-        </div>
-
-        {/* Metric strip */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          borderTop: '1px solid var(--border)',
-        }}>
-          {[
-            { label: 'BIQ Score', value: player.biqScore.toFixed(1), sub: player.biqTier, highlight: true },
-            { label: 'Recent Form', value: player.recentFormScore.toFixed(1), sub: 'Weighted signal' },
-            { label: 'Consistency', value: player.consistencyScore.toFixed(1), sub: 'Game-to-game stability' },
-          ].map((m, i) => (
-            <div key={m.label} style={{
-              padding: '1.25rem 1rem',
-              borderRight: i < 2 ? '1px solid var(--border)' : undefined,
-              textAlign: 'center',
-            }}>
-              <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
-                {m.label}
-              </p>
-              <p style={{
-                fontSize: '2rem',
-                fontWeight: 700,
-                letterSpacing: '-0.03em',
-                color: m.highlight ? 'var(--gold, #C9A84C)' : 'var(--text)',
-                lineHeight: 1,
-                marginBottom: 4,
-              }}>
-                {m.value}
-              </p>
-              <p style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{m.sub}</p>
-            </div>
-          ))}
         </div>
       </section>
 
-      {/* ── BIQ Breakdown ── */}
-      <section style={{ background: 'var(--s1)', border: '1px solid var(--border)', borderRadius: 12, padding: '1.5rem' }}>
-        <SectionHeader title="BIQ Breakdown" />
-        <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: '1.25rem', lineHeight: 1.5 }}>
-          BIQ combines availability, efficiency, impact, team context, and box-score burden into one team-utility score.
+      {/* ---------------- TOPLINE ---------------- */}
+      <section style={{ padding: '40px 0' }}>
+        <SectionHeader label="Core season indicators" title="Topline" />
+        <div style={{ marginTop: 24 }}>
+          <RuleGrid>
+            {(player.stats ?? []).map((stat) => (
+              <StatCell key={stat.label} {...stat} />
+            ))}
+          </RuleGrid>
+        </div>
+      </section>
+
+      {/* ---------------- ANALYST NOTE ---------------- */}
+      <section style={{ padding: '40px 0' }}>
+        <SectionHeader label="BIQ insight" title="Analyst note" />
+        <div
+          className="biq-card"
+          style={{
+            marginTop: 24,
+            maxWidth: 860,
+            padding: '20px 24px',
+            borderLeft: '3px solid var(--key)',
+          }}
+        >
+          <p className="biq-mono" style={{ marginBottom: 10 }}>What the profile suggests</p>
+          <p style={{ fontSize: 15, lineHeight: 1.75, color: 'var(--ink-2)' }}>{player.insight}</p>
+        </div>
+      </section>
+
+      {/* ---------------- BIQ BREAKDOWN ---------------- */}
+      <section style={{ padding: '40px 0' }}>
+        <SectionHeader label="Component scores" title="BIQ breakdown" />
+        <p style={{ marginTop: 20, maxWidth: '64ch', fontSize: 14, lineHeight: 1.7, color: 'var(--ink-2)' }}>
+          BIQ combines availability, efficiency, impact, team context, and box-score burden into
+          one team-utility score.
         </p>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+        <ol style={{ listStyle: 'none', margin: '12px 0 0', padding: 0 }}>
           {(player.biqBreakdown ?? []).map((component) => (
-            <div key={component.label} style={{ display: 'grid', gridTemplateColumns: '90px 1fr 36px', gap: '0.75rem', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text)' }}>
-                {component.label}
-              </span>
-              <div style={{ height: 6, background: 'var(--s2)', borderRadius: 99, overflow: 'hidden' }}>
-                <div style={{
-                  height: '100%',
-                  width: `${component.score}%`,
-                  background: 'linear-gradient(to right, var(--gold, #C9A84C), color-mix(in srgb, var(--gold, #C9A84C) 60%, var(--teal, #4ECDC4)))',
-                  borderRadius: 99,
-                  transition: 'width 0.6s ease',
-                }} />
+            <li key={component.label} className="biq-row">
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(120px, 12rem) 1fr minmax(110px, 13rem) 4.5rem',
+                  alignItems: 'center',
+                  gap: 24,
+                  padding: '16px 8px',
+                }}
+              >
+                <span className="biq-display" style={{ fontSize: 16, fontWeight: 600 }}>
+                  {component.label}
+                </span>
+                <span style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--fog)' }}>
+                  {component.explanation}
+                </span>
+                <span>
+                  <MeterBar value={component.score} />
+                  <span className="biq-mono" style={{ display: 'block', marginTop: 6, fontSize: 10 }}>
+                    Weight {Math.round(component.weight * 100)}%
+                  </span>
+                </span>
+                <span className="biq-num" style={{ fontSize: 20, fontWeight: 600, justifySelf: 'end' }}>
+                  {Math.round(component.score)}
+                </span>
               </div>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text)', textAlign: 'right' }}>
-                {component.score.toFixed(0)}
-              </span>
-            </div>
+            </li>
           ))}
+        </ol>
+      </section>
+
+      {/* ---------------- RECENT TREND ---------------- */}
+      <section style={{ padding: '40px 0' }}>
+        <SectionHeader label="Last 10 games · Points" title="Recent trend" />
+        <div className="biq-card" style={{ marginTop: 24, padding: 24 }}>
+          <TrendBars data={player.recentTrend ?? []} />
         </div>
       </section>
 
-      {/* ── Season Stats ── */}
-      <section>
-        <SectionHeader title="Core Season Indicators" />
-        <div className="grid-ruled" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
-          {(player.stats ?? []).map((stat) => (
-            <StatCard key={stat.label} {...stat} />
-          ))}
-        </div>
-      </section>
-
-      {/* ── Trend ── */}
-      <TrendChart data={player.recentTrend ?? []} title="Recent Scoring Trend" />
-
-      {/* ── Insight + Splits ── */}
-      <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1fr 1fr' }}>
-        <section style={{ background: 'var(--s1)', border: '1px solid var(--border)', borderRadius: 12, padding: '1.5rem' }}>
-          <p style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold, #C9A84C)', marginBottom: 8 }}>
-            BIQ Insight
-          </p>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.75rem', letterSpacing: '-0.01em' }}>
-            What the profile suggests
-          </h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--muted)', lineHeight: 1.6 }}>{player.insight}</p>
-        </section>
-
-        <section style={{ background: 'var(--s1)', border: '1px solid var(--border)', borderRadius: 12, padding: '1.5rem' }}>
-          <p style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
-            Context Splits
-          </p>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem', letterSpacing: '-0.01em' }}>
-            Situational production
-          </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      {/* ---------------- SPLITS ---------------- */}
+      <section style={{ padding: '40px 0' }}>
+        <SectionHeader label="Situational production" title="Splits" />
+        <div style={{ marginTop: 24 }}>
+          <RuleGrid min={180}>
             {(player.splits ?? []).map((split) => (
-              <SplitTile key={split.label} label={split.label} value={split.value} />
+              <div key={split.label} style={{ padding: 20 }}>
+                <p className="biq-mono">{split.label}</p>
+                <p className="biq-num" style={{ marginTop: 10, fontSize: 22, fontWeight: 600 }}>
+                  {split.value}
+                </p>
+              </div>
             ))}
-          </div>
-        </section>
-      </div>
+          </RuleGrid>
+        </div>
+      </section>
 
-      {/* ── Analytics blocks ── */}
-      {(player.analyticsBlocks ?? []).map((block) => (
-        <section key={block.title}>
-          <SectionHeader title={block.title} />
-          <div className="grid-ruled" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
-            {block.stats.map((stat) => (
-              <StatCard key={`${block.title}-${stat.label}`} {...stat} />
-            ))}
+      {/* ---------------- ANALYTICS BLOCKS ---------------- */}
+      <section style={{ padding: '40px 0' }}>
+        <SectionHeader label="Extended metrics" title="Analytics" />
+        {(player.analyticsBlocks ?? []).map((block) => (
+          <div key={block.title} style={{ marginTop: 32 }}>
+            <p className="biq-mono biq-signal" style={{ marginBottom: 14 }}>{block.title}</p>
+            <RuleGrid>
+              {block.stats.map((stat) => (
+                <StatCell key={`${block.title}-${stat.label}`} {...stat} />
+              ))}
+            </RuleGrid>
           </div>
-        </section>
-      ))}
+        ))}
+      </section>
 
-      {/* ── Game Log ── */}
-      <section>
-        <SectionHeader title="Game Log" />
-        <GameLogTable rows={player.gameLog ?? []} />
+      {/* ---------------- GAME LOG ---------------- */}
+      <section style={{ padding: '40px 0 88px' }}>
+        <SectionHeader label="Game by game" title="Game log" />
+        <div style={{ overflowX: 'auto', marginTop: 24 }}>
+          <table className="biq-table" style={{ minWidth: 980 }}>
+            <thead>
+              <tr>
+                {['DATE', 'MATCHUP', 'W/L', 'MIN', 'PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV', 'FG%', '3PT%', 'FT%', '+/-'].map((label) => (
+                  <th key={label}>{label}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {(player.gameLog ?? []).map((row, index) => (
+                <tr key={`${row.gameDate}-${row.matchup}-${index}`}>
+                  <td style={{ color: 'var(--fog)' }}>{row.gameDate}</td>
+                  <td>{row.matchup}</td>
+                  <td style={{ color: row.result === 'W' ? 'var(--up)' : 'var(--down)', fontWeight: 600 }}>
+                    {row.result}
+                  </td>
+                  <td style={{ color: 'var(--fog)' }}>{row.minutes}</td>
+                  <td style={{ fontWeight: 600 }}>{row.points}</td>
+                  <td>{row.rebounds}</td>
+                  <td>{row.assists}</td>
+                  <td>{row.steals}</td>
+                  <td>{row.blocks}</td>
+                  <td>{row.turnovers}</td>
+                  <td>{row.fgPct.toFixed(1)}</td>
+                  <td>{row.threePct.toFixed(1)}</td>
+                  <td>{row.ftPct.toFixed(1)}</td>
+                  <td style={{ color: row.plusMinus >= 0 ? 'var(--up)' : 'var(--down)' }}>
+                    {row.plusMinus > 0 ? '+' : ''}
+                    {row.plusMinus.toFixed(1)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
-  );
-}
-
-function SectionHeader({ title }: { title: string }) {
-  return (
-    <div style={{ marginBottom: '0.875rem' }}>
-      <h2 style={{
-        fontSize: '0.7rem',
-        fontWeight: 700,
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        color: 'var(--muted)',
-      }}>
-        {title}
-      </h2>
-    </div>
   );
 }

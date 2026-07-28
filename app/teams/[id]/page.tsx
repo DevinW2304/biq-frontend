@@ -18,7 +18,6 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
       <section style={{
         background: 'var(--s1)',
         border: '1px solid var(--border)',
-        borderRadius: 12,
         overflow: 'hidden',
       }}>
         <div style={{ padding: '1.75rem' }}>
@@ -74,7 +73,6 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
                 padding: '3px 10px',
-                borderRadius: 99,
                 background: 'var(--s2)',
                 color: 'var(--muted)',
                 border: '1px solid var(--border)',
@@ -113,7 +111,6 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
       <section style={{
         background: 'var(--s1)',
         border: '1px solid var(--border)',
-        borderRadius: 12,
         padding: '1.5rem',
       }}>
         <SectionHeader title="Roster Preview" />
@@ -136,7 +133,6 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
                   padding: '1rem',
                   background: 'var(--s2)',
                   border: '1px solid var(--border)',
-                  borderRadius: 8,
                   textDecoration: 'none',
                 }}
               >
@@ -165,7 +161,7 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
                   fontSize: '0.65rem',
                   fontWeight: 600,
                   letterSpacing: '0.08em',
-                  color: 'var(--gold, #C9A84C)',
+                  color: 'var(--signal)',
                   marginTop: 2,
                 }}>
                   View profile →

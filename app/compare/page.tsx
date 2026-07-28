@@ -1,17 +1,81 @@
-import Link from 'next/link';
-import { fetchCachedJSON } from '@/lib/api';
-import { CompareResponse } from '@/lib/types';
-import { StatCard } from '@/components/StatCard';
-import { TrendChart } from '@/components/TrendChart';
-import { ScoreCard } from '@/components/ScoreCard';
-import { ComparePlayerPicker } from '@/components/ComparePlayerPicker';
+// app/compare/page.tsx — COURT PAPER comparison: two subject cards and a
+// verdict panel. Server component; data flow unchanged (fetchCachedJSON,
+// revalidate 300, ?a=&b= query params).
 
 export const revalidate = 300;
 
-function getAdvantageLabel(a: number, b: number) {
-  if (a > b) return 'Player A edge';
-  if (b > a) return 'Player B edge';
-  return 'Even';
+import Link from 'next/link';
+import { fetchCachedJSON } from '@/lib/api';
+import { CompareResponse, ComparePlayerCard } from '@/lib/types';
+import { MeterBar, ScoreMeter } from '@/components/biq/BiqKit';
+import { RuleGrid, StatCell } from '@/components/biq/StatGrid';
+import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
+import { TrendBars } from '@/components/biq/TrendBars';
+import { ComparePlayerPicker } from '@/components/ComparePlayerPicker';
+
+const QUICK_MATCHUPS = [
+  { href: '/compare?a=2544&b=201939', label: 'LeBron vs Curry' },
+  { href: '/compare?a=1629029&b=203999', label: 'Luka vs Jokic' },
+  { href: '/compare?a=1628369&b=2544', label: 'Tatum vs LeBron' },
+];
+
+function getAdvantageLine(a: ComparePlayerCard, b: ComparePlayerCard) {
+  const gap = Math.abs(a.biqScore - b.biqScore).toFixed(1);
+  if (a.biqScore > b.biqScore) return `BIQ advantage +${gap} · ${a.name}`;
+  if (b.biqScore > a.biqScore) return `BIQ advantage +${gap} · ${b.name}`;
+  return 'BIQ advantage 0.0 · Even';
+}
+
+function SubjectCard({ player, slot }: { player: ComparePlayerCard; slot: 'A' | 'B' }) {
+  return (
+    <div className="biq-card" style={{ padding: 28, height: '100%' }}>
+      <p className="biq-mono">Player {slot}</p>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18, margin: '18px 0 24px' }}>
+        <SubjectPhoto id={player.id} name={player.name} size={80} />
+        <div style={{ minWidth: 0 }}>
+          <Link href={`/players/${player.id}`} className="biq-link" style={{ color: 'var(--ink)' }}>
+            <span className="biq-display" style={{ display: 'block', fontSize: 'clamp(22px, 2.4vw, 32px)' }}>
+              {player.name}
+            </span>
+          </Link>
+          <p style={{ marginTop: 4, fontSize: 14, color: 'var(--fog)' }}>
+            {player.team} · {player.position}
+          </p>
+        </div>
+      </div>
+
+      <ScoreMeter value={player.biqScore} label="BIQ SCORE" tier={player.biqTier} size="lg" />
+
+      <div style={{ marginTop: 24, paddingTop: 18, borderTop: '1px solid var(--line)' }}>
+        <p className="biq-mono">Recent form</p>
+        <p className="biq-num" style={{ fontSize: 22, fontWeight: 600, margin: '8px 0 6px' }}>
+          {player.recentFormScore.toFixed(1)}
+        </p>
+        <MeterBar value={player.recentFormScore} />
+      </div>
+
+      <div style={{ marginTop: 24 }}>
+        <p className="biq-mono" style={{ marginBottom: 10 }}>Analyst note</p>
+        <div style={{ borderLeft: '3px solid var(--key)', paddingLeft: 14 }}>
+          <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink-2)' }}>{player.insight}</p>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 24 }}>
+        <RuleGrid min={150}>
+          {player.stats.map((stat) => (
+            <StatCell key={`${player.id}-${stat.label}`} {...stat} />
+          ))}
+        </RuleGrid>
+      </div>
+
+      <div style={{ marginTop: 28 }}>
+        <p className="biq-mono" style={{ marginBottom: 14 }}>Recent trend · Last 10 · PTS</p>
+        <TrendBars data={player.recentTrend} height={140} barHeight={100} />
+      </div>
+    </div>
+  );
 }
 
 export default async function ComparePage({
@@ -36,219 +100,58 @@ export default async function ComparePage({
   }
 
   return (
-    <main className="page-shell space-y-10">
+    <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
       <ComparePlayerPicker />
 
       {compare && (
         <>
-          <section className="card p-6 md:p-7">
-            <p className="eyebrow mb-3">Head-to-Head Snapshot</p>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)',
-                gap: '1rem',
-                alignItems: 'end',
-              }}
-            >
-              <div>
-                <div className="leader-name" style={{ fontSize: 'clamp(1.7rem, 3vw, 2.7rem)' }}>
-                  {compare.playerA.name}
-                </div>
-                <div className="leader-meta">
-                  {compare.playerA.team} · {compare.playerA.position}
-                </div>
-              </div>
-
-              <div
-                className="display"
-                style={{
-                  fontSize: 'clamp(1.2rem, 2.4vw, 2rem)',
-                  color: 'var(--gold)',
-                  opacity: 0.92,
-                }}
-              >
-                VS
-              </div>
-
-              <div style={{ textAlign: 'right' }}>
-                <div className="leader-name" style={{ fontSize: 'clamp(1.7rem, 3vw, 2.7rem)' }}>
-                  {compare.playerB.name}
-                </div>
-                <div className="leader-meta">
-                  {compare.playerB.team} · {compare.playerB.position}
-                </div>
-              </div>
-            </div>
-
-            <p
-              className="serif-italic"
-              style={{
-                fontSize: '0.96rem',
-                lineHeight: 1.8,
-                color: 'var(--muted)',
-                maxWidth: '900px',
-                marginTop: '1.25rem',
-              }}
-            >
-              {compare.summary}
-            </p>
-
-            <div className="mt-6 flex flex-wrap gap-3 text-sm">
-              <Link
-                href="/compare?a=2544&b=201939"
-                className="btn btn-ghost btn-animated"
-              >
-                LeBron vs Curry
-              </Link>
-              <Link
-                href="/compare?a=1629029&b=203999"
-                className="btn btn-ghost btn-animated"
-              >
-                Luka vs Jokic
-              </Link>
-              <Link
-                href="/compare?a=1628369&b=2544"
-                className="btn btn-ghost btn-animated"
-              >
-                Tatum vs LeBron
-              </Link>
-            </div>
+          {/* ---------------- THE SUBJECT CARDS ---------------- */}
+          <section
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+              gap: 20,
+              padding: '40px 0',
+            }}
+          >
+            <SubjectCard player={compare.playerA} slot="A" />
+            <SubjectCard player={compare.playerB} slot="B" />
           </section>
 
-          <section>
-            <div
-              className="grid-ruled"
-              style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}
-            >
-              <div className="stat-block">
-                <span className="stat-label">{compare.playerA.name} BIQ</span>
-                <div className="stat-val gold">{compare.playerA.biqScore.toFixed(1)}</div>
-                <div className="stat-sub">{compare.playerA.biqTier}</div>
-              </div>
-
-              <div className="stat-block">
-                <span className="stat-label">BIQ Advantage</span>
-                <div className="stat-val">
-                  {Math.abs(compare.playerA.biqScore - compare.playerB.biqScore).toFixed(1)}
-                </div>
-                <div className="stat-sub">
-                  {getAdvantageLabel(compare.playerA.biqScore, compare.playerB.biqScore)}
-                </div>
-              </div>
-
-              <div className="stat-block">
-                <span className="stat-label">{compare.playerB.name} BIQ</span>
-                <div className="stat-val teal">{compare.playerB.biqScore.toFixed(1)}</div>
-                <div className="stat-sub">{compare.playerB.biqTier}</div>
-              </div>
-            </div>
-          </section>
-
-          <section className="grid gap-4 md:grid-cols-2">
-            <ScoreCard
-              label={`${compare.playerA.name} Form`}
-              value={compare.playerA.recentFormScore.toFixed(1)}
-              description="Recent form score based on current-season momentum and recent output."
-            />
-            <ScoreCard
-              label={`${compare.playerB.name} Form`}
-              value={compare.playerB.recentFormScore.toFixed(1)}
-              description="Recent form score based on current-season momentum and recent output."
-            />
-          </section>
-
-          <section className="grid gap-6 xl:grid-cols-2">
-            <div className="space-y-6">
-              <div className="card p-6">
-                <div className="section-head">
-                  <span className="section-title">{compare.playerA.name}</span>
-                </div>
-
-                <p
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.6rem',
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    color: 'var(--muted)',
-                    marginBottom: '1rem',
-                  }}
-                >
-                  {compare.playerA.team} · {compare.playerA.position}
-                </p>
-
-                <p className="muted-copy" style={{ marginBottom: '1.25rem' }}>
-                  {compare.playerA.insight}
-                </p>
-
-                <div
-                  className="grid-ruled"
-                  style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}
-                >
-                  {compare.playerA.stats.map((stat) => (
-                    <StatCard key={`${compare.playerA.id}-${stat.label}`} {...stat} />
-                  ))}
-                </div>
-              </div>
-
-              <TrendChart
-                data={compare.playerA.recentTrend}
-                title={`${compare.playerA.name} Recent Trend`}
-              />
+          {/* ---------------- THE VERDICT ---------------- */}
+          <section style={{ padding: '0 0 48px' }}>
+            <div className="biq-card" style={{ padding: 28, borderLeft: '3px solid var(--key)' }}>
+              <p className="biq-mono biq-signal">The verdict</p>
+              <p className="biq-display" style={{ marginTop: 10, fontSize: 'clamp(18px, 2vw, 24px)' }}>
+                {getAdvantageLine(compare.playerA, compare.playerB)}
+              </p>
+              <hr className="biq-rule-line" style={{ margin: '18px 0' }} />
+              <p style={{ maxWidth: '80ch', fontSize: 15, lineHeight: 1.75, color: 'var(--ink-2)' }}>
+                {compare.summary}
+              </p>
             </div>
 
-            <div className="space-y-6">
-              <div className="card p-6">
-                <div className="section-head">
-                  <span className="section-title">{compare.playerB.name}</span>
-                </div>
-
-                <p
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.6rem',
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    color: 'var(--muted)',
-                    marginBottom: '1rem',
-                  }}
-                >
-                  {compare.playerB.team} · {compare.playerB.position}
-                </p>
-
-                <p className="muted-copy" style={{ marginBottom: '1.25rem' }}>
-                  {compare.playerB.insight}
-                </p>
-
-                <div
-                  className="grid-ruled"
-                  style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}
-                >
-                  {compare.playerB.stats.map((stat) => (
-                    <StatCard key={`${compare.playerB.id}-${stat.label}`} {...stat} />
-                  ))}
-                </div>
-              </div>
-
-              <TrendChart
-                data={compare.playerB.recentTrend}
-                title={`${compare.playerB.name} Recent Trend`}
-              />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginTop: 20 }}>
+              {QUICK_MATCHUPS.map((matchup) => (
+                <Link key={matchup.href} href={matchup.href} className="biq-link" style={{ fontSize: 14 }}>
+                  {matchup.label}
+                </Link>
+              ))}
             </div>
           </section>
         </>
       )}
 
       {!compare && playerA && playerB && (
-        <section className="card p-6">
-          <div className="section-head">
-            <span className="section-title">Comparison unavailable</span>
+        <section style={{ padding: '40px 0' }}>
+          <div className="biq-card" style={{ padding: 28 }}>
+            <p className="biq-display" style={{ fontSize: 18, fontWeight: 600 }}>
+              Comparison unavailable
+            </p>
+            <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
+              The selected players could not be compared right now. Try another matchup.
+            </p>
           </div>
-          <p className="muted-copy">
-            The selected players could not be compared right now. Try another matchup.
-          </p>
         </section>
       )}
     </main>

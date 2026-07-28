@@ -139,8 +139,24 @@ export type TeamProfile = {
   rosterPreview?: TeamRosterPlayer[];
 };
 
+// The compare endpoint returns a deliberately narrower card than PlayerProfile
+// — no splits, analytics blocks, game log, consistency score, or BIQ breakdown.
+// Typing it as PlayerProfile made those read as safe when they are undefined.
+export type ComparePlayerCard = {
+  id: number;
+  name: string;
+  team: string;
+  position: string;
+  stats: StatCardData[];
+  recentTrend: TrendPoint[];
+  insight: string;
+  biqScore: number;
+  biqTier: string;
+  recentFormScore: number;
+};
+
 export type CompareResponse = {
-  playerA: PlayerProfile;
-  playerB: PlayerProfile;
+  playerA: ComparePlayerCard;
+  playerB: ComparePlayerCard;
   summary: string;
 };

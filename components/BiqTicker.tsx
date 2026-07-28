@@ -22,35 +22,7 @@ export function BiqTicker({ players }: BiqTickerProps) {
         position: 'relative',
       }}
     >
-      {/* Fade edges */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          bottom: 0,
-          width: 80,
-          background: 'linear-gradient(90deg, var(--s1), transparent)',
-          zIndex: 10,
-          pointerEvents: 'none',
-        }}
-      />
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: 80,
-          background: 'linear-gradient(-90deg, var(--s1), transparent)',
-          zIndex: 10,
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Label pill */}
+      {/* Live label: key blue marks live data */}
       <div
         aria-hidden="true"
         style={{
@@ -59,14 +31,15 @@ export function BiqTicker({ players }: BiqTickerProps) {
           top: '50%',
           transform: 'translate(-50%, -50%)',
           zIndex: 20,
-          background: 'var(--gold)',
-          color: '#060709',
-          fontFamily: 'var(--font-condensed)',
-          fontWeight: 800,
+          background: 'var(--key)',
+          color: '#fff',
+          fontFamily: 'var(--font-file)',
+          fontWeight: 600,
           fontSize: '0.55rem',
-          letterSpacing: '0.22em',
+          letterSpacing: '0.14em',
           textTransform: 'uppercase',
-          padding: '3px 10px',
+          padding: '3px 12px',
+          borderRadius: 999,
           pointerEvents: 'none',
         }}
       >
@@ -89,9 +62,9 @@ export function BiqTicker({ players }: BiqTickerProps) {
             </span>
             <span
               style={{
-                fontFamily: 'var(--font-condensed)',
-                fontSize: '0.62rem',
-                fontWeight: 700,
+                fontFamily: 'var(--font-file)',
+                fontSize: '0.6rem',
+                fontWeight: 500,
                 letterSpacing: '0.14em',
                 color: 'var(--muted)',
                 textTransform: 'uppercase',
@@ -99,7 +72,7 @@ export function BiqTicker({ players }: BiqTickerProps) {
             >
               BIQ
             </span>
-            <span className="ticker-up" style={{ fontFamily: 'var(--font-display)', fontSize: '0.9rem', letterSpacing: '0.04em' }}>
+            <span className="ticker-up" style={{ fontFamily: 'var(--font-file)', fontSize: '0.85rem' }}>
               {player.biqScore.toFixed(1)}
             </span>
           </span>

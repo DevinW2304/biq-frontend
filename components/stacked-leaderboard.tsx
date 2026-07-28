@@ -9,11 +9,7 @@ import { BIQLeaderboardEntry } from '@/lib/types';
 const VISIBLE_SIDE = 3;
 
 const GRADIENTS = [
-  'linear-gradient(160deg,rgba(214,178,94,0.55) 0%,rgba(180,80,40,0.30) 100%)',
-  'linear-gradient(160deg,rgba(56,189,248,0.50) 0%,rgba(99,55,255,0.30) 100%)',
-  'linear-gradient(160deg,rgba(168,85,247,0.50) 0%,rgba(236,72,153,0.30) 100%)',
-  'linear-gradient(160deg,rgba(16,185,129,0.48) 0%,rgba(56,189,248,0.30) 100%)',
-  'linear-gradient(160deg,rgba(236,72,153,0.50) 0%,rgba(245,158,11,0.30) 100%)',
+  'rgba(18, 18, 19, 0.55)',
 ];
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -21,11 +17,10 @@ function headshotUrl(id: number) {
   return `https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/${id}.png`;
 }
 
-function tierColor(score: number): string {
-  if (score >= 90) return '#D6B25E';
-  if (score >= 80) return '#38BDF8';
-  if (score >= 70) return '#A855F7';
-  return '#6B7280';
+// COURT PAPER: one accent. The chrome around the photo cards is light, so
+// every former tier color collapses to the key blue.
+function tierColor(_score: number): string {
+  return '#2545cb';
 }
 
 // ─── StatPill ─────────────────────────────────────────────────────────────────
@@ -46,27 +41,29 @@ function StatPill({
         alignItems: 'center',
         gap: 3,
         padding: '0.55rem 0.5rem',
-        background: accent ? 'rgba(214,178,94,0.1)' : 'rgba(255,255,255,0.04)',
-        border: `1px solid ${accent ? 'rgba(214,178,94,0.25)' : 'rgba(255,255,255,0.08)'}`,
+        borderRadius: 'var(--r-sm)',
+        background: accent ? '#e9edfa' : '#fff',
+        border: `1px solid ${accent ? '#c8d3f2' : 'var(--border)'}`,
       }}
     >
       <div
         style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.46rem',
-          letterSpacing: '0.18em',
+          fontFamily: 'var(--font-file)',
+          fontSize: '0.5rem',
+          letterSpacing: '0.14em',
           textTransform: 'uppercase',
-          color: accent ? 'rgba(214,178,94,0.82)' : 'rgba(255,255,255,0.56)',
+          color: accent ? '#1b34a0' : 'var(--muted)',
         }}
       >
         {label}
       </div>
       <div
         style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '1.1rem',
+          fontFamily: 'var(--font-file)',
+          fontWeight: 600,
+          fontSize: '1.05rem',
           lineHeight: 1,
-          color: accent ? '#D6B25E' : 'white',
+          color: accent ? '#1b34a0' : 'var(--text)',
           fontVariantNumeric: 'tabular-nums',
         }}
       >
@@ -97,16 +94,18 @@ function NeighborRow({
         alignItems: 'center',
         padding: '0.7rem 0.8rem',
         textDecoration: 'none',
-        color: 'white',
-        border: `1px solid ${active ? `${tc}44` : 'rgba(255,255,255,0.07)'}`,
-        background: active ? `${tc}12` : 'rgba(255,255,255,0.025)',
+        color: 'var(--text)',
+        borderRadius: 'var(--r-sm)',
+        border: `1px solid ${active ? '#c8d3f2' : 'var(--border)'}`,
+        background: active ? '#e9edfa' : '#fff',
       }}
     >
       <div
         style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '1rem',
-          color: active ? tc : 'rgba(255,255,255,0.78)',
+          fontFamily: 'var(--font-file)',
+          fontSize: '0.85rem',
+          fontWeight: 600,
+          color: active ? tc : 'var(--muted)',
           lineHeight: 1,
         }}
       >
@@ -118,8 +117,9 @@ function NeighborRow({
           style={{
             fontFamily: 'var(--font-display)',
             fontSize: '0.95rem',
+            fontWeight: 600,
             lineHeight: 1.05,
-            color: 'white',
+            color: 'var(--text)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -129,11 +129,11 @@ function NeighborRow({
         </div>
         <div
           style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.44rem',
-            letterSpacing: '0.14em',
+            fontFamily: 'var(--font-file)',
+            fontSize: '0.55rem',
+            letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            color: 'rgba(255,255,255,0.50)',
+            color: 'var(--muted)',
             marginTop: 4,
           }}
         >
@@ -143,8 +143,9 @@ function NeighborRow({
 
       <div
         style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '1rem',
+          fontFamily: 'var(--font-file)',
+          fontSize: '0.95rem',
+          fontWeight: 600,
           color: tc,
           lineHeight: 1,
           fontVariantNumeric: 'tabular-nums',
@@ -278,11 +279,14 @@ export default function StackedLeaderboard({
   return (
     <div
       style={{
-        background: '#07080f',
-        color: 'white',
+        background: '#fff',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--r-md)',
+        overflow: 'hidden',
+        color: 'var(--text)',
         userSelect: 'none',
         isolation: 'isolate',
-        fontFamily: 'var(--font-mono)',
+        fontFamily: 'var(--font-body)',
       }}
     >
       <div
@@ -291,8 +295,8 @@ export default function StackedLeaderboard({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0.55rem 1.1rem',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
-          background: 'rgba(4,5,12,0.5)',
+          borderBottom: '1px solid var(--border)',
+          background: 'var(--bg)',
           gap: '0.75rem',
           flexWrap: 'wrap',
         }}
@@ -307,14 +311,14 @@ export default function StackedLeaderboard({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: activeIdx === 0 ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.88)',
+              background: '#fff',
+              border: '1px solid var(--border)',
+              borderRadius: 999,
+              color: activeIdx === 0 ? 'var(--faint)' : 'var(--text)',
               cursor: activeIdx === 0 ? 'not-allowed' : 'pointer',
               fontSize: '1rem',
               lineHeight: 1,
               transition: 'background 0.15s, color 0.15s',
-              borderRadius: 2,
             }}
           >
             ‹
@@ -322,14 +326,14 @@ export default function StackedLeaderboard({
 
           <div
             style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '1.35rem',
-              letterSpacing: '0.04em',
+              fontFamily: 'var(--font-file)',
+              fontWeight: 600,
+              fontSize: '1.1rem',
               lineHeight: 1,
               color: tc,
-              transition: 'color 0.3s ease',
               minWidth: 36,
               textAlign: 'center',
+              fontVariantNumeric: 'tabular-nums',
             }}
           >
             #{activeIdx + 1}
@@ -337,10 +341,10 @@ export default function StackedLeaderboard({
 
           <div
             style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.48rem',
-              color: 'rgba(255,255,255,0.44)',
-              letterSpacing: '0.12em',
+              fontFamily: 'var(--font-file)',
+              fontSize: '0.6rem',
+              color: 'var(--muted)',
+              letterSpacing: '0.1em',
             }}
           >
             / {N}
@@ -355,14 +359,14 @@ export default function StackedLeaderboard({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: activeIdx === N - 1 ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.88)',
+              background: '#fff',
+              border: '1px solid var(--border)',
+              borderRadius: 999,
+              color: activeIdx === N - 1 ? 'var(--faint)' : 'var(--text)',
               cursor: activeIdx === N - 1 ? 'not-allowed' : 'pointer',
               fontSize: '1rem',
               lineHeight: 1,
               transition: 'background 0.15s, color 0.15s',
-              borderRadius: 2,
             }}
           >
             ›
@@ -371,10 +375,11 @@ export default function StackedLeaderboard({
 
         <div
           style={{
-            fontSize: '0.46rem',
-            letterSpacing: '0.2em',
+            fontFamily: 'var(--font-file)',
+            fontSize: '0.55rem',
+            letterSpacing: '0.14em',
             textTransform: 'uppercase',
-            color: 'rgba(255,255,255,0.38)',
+            color: 'var(--muted)',
           }}
         >
           Drag · ← → keys · slider
@@ -398,7 +403,7 @@ export default function StackedLeaderboard({
           justifyContent: 'center',
           overflow: 'hidden',
           position: 'relative',
-          background: `radial-gradient(ellipse 54% 62% at 50% 58%, ${tc}16 0%, transparent 72%)`,
+          background: 'transparent',
           transition: 'background 0.5s ease',
         }}
       >
@@ -446,16 +451,13 @@ export default function StackedLeaderboard({
                   transition:
                     'transform 0.42s cubic-bezier(0.25,1,0.5,1), opacity 0.32s ease, width 0.32s ease, height 0.32s ease, margin 0.32s ease',
                   opacity,
-                  borderRadius: 12,
                   overflow: 'hidden',
                   cursor: isActive ? 'default' : 'pointer',
                   zIndex: isActive ? 10 : Math.max(1, 5 - absOff),
+                  borderRadius: 'var(--r-md)',
                   outline: isActive
-                    ? `1px solid ${ptc}55`
-                    : '1px solid rgba(255,255,255,0.07)',
-                  boxShadow: isActive
-                    ? `0 34px 72px rgba(0,0,0,0.72), 0 0 0 1px ${ptc}22, inset 0 1px 0 rgba(255,255,255,0.1)`
-                    : `0 10px 24px rgba(0,0,0,0.42)`,
+                    ? '2px solid #2545cb'
+                    : '1px solid var(--border-strong)',
                 }}
               >
                 <div
@@ -484,7 +486,7 @@ export default function StackedLeaderboard({
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'linear-gradient(to bottom, rgba(4,5,12,0.30) 0%, transparent 24%)',
+                    background: 'transparent',
                   }}
                 />
 
@@ -492,8 +494,7 @@ export default function StackedLeaderboard({
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    background:
-                      'linear-gradient(to bottom, transparent 20%, rgba(4,5,12,0.72) 52%, rgba(4,5,12,0.985) 100%)',
+                    background: 'rgba(11,11,12,0.72)',
                   }}
                 />
 
@@ -502,8 +503,7 @@ export default function StackedLeaderboard({
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    borderRadius: 12,
-                    border: `1px solid rgba(255,255,255,${isActive ? 0.13 : 0.05})`,
+                      border: `1px solid rgba(255,255,255,${isActive ? 0.13 : 0.05})`,
                     pointerEvents: 'none',
                   }}
                 />
@@ -513,14 +513,13 @@ export default function StackedLeaderboard({
                     position: 'absolute',
                     top: 10,
                     left: 10,
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.5rem',
-                    letterSpacing: '0.14em',
-                    color: rank <= 3 ? ptc : 'rgba(255,255,255,0.84)',
-                    background: 'rgba(4,5,12,0.68)',
-                    padding: '3px 7px',
-                    backdropFilter: 'blur(8px)',
-                    border: rank <= 3 ? `1px solid ${ptc}44` : '1px solid rgba(255,255,255,0.09)',
+                    fontFamily: 'var(--font-file)',
+                    fontSize: '0.55rem',
+                    letterSpacing: '0.1em',
+                    color: rank <= 3 ? '#b7c6ff' : 'rgba(255,255,255,0.84)',
+                    background: 'rgba(10,12,20,0.68)',
+                    padding: '3px 8px',
+                    borderRadius: 999,
                   }}
                 >
                   #{rank}
@@ -534,9 +533,9 @@ export default function StackedLeaderboard({
                       right: 12,
                       width: 8,
                       height: 8,
-                      borderRadius: '50%',
-                      background: ptc,
-                      boxShadow: `0 0 12px ${ptc}`,
+                      borderRadius: 999,
+                      background: '#2545cb',
+                      border: '1px solid rgba(255,255,255,0.7)',
                     }}
                   />
                 )}
@@ -558,7 +557,6 @@ export default function StackedLeaderboard({
                       color: 'white',
                       marginBottom: 3,
                       transition: 'font-size 0.32s ease',
-                      textShadow: '0 2px 10px rgba(0,0,0,0.7)',
                     }}
                   >
                     {player.name}
@@ -566,11 +564,11 @@ export default function StackedLeaderboard({
 
                   <div
                     style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.42rem',
+                      fontFamily: 'var(--font-file)',
+                      fontSize: '0.48rem',
                       letterSpacing: '0.12em',
                       textTransform: 'uppercase',
-                      color: 'rgba(255,255,255,0.62)',
+                      color: 'rgba(255,255,255,0.72)',
                       marginBottom: 7,
                     }}
                   >
@@ -580,9 +578,10 @@ export default function StackedLeaderboard({
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
                     <span
                       style={{
-                        fontFamily: 'var(--font-display)',
+                        fontFamily: 'var(--font-file)',
+                        fontWeight: 600,
                         fontSize: isActive ? (isDesktop ? '1.56rem' : '1.18rem') : '0.9rem',
-                        color: ptc,
+                        color: '#fff',
                         lineHeight: 1,
                         fontVariantNumeric: 'tabular-nums',
                         transition: 'font-size 0.32s ease',
@@ -592,9 +591,9 @@ export default function StackedLeaderboard({
                     </span>
                     <span
                       style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.4rem',
-                        color: 'rgba(255,255,255,0.52)',
+                        fontFamily: 'var(--font-file)',
+                        fontSize: '0.45rem',
+                        color: 'rgba(255,255,255,0.62)',
                         letterSpacing: '0.1em',
                         textTransform: 'uppercase',
                       }}
@@ -612,8 +611,8 @@ export default function StackedLeaderboard({
       <div
         style={{
           padding: '0.7rem 1.1rem 0.6rem',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          background: 'rgba(4,5,12,0.6)',
+          borderTop: '1px solid var(--border)',
+          background: 'var(--bg)',
         }}
       >
         <div style={{ position: 'relative', marginBottom: '0.65rem', padding: '6px 0' }}>
@@ -626,7 +625,8 @@ export default function StackedLeaderboard({
             style={{
               position: 'relative',
               height: 3,
-              background: 'rgba(255,255,255,0.1)',
+              borderRadius: 999,
+              background: 'var(--s3)',
               cursor: 'pointer',
             }}
           >
@@ -637,7 +637,7 @@ export default function StackedLeaderboard({
                 left: 0,
                 top: 0,
                 bottom: 0,
-                background: `linear-gradient(90deg, ${tc}, rgba(255,255,255,0.35))`,
+                background: tc,
                 width: `${(activeIdx / Math.max(N - 1, 1)) * 100}%`,
                 transition: 'background 0.4s ease',
               }}
@@ -651,11 +651,10 @@ export default function StackedLeaderboard({
                 transform: 'translate(-50%, -50%)',
                 width: 16,
                 height: 16,
-                borderRadius: '50%',
+                borderRadius: 999,
                 background: tc,
-                border: '2px solid rgba(255,255,255,0.85)',
-                boxShadow: `0 0 14px ${tc}99`,
-                transition: 'background 0.4s ease, box-shadow 0.4s ease',
+                border: '2px solid #fff',
+                transition: 'background 0.4s ease',
                 pointerEvents: 'none',
               }}
             />
@@ -684,13 +683,12 @@ export default function StackedLeaderboard({
                   flexShrink: 0,
                   width: isA ? 22 : 7,
                   height: 7,
-                  borderRadius: isA ? 3.5 : '50%',
-                  background: isA ? ptc : 'rgba(255,255,255,0.16)',
+                  borderRadius: 999,
+                  background: isA ? ptc : 'var(--s3)',
                   border: 'none',
                   cursor: 'pointer',
                   padding: 0,
-                  transition: 'width 0.22s ease, background 0.22s ease, box-shadow 0.22s ease',
-                  boxShadow: isA ? `0 0 8px ${ptc}88` : 'none',
+                  transition: 'width 0.22s ease, background 0.22s ease',
                 }}
               />
             );
@@ -700,11 +698,9 @@ export default function StackedLeaderboard({
 
       <div
         style={{
-          borderTop: '1px solid rgba(255,255,255,0.07)',
-          background: 'rgba(4,5,12,0.92)',
-          backdropFilter: 'blur(20px)',
+          borderTop: '1px solid var(--border)',
+          background: '#fff',
           padding: '1.05rem 1.1rem 1.15rem',
-          marginTop: -8,
         }}
       >
         <div
@@ -738,11 +734,11 @@ export default function StackedLeaderboard({
                 >
                   <div
                     style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.5rem',
-                      letterSpacing: '0.22em',
+                      fontFamily: 'var(--font-file)',
+                      fontSize: '0.55rem',
+                      letterSpacing: '0.14em',
                       textTransform: 'uppercase',
-                      color: 'rgba(255,255,255,0.46)',
+                      color: 'var(--muted)',
                     }}
                   >
                     Rank #{activeIdx + 1} of {N}
@@ -750,16 +746,15 @@ export default function StackedLeaderboard({
                   <div
                     style={{
                       display: 'inline-block',
-                      padding: '2px 8px',
-                      border: `1px solid ${tc}44`,
-                      color: tc,
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.48rem',
-                      letterSpacing: '0.16em',
+                      padding: '3px 10px',
+                      borderRadius: 999,
+                      color: '#1b34a0',
+                      fontFamily: 'var(--font-file)',
+                      fontSize: '0.55rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.1em',
                       textTransform: 'uppercase',
-                      background: `${tc}12`,
-                      transition:
-                        'color 0.3s ease, border-color 0.3s ease, background 0.3s ease',
+                      background: '#e9edfa',
                     }}
                   >
                     {active.biqTier}
@@ -767,14 +762,11 @@ export default function StackedLeaderboard({
                 </div>
 
                 <div
+                  className="display"
                   style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: 'clamp(1.5rem, 3vw, 2.35rem)',
-                    lineHeight: 1,
-                    letterSpacing: '0.03em',
-                    color: tc,
+                    fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
+                    color: 'var(--text)',
                     marginBottom: 8,
-                    transition: 'color 0.3s ease',
                   }}
                 >
                   {active.name}
@@ -782,11 +774,11 @@ export default function StackedLeaderboard({
 
                 <div
                   style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.54rem',
-                    letterSpacing: '0.14em',
+                    fontFamily: 'var(--font-file)',
+                    fontSize: '0.6rem',
+                    letterSpacing: '0.12em',
                     textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.62)',
+                    color: 'var(--muted)',
                   }}
                 >
                   {active.team} · {active.position}
@@ -799,13 +791,12 @@ export default function StackedLeaderboard({
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.58rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: '#07080f',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: '#fff',
                   background: tc,
+                  borderRadius: 'var(--r-md)',
                   padding: '0.58rem 1.05rem',
                   textDecoration: 'none',
                   transition: 'background 0.3s ease, opacity 0.15s',
@@ -813,7 +804,7 @@ export default function StackedLeaderboard({
                   alignSelf: 'flex-start',
                 }}
               >
-                Full Profile →
+                Full profile
               </Link>
             </div>
 
@@ -839,15 +830,13 @@ export default function StackedLeaderboard({
             <p
               style={{
                 margin: 0,
-                fontFamily: 'var(--font-serif)',
-                fontStyle: 'italic',
+                fontFamily: 'var(--font-body)',
                 fontSize: '0.88rem',
-                color: 'rgba(255,255,255,0.78)',
+                color: 'var(--text-2)',
                 lineHeight: 1.75,
                 maxWidth: '78ch',
-                borderLeft: `2px solid ${tc}44`,
+                borderLeft: '3px solid var(--signal)',
                 paddingLeft: '0.85rem',
-                transition: 'border-color 0.3s ease',
               }}
             >
               {active.reason}
@@ -863,15 +852,15 @@ export default function StackedLeaderboard({
           >
             <div
               style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.5rem',
-                letterSpacing: '0.18em',
+                fontFamily: 'var(--font-file)',
+                fontSize: '0.55rem',
+                letterSpacing: '0.14em',
                 textTransform: 'uppercase',
-                color: 'rgba(255,255,255,0.40)',
+                color: 'var(--muted)',
                 marginBottom: '0.15rem',
               }}
             >
-              Nearby Ranks
+              Nearby ranks
             </div>
 
             {neighbors.map((idx) => (

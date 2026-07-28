@@ -1,10 +1,15 @@
+// app/players/page.tsx — COURT PAPER player index: search plus results as
+// ranked list rows. Server component; data flow unchanged
+// (fetchLiveJSON for searches, fetchCachedJSON leaderboard default).
+
+export const revalidate = 300;
+
 import Link from 'next/link';
 import { PlayerSearchBar } from '@/components/PlayerSearchBar';
 import { fetchCachedJSON, fetchLiveJSON } from '@/lib/api';
 import { SearchPlayerResult, BIQLeaderboardEntry } from '@/lib/types';
-
-import { SpeedInsights } from "@vercel/speed-insights/next"
-export const revalidate = 300;
+import { MeterBar, SectionHeader } from '@/components/biq/BiqKit';
+import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
 
 export default async function PlayersPage({
   searchParams,
@@ -22,91 +27,106 @@ export default async function PlayersPage({
         300
       );
 
-  return (
-    <main className="page-shell space-y-8">
-      <section className="card p-6">
-        <p className="text-sm uppercase tracking-[0.2em] text-accent">Player Search</p>
-        <h1 className="mt-2 text-4xl font-bold">Find active NBA players</h1>
-        <p className="mt-3 max-w-2xl text-sm text-muted">
-          Search current active NBA players only. When no search is entered, this page defaults
-          to the current BIQ leaderboard so the player index feels tied to the model instead of a
-          generic directory.
-        </p>
+  const countLine = q
+    ? `${results.length} active player${results.length === 1 ? '' : 's'} found`
+    : `${results.length} leaderboard player${results.length === 1 ? '' : 's'} shown`;
 
-        <PlayerSearchBar initialValue={q} />
+  return (
+    <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+      {/* ---------------- SEARCH ---------------- */}
+      <section style={{ padding: '56px 0 40px' }}>
+        <p className="biq-mono">Player index · 2025-26</p>
+        <h1 className="biq-display biq-h2-size" style={{ marginTop: 12 }}>
+          Find active NBA players
+        </h1>
+        <p style={{ marginTop: 14, maxWidth: '60ch', fontSize: 15, lineHeight: 1.7, color: 'var(--ink-2)' }}>
+          Search current active NBA players. With no search entered, this page shows the current
+          BIQ leaderboard so the index stays tied to the model instead of a generic directory.
+        </p>
+        <div style={{ maxWidth: 460 }}>
+          <PlayerSearchBar initialValue={q} />
+        </div>
       </section>
 
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold">
-            {q ? `Results for "${q}"` : 'Current BIQ leaderboard players'}
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            {results.length}{' '}
-            {q
-              ? `active player${results.length === 1 ? '' : 's'} found`
-              : `leaderboard player${results.length === 1 ? '' : 's'} shown`}
-          </p>
-        </div>
+      {/* ---------------- RESULTS ---------------- */}
+      <section style={{ padding: '0 0 88px' }}>
+        <SectionHeader
+          label={countLine}
+          title={q ? `Results for "${q}"` : 'Current BIQ leaderboard'}
+        />
 
-        <div className="grid gap-4">
-          {results.map((player) => {
-            const isLeaderboardEntry = 'biqRankScore' in player;
+        <ol style={{ listStyle: 'none', margin: '8px 0 0', padding: 0 }}>
+          {results.map((player, index) => {
+            const entry = 'biqRankScore' in player ? (player as BIQLeaderboardEntry) : null;
 
             return (
-              <Link
-                key={player.id}
-                href={`/players/${player.id}`}
-                className="card p-5 transition hover:-translate-y-0.5 hover:border-accent"
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h3 className="text-xl font-semibold">{player.name}</h3>
-                    <p className="mt-1 text-sm text-muted">
-                      {player.team} · {player.position}
-                    </p>
-
-                    {isLeaderboardEntry && (
-                      <p className="mt-2 text-xs uppercase tracking-[0.16em] text-accent">
-                        BIQ Leaderboard · {(player as BIQLeaderboardEntry).biqTier}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {isLeaderboardEntry && (
-                      <div className="text-right">
-                        <div className="text-[0.65rem] uppercase tracking-[0.16em] text-muted">
-                          Rank Score
-                        </div>
-                        <div className="text-lg font-semibold text-accent">
-                          {(player as BIQLeaderboardEntry).biqRankScore.toFixed(1)}
-                        </div>
-                      </div>
-                    )}
-
-                    <span className="rounded-full border border-border px-3 py-1 text-xs uppercase tracking-[0.18em] text-muted">
-                      Open Dashboard
+              <li key={player.id} className="biq-row">
+                <Link
+                  href={`/players/${player.id}`}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: entry
+                      ? '2.5rem 52px 1fr minmax(120px, 200px)'
+                      : '2.5rem 52px 1fr auto',
+                    alignItems: 'center',
+                    gap: 20,
+                    padding: '14px 8px',
+                  }}
+                >
+                  <span className="biq-rank" style={{ fontSize: 15 }}>
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <SubjectPhoto id={player.id} name={player.name} size={52} />
+                  <span style={{ minWidth: 0 }}>
+                    <span
+                      className="biq-display"
+                      style={{ display: 'block', fontSize: 'clamp(17px, 1.8vw, 21px)', fontWeight: 600 }}
+                    >
+                      {player.name}
                     </span>
-                  </div>
-                </div>
-              </Link>
+                    <span style={{ display: 'block', marginTop: 3, fontSize: 13, color: 'var(--fog)' }}>
+                      {player.team} · {player.position}
+                      {entry ? ` · ${entry.biqTier}` : ''}
+                    </span>
+                  </span>
+                  {entry ? (
+                    <span style={{ justifySelf: 'stretch' }}>
+                      <span
+                        className="biq-num biq-signal"
+                        style={{ display: 'block', fontSize: 22, fontWeight: 600, textAlign: 'right' }}
+                      >
+                        {entry.biqRankScore.toFixed(1)}
+                      </span>
+                      <span style={{ display: 'block', marginTop: 6 }}>
+                        <MeterBar value={entry.biqRankScore} />
+                      </span>
+                      <span className="biq-mono" style={{ display: 'block', marginTop: 6, fontSize: 9, textAlign: 'right' }}>
+                        Rank score
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="biq-link" style={{ justifySelf: 'end', fontSize: 14 }}>
+                      Open profile
+                    </span>
+                  )}
+                </Link>
+              </li>
             );
           })}
+        </ol>
 
-          {results.length === 0 && (
-            <div className="card p-6">
-              <h3 className="text-lg font-semibold">
-                {q ? 'No active players found' : 'No leaderboard players found'}
-              </h3>
-              <p className="mt-2 text-sm text-muted">
-                {q
-                  ? 'Try searching for a current NBA player by name.'
-                  : 'The BIQ leaderboard is currently unavailable.'}
-              </p>
-            </div>
-          )}
-        </div>
+        {results.length === 0 && (
+          <div className="biq-card" style={{ padding: 28, marginTop: 24 }}>
+            <p className="biq-display" style={{ fontSize: 18, fontWeight: 600 }}>
+              {q ? 'No active players found' : 'No leaderboard players found'}
+            </p>
+            <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
+              {q
+                ? 'Try searching for a current NBA player by name.'
+                : 'The BIQ leaderboard is currently unavailable.'}
+            </p>
+          </div>
+        )}
       </section>
     </main>
   );

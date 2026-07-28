@@ -3,27 +3,49 @@
 // else is static with quiet hover states.
 'use client';
 
-import { useRef, type ReactNode } from 'react';
+import { useRef, type CSSProperties, type ReactNode } from 'react';
 import { useInView } from './biq-motion';
 
 /* ------------------------------------------------------------------ */
 /* MeterBar: the signature gauge. A 3px track whose key-blue fill      */
 /* transitions to value/max on first scroll-into-view. Reduced-motion  */
 /* users see it filled (transition disabled in CSS).                   */
+/*                                                                     */
+/* `driven` hands the fill over to an external timeline (the homepage  */
+/* HomeMotion component) instead of self-animating — two systems       */
+/* writing `width` would fight. Driven fills render their width from   */
+/* the --meter-pct custom property so a no-JS page still shows a full  */
+/* gauge; biq-theme.css empties them only under `.js-motion`.          */
 /* ------------------------------------------------------------------ */
 
 export function MeterBar({
   value,
   max = 100,
   className = '',
+  driven = false,
 }: {
   value: number;
   max?: number;
   className?: string;
+  driven?: boolean;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const open = useInView(ref);
   const pct = Math.max(0, Math.min(100, (value / max) * 100));
+
+  if (driven) {
+    return (
+      <span className={`biq-meter-track ${className}`}>
+        <span
+          className="biq-meter-fill"
+          data-anime="meter"
+          data-meter-pct={`${pct}%`}
+          style={{ '--meter-pct': `${pct}%` } as CSSProperties}
+        />
+      </span>
+    );
+  }
+
   return (
     <span ref={ref} className={`biq-meter-track ${className}`}>
       <span className="biq-meter-fill" style={{ width: open ? `${pct}%` : '0%' }} />
@@ -53,6 +75,7 @@ export function ScoreMeter({
   size = 'md',
   align = 'left',
   className = '',
+  driven = false,
 }: {
   value: number;
   max?: number;
@@ -62,6 +85,8 @@ export function ScoreMeter({
   size?: keyof typeof SCORE_SIZES;
   align?: 'left' | 'right';
   className?: string;
+  /** Hand the gauge and the readout to an external timeline. See MeterBar. */
+  driven?: boolean;
 }) {
   return (
     <div className={className} style={{ textAlign: align, minWidth: 0 }}>
@@ -78,6 +103,9 @@ export function ScoreMeter({
       >
         <span
           className="biq-display biq-signal"
+          data-anime={driven ? 'count' : undefined}
+          data-count-to={driven ? value : undefined}
+          data-count-decimals={driven ? decimals : undefined}
           style={{
             fontSize: SCORE_SIZES[size],
             fontWeight: 600,
@@ -91,7 +119,7 @@ export function ScoreMeter({
         {tier ? <span className="biq-chip">{tier}</span> : null}
       </div>
       <div style={{ marginTop: 10 }}>
-        <MeterBar value={value} max={max} />
+        <MeterBar value={value} max={max} driven={driven} />
       </div>
     </div>
   );
@@ -106,11 +134,14 @@ export function SectionHeader({
   title,
   action,
   className = '',
+  driven = false,
 }: {
   label: string;
   title: string;
   action?: ReactNode;
   className?: string;
+  /** Tag the rule so an external timeline can draw it. See MeterBar. */
+  driven?: boolean;
 }) {
   return (
     <div className={className}>
@@ -131,7 +162,11 @@ export function SectionHeader({
         </div>
         {action ?? null}
       </div>
-      <hr className="biq-rule-line" style={{ marginTop: 16 }} />
+      <hr
+        className="biq-rule-line"
+        data-anime={driven ? 'rule' : undefined}
+        style={{ marginTop: 16 }}
+      />
     </div>
   );
 }

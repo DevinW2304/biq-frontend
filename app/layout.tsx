@@ -32,6 +32,17 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        {/* Arms the homepage motion before first paint. Everything anime.js
+            animates is hidden only under `.js-motion`, so if this never runs
+            (JS off, script blocked) the page renders complete and static.
+            See docs/superpowers/specs/2026-07-27-homepage-motion-design.md */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.documentElement.classList.add('js-motion')",
+          }}
+        />
+      </head>
       <body className={`${bricolage.variable} ${instrument.variable} ${splineMono.variable} biq-page`}>
         <Navbar />
         {children}

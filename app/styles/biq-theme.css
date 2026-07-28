@@ -198,8 +198,298 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
   outline-offset: 2px;
 }
 
-/* ---- reduced motion ----------------------------------------------------- */
+/* ==========================================================================
+   DARK HERO — homepage showcase only. The page stays COURT PAPER; the hero
+   is a deliberate dark stage so the instrument's colour reads. The dark
+   canvas is a fixed layer whose opacity is scrubbed out on scroll.
+   ========================================================================== */
 
-@media (prefers-reduced-motion: reduce) {
+/* The homepage main must be transparent or its paper background would hide
+   the stage; body still carries the paper the hero fades back into. */
+.biq-page[data-anime-root] {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+/* The stage is a full-bleed pseudo-element on the hero itself, NOT a
+   JS-injected layer. The hero's light text is set in static markup, so if the
+   dark background depended on JS it would vanish for no-JS and reduced-motion
+   users and leave bone text on white paper. This cannot fail. It also fades
+   to paper at its own bottom edge, so no scroll handler is needed to hand
+   over to the board. */
+.biq-hero-dark { position: relative; }
+.biq-hero-dark::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  margin-left: -50vw;
+  width: 100vw;
+  top: -88px;
+  /* Butt flush against the next dark section. Any negative bottom here leaves
+     the following section's backdrop overlapping this one's, which shows as a
+     seam once more than one dark section is stacked. */
+  bottom: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: #131210;
+}
+
+/* The hand-off to paper happens once, on the last dark section only.
+   Every dark section used to carry its own fade-to-transparent, so stacking
+   hero + stage + caption produced a wash of paper at each seam. The fade is a
+   fixed distance rather than a percentage, because these sections range from
+   ~60px to 420vh and a percentage fade is invisible on one and enormous on
+   the other. */
+.biq-dark-end::before {
+  /* Land the fade exactly on the section's own bottom edge, which is where the
+     paper section begins. Any negative bottom here carries the tail of the
+     gradient over the next section's heading as a muddy wash. The section
+     carries ~240px of bottom padding so the 200px fade starts clear of its
+     last line of type. */
+  bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    #131210 calc(100% - 200px),
+    rgba(19, 18, 16, 0) 100%
+  );
+}
+
+.biq-hero-dark {
+  --eng-key: #6b8cff;
+  --eng-teal: #3fbf9a;
+  --eng-amber: #e8b13d;
+  --eng-dim: rgba(244, 241, 232, 0.34);
+  --eng-line: rgba(244, 241, 232, 0.16);
+  --eng-tick: rgba(244, 241, 232, 0.58);
+  --eng-beam: rgba(107, 140, 255, 0.55);
+  --eng-well: rgba(255, 255, 255, 0.02);
+  --eng-label: rgba(244, 241, 232, 0.5);
+  --eng-ink: rgba(244, 241, 232, 0.92);
+}
+
+.biq-hero-dark .biq-display { color: #f4f1e8; }
+.biq-hero-dark .biq-mono { color: rgba(244, 241, 232, 0.52); }
+.biq-hero-dark .biq-hero-copy { color: rgba(244, 241, 232, 0.74) !important; }
+.biq-hero-dark .biq-link { color: var(--eng-key); }
+.biq-hero-dark .biq-btn-ghost {
+  color: #f4f1e8 !important;
+  border-color: rgba(244, 241, 232, 0.3) !important;
+}
+.biq-hero-dark .biq-btn-ghost:hover,
+.biq-hero-dark .biq-btn-ghost:focus-visible {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: #f4f1e8 !important;
+}
+
+/* Navbar goes light while the dark hero is behind it. Inline styles on the
+   header mean these need !important to land. */
+.biq-dark-nav header {
+  background: rgba(19, 18, 16, 0.72) !important;
+  border-bottom-color: rgba(244, 241, 232, 0.14) !important;
+}
+/* Every rule here must stay scoped to `header` — the class lives on <html>,
+   so an unscoped `.biq-dark-nav .biq-display` would recolour every heading
+   on the page. */
+.biq-dark-nav header .biq-display { color: rgba(244, 241, 232, 0.95); }
+.biq-dark-nav header .nav-link { color: rgba(244, 241, 232, 0.7); }
+.biq-dark-nav header .nav-link:hover,
+.biq-dark-nav header .nav-link:focus-visible { color: #fff; }
+.biq-dark-nav header .nav-link-live { color: #6b8cff; }
+.biq-dark-nav header .nav-tagline { color: rgba(244, 241, 232, 0.48) !important; }
+.biq-dark-nav header .nav-search {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(244, 241, 232, 0.18) !important;
+  color: #f4f1e8 !important;
+}
+.biq-dark-nav header .nav-search::placeholder { color: rgba(244, 241, 232, 0.45); }
+
+/* ---- homepage motion (anime.js) -----------------------------------------
+   Armed states apply only while JS is running: an inline script in
+   app/layout.tsx puts `js-motion` on <html> before paint. With JS off the
+   class never lands, none of this applies, and the full page renders
+   statically. HomeMotion animates these back to their resting state.        */
+
+.js-motion [data-anime-hide] { opacity: 0; }
+
+.js-motion [data-anime="rule"] {
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+/* Every moving part of the instrument arms in one rule. */
+.js-motion .biq-engine [data-anime] { opacity: 0; }
+.js-motion [data-anime="lane-axis"] {
+  transform: scaleX(0);
+  transform-box: view-box;
+  transform-origin: left center;
+}
+
+/* ---- THE TEARDOWN: the scroll stage -------------------------------------
+   Default (no JS, reduced motion) is plain flow: the instrument renders whole
+   and the top 20 prints underneath it. Only `js-motion` turns this into a tall
+   stage with a sticky pin, because only then is there an animation to watch. */
+
+.biq-stage { padding: 0 0 56px; }
+.js-motion .biq-stage { height: 420vh; padding: 0; }
+
+.js-motion .biq-stage-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+}
+.js-motion .biq-stage-pin .biq-engine { width: 100%; }
+
+/* The instrument's layout lives here rather than inline, so the no-teardown
+   media query below can put the SVG back into normal flow. The component
+   passes only geometry (--vb-aspect, --verdict-*), never layout. */
+.biq-engine {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--vb-aspect);
+}
+.biq-engine-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* The score reads in real type rather than SVG text, positioned off the same
+   viewBox numbers the aperture is drawn from. */
+.biq-engine-verdict {
+  position: absolute;
+  left: var(--verdict-x);
+  top: var(--verdict-y);
+  width: var(--verdict-w);
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+/* Scale about the shape's own centre rather than the viewBox's, or a tick
+   compressing into a row slides to the middle of the drawing and the aperture
+   grows off toward the bottom-right instead of opening in place. */
+.biq-engine [data-anime="lane-tick"],
+.biq-engine [data-anime="aperture"] { transform-box: fill-box; }
+
+/* The board the object comes apart into. */
+.biq-board-rows { list-style: none; margin: 24px 0 0; padding: 0; }
+.biq-board-link {
+  display: grid;
+  /* 4th column is the landing zone for the five ticks; it collapses when the
+     board is just a printed list. */
+  grid-template-columns: 2.5rem 1fr 4rem 0 4.5rem;
+  align-items: baseline;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--eng-line);
+}
+.biq-board-rank { color: var(--eng-label); font-size: 12px; }
+.biq-board-name { color: var(--eng-ink); font-weight: 600; font-size: 15px; }
+.biq-board-team { color: var(--eng-label); font-size: 11px; }
+.biq-board-score {
+  color: var(--eng-key);
+  font-weight: 600;
+  font-size: 15px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Armed: rows are lifted onto the stage and parked at the y their ticks fly
+   to. --row-y is inline data; this rule decides whether it means anything. */
+.js-motion .biq-board-rows { margin: 0; }
+.js-motion .biq-board-row {
+  position: absolute;
+  top: var(--row-y);
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  /* Each row is a link, and `opacity: 0` leaves it in the tab order — a
+     keyboard user would otherwise tab out of the hero into twenty invisible
+     leaderboard links. HomeMotion flips this the moment the rows start
+     printing. */
+  visibility: hidden;
+}
+/* Armed, the columns must be percentages: the ticks are placed by the SVG's
+   viewBox, which maps proportionally to the container, so rem columns would
+   drift out of register with them at every other viewport width. The tick
+   landing zone (viewBox x 966-1062 of 1400) sits inside column 4. */
+.js-motion .biq-board-link {
+  grid-template-columns: 5% 44% 14% 12% 1fr;
+  gap: 0;
+  border-bottom: 0;
+  padding: 0;
+}
+
+/* Parts that exist only to carry the readout sweep — the playhead, the beam
+   pulses, the status line. They describe a sweep that is running, so they stay
+   hidden unless HomeMotion is actually running one. Unscoped by `js-motion` on
+   purpose: a no-JS page should not show a playhead parked at zero.            */
+[data-motion-only] { opacity: 0; }
+
+/* Driven meters take their width from --meter-pct, so a JS-less page still
+   shows filled gauges. Only the armed page empties them for anime to sweep,
+   and the CSS transition steps aside so a single system writes width.       */
+.biq-meter-fill[data-anime="meter"] {
+  width: var(--meter-pct, 0%);
+  transition: none;
+}
+.js-motion .biq-meter-fill[data-anime="meter"] { width: 0%; }
+
+/* ---- no teardown: reduced motion, or too narrow to read one -------------
+   Comma is OR. Both cases want exactly the same thing — the page rendered
+   complete and still, in plain flow.
+
+   The width cutoff is not taste, it is geometry. A board row's pitch is
+   (40/900) x the engine's height, and the engine's height is locked to the
+   container's width by its 1400x900 aspect ratio. Measured against the 22.5px
+   row text: ~10px clearance at a 1200px container, 1.8px at 900px, and by
+   414px the pitch goes negative and the rows stack backwards. Below this
+   breakpoint the board cannot be laid out at all, never mind read — and the
+   instrument's 125 ticks would be sub-pixel besides.
+
+   HomeMotion matches the same query and skips the teardown, so the two can
+   never disagree about which layout is on screen.                           */
+
+@media (prefers-reduced-motion: reduce), (max-width: 1080px) {
   .biq-meter-fill { transition: none; }
+
+  /* Nothing is armed: the homepage renders complete and still. */
+  .js-motion [data-anime-hide] { opacity: 1; }
+  .js-motion [data-anime="rule"] { opacity: 1; transform: none; }
+  .js-motion .biq-engine [data-anime] { opacity: 1; }
+  /* ...but the blanket reveal above must not strand the sweep's parts on a
+     page where the sweep will never run. Same specificity, stated later.     */
+  .js-motion .biq-engine [data-motion-only] { opacity: 0; }
+  .js-motion [data-anime="lane-axis"] { transform: none; }
+
+  /* The instrument stops being an absolute-positioned overlay and becomes an
+     ordinary image in the flow, so the board can sit underneath it instead of
+     being drawn over by it. Without this the aperture lands on top of rows
+     8-12 on a phone. */
+  .biq-engine { aspect-ratio: auto; }
+  .biq-engine-svg { position: static; display: block; height: auto; }
+  .biq-engine-verdict {
+    position: static;
+    width: auto;
+    transform: none;
+    margin-top: 20px;
+  }
+
+  /* No teardown to watch, so no stage to scroll through: hand the whole thing
+     back to plain flow, exactly as the no-JS page renders it. */
+  .js-motion .biq-stage { height: auto; padding: 0 0 56px; }
+  .js-motion .biq-stage-pin { position: static; height: auto; display: block; }
+  .js-motion .biq-board-rows { margin: 24px 0 0; }
+  .js-motion .biq-board-row { position: static; transform: none; visibility: visible; }
+  .js-motion .biq-board-link {
+    grid-template-columns: 2.5rem 1fr 4rem 0 4.5rem;
+    gap: 16px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--eng-line);
+  }
+  .js-motion .biq-meter-fill[data-anime="meter"] { width: var(--meter-pct, 0%); }
 }

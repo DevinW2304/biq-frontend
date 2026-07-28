@@ -9,8 +9,10 @@ import { BiqTicker } from '@/components/BiqTicker';
 import { fetchCachedJSON } from '@/lib/api';
 import { BIQLeaderboardEntry } from '@/lib/types';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { MeterBar, ScoreMeter, SectionHeader } from '@/components/biq/BiqKit';
+import { MeterBar, SectionHeader } from '@/components/biq/BiqKit';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
+import { HomeMotion } from '@/components/biq/motion/HomeMotion';
+import { BiqEngine } from '@/components/biq/motion/BiqEngine';
 
 const METHOD_SECTIONS = [
   {
@@ -39,8 +41,10 @@ export default async function HomePage() {
   let tickerPlayers: BIQLeaderboardEntry[] = [];
 
   try {
+    // 25 is the backend's cap (26+ returns 422). Every tick in the hero
+    // instrument is one of these real players, so this sets its density.
     tickerPlayers = await fetchCachedJSON<BIQLeaderboardEntry[]>(
-      '/api/players/biq-leaders?limit=12',
+      '/api/players/biq-leaders?limit=25',
       300,
     );
   } catch (error) {
@@ -57,152 +61,116 @@ export default async function HomePage() {
   ];
 
   return (
-    <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-      {/* ---------------- 1. HERO ---------------- */}
-      <section
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          alignItems: 'center',
-          gap: 48,
-          padding: '72px 0 64px',
-        }}
-      >
-        <div>
-          <p className="biq-mono">Basketball Intelligence Quotient · 2025-26</p>
-          <h1 className="biq-display biq-hero-size" style={{ marginTop: 16, maxWidth: '14ch' }}>
-            One number for what a player is worth.
-          </h1>
-          <p style={{ marginTop: 20, maxWidth: '48ch', fontSize: 16, lineHeight: 1.7, color: 'var(--ink-2)' }}>
-            BIQ blends workload, creation, efficiency, impact, and availability into a single
-            current-season score, then shows its work.
-          </p>
-
-          <div style={{ maxWidth: 460 }}>
-            <PlayerSearchBar />
+    <main
+      className="biq-page"
+      data-anime-root
+      style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}
+    >
+      {/* ---------------- 1. HERO — the dark stage ---------------- */}
+      <section className="biq-hero-dark" data-anime="hero" style={{ padding: '44px 0 64px' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            alignItems: 'end',
+            gap: 40,
+          }}
+        >
+          <div>
+            <p className="biq-mono" data-anime="hero-eyebrow" data-anime-hide>
+              Basketball Intelligence Quotient · 2025-26
+            </p>
+            <h1
+              className="biq-display biq-hero-size"
+              data-anime="hero-headline"
+              data-anime-hide
+              style={{ marginTop: 16, maxWidth: '13ch' }}
+            >
+              One number for what a player is worth.
+            </h1>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 20 }}>
-            <Link href="/compare?a=2544&b=201939" className="biq-btn">
-              Open a comparison
-            </Link>
-            <Link href="/players?q=" className="biq-btn-ghost">
-              Browse all players
-            </Link>
+          <div>
+            <p
+              className="biq-hero-copy"
+              data-anime="hero-body"
+              data-anime-hide
+              style={{ maxWidth: '46ch', fontSize: 16, lineHeight: 1.7, color: 'var(--ink-2)' }}
+            >
+              BIQ blends workload, creation, efficiency, impact, and availability into a single
+              current-season score, then shows its work.
+            </p>
+
+            <div data-anime="hero-search" data-anime-hide style={{ maxWidth: 460, marginTop: 4 }}>
+              <PlayerSearchBar />
+            </div>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 20 }}>
+              <Link href="/compare?a=2544&b=201939" className="biq-btn" data-anime="hero-cta" data-anime-hide>
+                Open a comparison
+              </Link>
+              <Link href="/players?q=" className="biq-btn-ghost" data-anime="hero-cta" data-anime-hide>
+                Browse all players
+              </Link>
+            </div>
           </div>
         </div>
 
-        {heroLeader ? (
-          <Link
-            href={`/players/${heroLeader.id}`}
-            className="biq-card"
-            style={{ display: 'block', padding: 28 }}
-          >
-            <p className="biq-mono">No. 1 on the board</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 20, margin: '20px 0 24px' }}>
-              <SubjectPhoto id={heroLeader.id} name={heroLeader.name} size={88} />
-              <div style={{ minWidth: 0 }}>
-                <p className="biq-display" style={{ fontSize: 'clamp(26px, 3vw, 36px)' }}>
-                  {heroLeader.name}
-                </p>
-                <p style={{ marginTop: 4, fontSize: 14, color: 'var(--fog)' }}>
-                  {heroLeader.team} · {heroLeader.position}
-                </p>
-              </div>
-            </div>
-            <ScoreMeter
-              value={heroLeader.biqScore}
-              label="BIQ SCORE"
-              tier={heroLeader.biqTier || 'On the board'}
-              size="xl"
-            />
-            <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
-              {heroLeader.reason}
-            </p>
-            <p className="biq-link" style={{ marginTop: 16, fontSize: 14 }}>
-              View full profile
-            </p>
-          </Link>
-        ) : (
+      </section>
+
+      {/* ---------------- 2. THE TEARDOWN — the scroll stage ----------------
+          A tall section whose sticky child is what the reader watches. Scroll
+          across it scrubs the instrument apart and lands the top 20. Both the
+          height and the pin are `.js-motion` only, so a no-JS page gets plain
+          flow instead of four viewports of nothing. */}
+      {heroLeader ? (
+        <section className="biq-hero-dark biq-stage" data-anime="stage">
+          <div className="biq-stage-pin">
+            <BiqEngine players={tickerPlayers} leader={heroLeader} />
+
+          </div>
+        </section>
+      ) : (
+        <section className="biq-hero-dark biq-dark-end" style={{ padding: '0 0 240px' }}>
           <div className="biq-card" style={{ padding: 28 }}>
             <p className="biq-mono">The board</p>
             <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
               Leaderboard data is warming up. Search a player to get started.
             </p>
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {/* ---------------- 2. THE BOARD (top 10) ------------------ */}
-      <section style={{ padding: '48px 0' }}>
-        <SectionHeader
-          label="Top ten by BIQ"
-          title="The board"
-          action={
+      {/* The stage's caption, on the far side of the pin — it reads as the
+          board's footer once the teardown has landed. */}
+      {heroLeader ? (
+        <section className="biq-hero-dark biq-dark-end" style={{ padding: '0 0 240px' }}>
+          <div
+            data-anime="engine-footer"
+            data-anime-hide
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 16,
+            }}
+          >
+            <span className="biq-mono">
+              Five components · {tickerPlayers.length} players · live
+            </span>
             <Link href="/leaderboard" className="biq-link" style={{ fontSize: 14 }}>
-              Full leaderboard
+              Full leaderboard →
             </Link>
-          }
-        />
-        <ol style={{ listStyle: 'none', margin: '8px 0 0', padding: 0 }}>
-          {board.map((player, index) => (
-            <li key={player.id} className="biq-row">
-              <Link
-                href={`/players/${player.id}`}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '2.5rem 52px 1fr minmax(120px, 200px)',
-                  alignItems: 'center',
-                  gap: 20,
-                  padding: '14px 8px',
-                }}
-              >
-                <span className="biq-rank" style={{ fontSize: 15 }}>
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-                <SubjectPhoto id={player.id} name={player.name} size={52} />
-                <span style={{ minWidth: 0 }}>
-                  <span
-                    className="biq-display"
-                    style={{ display: 'block', fontSize: 'clamp(17px, 1.8vw, 21px)', fontWeight: 600 }}
-                  >
-                    {player.name}
-                  </span>
-                  <span
-                    style={{
-                      display: 'block',
-                      marginTop: 3,
-                      fontSize: 13,
-                      color: 'var(--fog)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {player.team} · {player.reason}
-                  </span>
-                </span>
-                <span style={{ justifySelf: 'stretch' }}>
-                  <span
-                    className="biq-num biq-signal"
-                    style={{ display: 'block', fontSize: 22, fontWeight: 600, textAlign: 'right' }}
-                  >
-                    {player.biqScore.toFixed(1)}
-                  </span>
-                  <span style={{ display: 'block', marginTop: 6 }}>
-                    <MeterBar value={player.biqScore} />
-                  </span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ol>
-      </section>
+          </div>
+        </section>
+      ) : null}
 
       {/* ---------------- 3. COMPONENT LEADERS ------ */}
       <section style={{ padding: '48px 0' }}>
-        <SectionHeader label="Leaders by component" title="Live signals" />
+        <SectionHeader label="Leaders by component" title="Live signals" driven />
         <div
+          data-anime="signal-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
@@ -215,6 +183,8 @@ export default async function HomePage() {
               key={s.label}
               href={s.player ? `/players/${s.player.id}` : '/players?q='}
               className="biq-card"
+              data-anime="signal-card"
+              data-anime-hide
               style={{ padding: 24, display: 'block' }}
             >
               <p className="biq-mono">{s.label}</p>
@@ -227,11 +197,17 @@ export default async function HomePage() {
                       <p style={{ marginTop: 2, fontSize: 13, color: 'var(--fog)' }}>{s.player.team}</p>
                     </div>
                   </div>
-                  <span className="biq-num biq-signal" style={{ fontSize: 30, fontWeight: 600 }}>
+                  <span
+                    className="biq-num biq-signal"
+                    data-anime="count"
+                    data-count-to={s.value(s.player)}
+                    data-count-decimals={1}
+                    style={{ fontSize: 30, fontWeight: 600 }}
+                  >
                     {s.value(s.player).toFixed(1)}
                   </span>
                   <div style={{ marginTop: 8 }}>
-                    <MeterBar value={s.value(s.player)} />
+                    <MeterBar value={s.value(s.player)} driven />
                   </div>
                 </>
               ) : (
@@ -242,12 +218,13 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <BiqTicker players={tickerPlayers} />
+      <BiqTicker players={tickerPlayers.slice(0, 14)} />
 
       {/* ---------------- 4. WHAT BIQ MEASURES --------------------------- */}
       <section style={{ padding: '56px 0 72px' }}>
-        <SectionHeader label="How the score reads" title="What BIQ measures" />
+        <SectionHeader label="How the score reads" title="What BIQ measures" driven />
         <div
+          data-anime="method-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
@@ -256,7 +233,13 @@ export default async function HomePage() {
           }}
         >
           {METHOD_SECTIONS.map((m) => (
-            <div key={m.title} className="biq-card" style={{ padding: 24 }}>
+            <div
+              key={m.title}
+              className="biq-card"
+              data-anime="method-card"
+              data-anime-hide
+              style={{ padding: 24 }}
+            >
               <h3 className="biq-display" style={{ fontSize: 19, fontWeight: 600 }}>
                 {m.title}
               </h3>
@@ -268,6 +251,7 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <HomeMotion />
       <SpeedInsights />
     </main>
   );

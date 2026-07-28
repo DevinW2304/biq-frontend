@@ -1,0 +1,205 @@
+/* ==========================================================================
+   BIQ // COURT PAPER — design system stylesheet
+   Light, clean analytics product. Warm paper neutrals (maple floor),
+   one royal blue accent (the painted key). Import once, site-wide.
+   Fonts load via next/font in app/layout.tsx:
+   --font-display (Bricolage Grotesque), --font-body (Instrument Sans),
+   --font-file (Spline Sans Mono).
+   ========================================================================== */
+
+:root {
+  --paper: #faf9f6;        /* page background, warm white */
+  --panel: #f1efe9;        /* tinted panels, hovers, photo backgrounds */
+  --line: #e3dfd5;         /* borders, dividers, gauge tracks */
+  --line-strong: #cfc9bb;  /* emphasized borders */
+  --ink: #1e1c17;          /* primary text, warm near-black */
+  --ink-2: #4f4b42;        /* secondary body copy */
+  --fog: #6f695c;          /* labels, metadata (AA on paper) */
+  --key: #2545cb;          /* the accent: verdicts, gauges, links, focus */
+  --key-deep: #1b34a0;     /* accent hover */
+  --key-tint: #e9edfa;     /* tier chips, selected states */
+  --up: #1a7a4a;           /* positive signed values only */
+  --down: #bc3a2e;         /* negative signed values only */
+
+  --radius: 8px;
+}
+
+/* ---- base ------------------------------------------------------------ */
+
+.biq-page {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+.biq-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+  color: var(--ink);
+}
+.biq-hero-size    { font-size: clamp(40px, 6vw, 76px); }
+.biq-verdict-size { font-size: clamp(64px, 8vw, 128px); font-weight: 600; letter-spacing: -0.03em; }
+.biq-h2-size      { font-size: clamp(24px, 3vw, 30px); font-weight: 600; }
+
+/* Small-caps data label: stat names, metadata, table headers */
+.biq-mono {
+  font-family: var(--font-file);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fog);
+}
+
+/* Numeric data value */
+.biq-num {
+  font-family: var(--font-file);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.biq-signal { color: var(--key); }
+.biq-rule-line { height: 1px; width: 100%; background: var(--line); border: 0; }
+
+/* ---- card ------------------------------------------------------------ */
+
+.biq-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+a.biq-card { transition: border-color 0.15s ease; }
+a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
+
+/* ---- the signature: BIQ meter gauge ----------------------------------
+   A 3px track under every BIQ score; the fill transitions to score/100 on
+   first scroll-into-view. The site's single signature motion.            */
+
+.biq-meter-track {
+  display: block;
+  height: 3px;
+  width: 100%;
+  background: var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.biq-meter-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: var(--key);
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.25, 0.6, 0.25, 1);
+}
+
+/* ---- tier chip -------------------------------------------------------- */
+
+.biq-chip {
+  display: inline-block;
+  background: var(--key-tint);
+  color: var(--key-deep);
+  font-family: var(--font-file);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ---- ledger rows (board, players index) ------------------------------- */
+
+.biq-row { border-bottom: 1px solid var(--line); transition: background 0.15s ease; }
+.biq-row:hover, .biq-row:focus-within { background: var(--panel); }
+
+.biq-rank {
+  font-family: var(--font-file);
+  font-variant-numeric: tabular-nums;
+  color: var(--fog);
+}
+
+/* ---- links and buttons ------------------------------------------------ */
+
+.biq-link {
+  color: var(--key);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+.biq-link:hover, .biq-link:focus-visible { color: var(--key-deep); text-decoration: underline; text-underline-offset: 3px; }
+
+.biq-btn {
+  display: inline-block;
+  background: var(--key);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 24px;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.biq-btn:hover, .biq-btn:focus-visible { background: var(--key-deep); }
+
+.biq-btn-ghost {
+  display: inline-block;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 24px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.biq-btn-ghost:hover, .biq-btn-ghost:focus-visible { border-color: var(--ink); background: #fff; }
+
+/* ---- tables ------------------------------------------------------------ */
+
+.biq-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-file);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+.biq-table th {
+  text-align: left;
+  padding: 10px 14px 10px 0;
+  border-bottom: 1px solid var(--line-strong);
+  white-space: nowrap;
+  font-family: var(--font-file);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fog);
+}
+.biq-table td {
+  padding: 10px 14px 10px 0;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+  color: var(--ink);
+}
+.biq-table tbody tr { transition: background 0.15s ease; }
+.biq-table tbody tr:hover { background: var(--panel); }
+
+/* ---- focus ------------------------------------------------------------- */
+
+:focus-visible {
+  outline: 2px solid var(--key);
+  outline-offset: 2px;
+}
+
+/* ---- reduced motion ----------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .biq-meter-fill { transition: none; }
+}

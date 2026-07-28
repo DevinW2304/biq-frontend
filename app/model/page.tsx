@@ -40,7 +40,7 @@ export default function ModelPage() {
             padding: '2rem',
             marginBottom: '2rem',
             background:
-              'linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%)',
+              'var(--panel)',
           }}
         >
           <div
@@ -53,7 +53,7 @@ export default function ModelPage() {
               fontSize: 'clamp(8rem, 18vw, 14rem)',
               lineHeight: 1,
               color: 'transparent',
-              WebkitTextStroke: '1px rgba(201, 168, 76, 0.06)',
+              WebkitTextStroke: '1px rgba(30, 28, 23, 0.1)',
               letterSpacing: '0.05em',
               pointerEvents: 'none',
               userSelect: 'none',
@@ -68,7 +68,7 @@ export default function ModelPage() {
             </p>
 
             <h1
-              className="display hero-title-glow"
+              className="display"
               style={{
                 fontSize: 'clamp(3rem, 7vw, 6rem)',
                 lineHeight: 0.92,
@@ -87,7 +87,7 @@ export default function ModelPage() {
             </h1>
 
             <p
-              className="serif-italic"
+              className="body-copy"
               style={{
                 fontSize: '1.02rem',
                 lineHeight: 1.8,
@@ -129,7 +129,7 @@ export default function ModelPage() {
               <article key={item.label} style={{ padding: '1.4rem' }}>
                 <div
                   className="leader-rank"
-                  style={{ marginBottom: '0.75rem', color: 'var(--gold)' }}
+                  style={{ marginBottom: '0.75rem', color: 'var(--signal)' }}
                 >
                   {item.label}
                 </div>
@@ -182,7 +182,7 @@ export default function ModelPage() {
                 </div>
                 <p
                   style={{
-                    fontFamily: 'var(--font-serif)',
+                    fontFamily: 'var(--font-body)',
                     fontSize: '0.96rem',
                     lineHeight: 1.85,
                     color: 'var(--text-2)',
@@ -202,7 +202,7 @@ export default function ModelPage() {
 
           <div className={styles.whyGrid}>
             <p
-              className="serif-italic"
+              className="body-copy"
               style={{
                 fontSize: '0.98rem',
                 lineHeight: 1.9,
@@ -216,7 +216,7 @@ export default function ModelPage() {
 
             <div
               className="card-flush"
-              style={{ padding: '1rem', borderLeft: '2px solid var(--gold)' }}
+              style={{ padding: '1rem', borderLeft: '2px solid var(--signal)' }}
             >
               <div className="leader-rank" style={{ marginBottom: '0.55rem' }}>
                 Portfolio Context

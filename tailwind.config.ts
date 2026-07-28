@@ -8,12 +8,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: '#081018',
-        surface: '#101b26',
-        border: '#1f3142',
-        text: '#f3f7fb',
-        muted: '#9cb0c3',
-        accent: '#4cc9f0',
+        /* COURT PAPER: legacy utility names mapped to the light palette */
+        background: '#faf9f6',
+        surface: '#f1efe9',
+        border: '#e3dfd5',
+        text: '#1e1c17',
+        muted: '#6f695c',
+        accent: '#2545cb',
+        /* tokens addressable directly (bg-paper, text-ink, border-line, ...) */
+        paper: 'var(--paper)',
+        panel: 'var(--panel)',
+        ink: 'var(--ink)',
+        fog: 'var(--fog)',
+        line: 'var(--line)',
+        key: 'var(--key)',
       },
     },
   },

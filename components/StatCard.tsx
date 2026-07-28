@@ -2,37 +2,13 @@ import { StatCardData } from '@/lib/types';
 
 export function StatCard({ label, value, subtext, description }: StatCardData) {
   return (
-    <div
-      className="stat-card"
-      style={{
-        background: 'rgba(255,255,255,0.02)',
-        border: '1px solid var(--border)',
-        padding: '1.375rem',
-        transition: 'border-color 0.15s ease, background 0.15s ease',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Subtle top-left corner accent */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: 40,
-          height: 40,
-          background: 'radial-gradient(circle at top left, rgba(201,168,76,0.07), transparent 70%)',
-          pointerEvents: 'none',
-        }}
-      />
-
+    <div className="stat-card" style={{ padding: '1.375rem' }}>
       <p
         style={{
-          fontFamily: 'var(--font-condensed)',
-          fontSize: '0.58rem',
-          fontWeight: 700,
-          letterSpacing: '0.2em',
+          fontFamily: 'var(--font-file)',
+          fontSize: '0.62rem',
+          fontWeight: 500,
+          letterSpacing: '0.14em',
           textTransform: 'uppercase',
           color: 'var(--muted)',
           marginBottom: '0.875rem',
@@ -43,9 +19,10 @@ export function StatCard({ label, value, subtext, description }: StatCardData) {
 
       <h3
         style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '2.4rem',
-          letterSpacing: '0.04em',
+          fontFamily: 'var(--font-file)',
+          fontSize: '1.7rem',
+          fontWeight: 600,
+          letterSpacing: '-0.01em',
           lineHeight: 1,
           color: 'var(--text)',
           marginBottom: subtext ? '0.5rem' : 0,
@@ -58,11 +35,12 @@ export function StatCard({ label, value, subtext, description }: StatCardData) {
       {subtext ? (
         <p
           style={{
-            fontFamily: 'var(--font-condensed)',
-            fontSize: '0.7rem',
-            fontWeight: 600,
-            letterSpacing: '0.08em',
-            color: 'var(--text-2)',
+            fontFamily: 'var(--font-file)',
+            fontSize: '0.66rem',
+            fontWeight: 500,
+            letterSpacing: '0.06em',
+            color: 'var(--muted)',
+            textTransform: 'uppercase',
             marginBottom: description ? '0.625rem' : 0,
           }}
         >
@@ -73,8 +51,7 @@ export function StatCard({ label, value, subtext, description }: StatCardData) {
       {description ? (
         <p
           style={{
-            fontFamily: 'var(--font-serif)',
-            fontStyle: 'italic',
+            fontFamily: 'var(--font-body)',
             fontSize: '0.78rem',
             lineHeight: 1.65,
             color: 'var(--muted)',

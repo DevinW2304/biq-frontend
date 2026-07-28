@@ -9,7 +9,7 @@ type PlayerSearchBarProps = {
 };
 
 export function PlayerSearchBar({
-  placeholder = 'Search players or teams',
+  placeholder = 'Search active NBA players',
   initialValue = '',
 }: PlayerSearchBarProps) {
   const [query, setQuery] = useState(initialValue);
@@ -54,7 +54,7 @@ export function PlayerSearchBar({
           style={{
             position: 'absolute',
             left: '0.875rem',
-            color: focused ? 'var(--gold)' : 'var(--muted)',
+            color: focused ? 'var(--key)' : 'var(--fog)',
             transition: 'color 0.15s ease',
             pointerEvents: 'none',
             flexShrink: 0,
@@ -72,48 +72,19 @@ export function PlayerSearchBar({
           placeholder={placeholder}
           style={{
             width: '100%',
-            background: 'var(--s2)',
-            border: `1px solid ${focused ? 'var(--border-focus)' : 'var(--border-strong)'}`,
-            borderRadius: 'var(--r-md)',
+            background: '#fff',
+            border: `1px solid ${focused ? 'var(--key)' : 'var(--line)'}`,
+            borderRadius: 'var(--radius)',
             padding: '0.7rem 1rem 0.7rem 2.5rem',
-            color: 'var(--text)',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.8rem',
-            letterSpacing: '0.04em',
+            color: 'var(--ink)',
+            fontSize: '0.9rem',
             outline: 'none',
-            transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-            boxShadow: focused ? '0 0 0 3px rgba(201,168,76,0.08)' : 'none',
+            transition: 'border-color 0.15s ease',
           }}
         />
       </div>
 
-      <button
-        type="submit"
-        style={{
-          background: 'var(--gold)',
-          color: '#060709',
-          fontFamily: 'var(--font-condensed)',
-          fontWeight: 800,
-          fontSize: '0.72rem',
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          border: 'none',
-          borderRadius: 'var(--r-md)',
-          padding: '0 1.25rem',
-          cursor: 'pointer',
-          whiteSpace: 'nowrap',
-          transition: 'background 0.15s ease, box-shadow 0.15s ease',
-          flexShrink: 0,
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = 'var(--gold-light)';
-          (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(201,168,76,0.25)';
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = 'var(--gold)';
-          (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none';
-        }}
-      >
+      <button type="submit" className="biq-btn" style={{ padding: '0 1.4rem' }}>
         Search
       </button>
     </form>

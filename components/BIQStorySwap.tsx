@@ -62,7 +62,7 @@ const layerCards = [
       {
         title: 'It supports the entire product, not just the score',
         text:
-          'This same structure powers rankings, player pages, and comparison tools. That matters because BIQ is meant to be more than a number — it is a system for exploring why value shows up the way it does.',
+          'This same structure powers rankings, player pages, and comparison tools. That matters because BIQ is meant to be more than a number: it is a system for exploring why value shows up the way it does.',
       },
     ],
     takeaway:
@@ -132,7 +132,7 @@ const layerCards = [
       {
         title: 'It builds trust through explanation',
         text:
-          'If BIQ is meant to feel thoughtful, then the product needs to show its reasoning. This layer is where the system becomes more persuasive because it is no longer just asserting value — it is showing the path to that value.',
+          'If BIQ is meant to feel thoughtful, then the product needs to show its reasoning. This layer is where the system becomes more persuasive because it is no longer just asserting value: it is showing the path to that value.',
       },
     ],
     takeaway:
@@ -607,7 +607,7 @@ export function BIQStorySwap() {
         </h2>
 
         <p
-          className="serif-italic"
+          className="body-copy"
           style={{
             fontSize: '1rem',
             lineHeight: 1.9,
@@ -650,22 +650,14 @@ export function BIQStorySwap() {
                     Layer {layer.step}
                   </span>
 
-                  <span
-                    className={`badge ${
-                      layer.tone === 'gold'
-                        ? 'badge-gold'
-                        : layer.tone === 'teal'
-                        ? 'badge-teal'
-                        : 'badge-neutral'
-                    }`}
-                  >
+                  <span className="badge badge-gold">
                     {layer.label}
                   </span>
                 </div>
 
                 <div className={styles.cardMain}>
                   <h3 className={`display ${styles.cardTitle}`}>{layer.title}</h3>
-                  <p className={`serif-italic ${styles.cardBody}`}>{layer.body}</p>
+                  <p className={`body-copy ${styles.cardBody}`}>{layer.body}</p>
 
                   <div className={styles.cardList}>
                     {layer.bullets.map((item, index) => (
@@ -690,22 +682,14 @@ export function BIQStorySwap() {
               <h3 className={`display ${styles.detailTitle}`}>{activeCard.title}</h3>
             </div>
 
-            <span
-              className={`badge ${
-                activeCard.tone === 'gold'
-                  ? 'badge-gold'
-                  : activeCard.tone === 'teal'
-                  ? 'badge-teal'
-                  : 'badge-neutral'
-              }`}
-            >
+            <span className="badge badge-gold">
               {activeCard.label}
             </span>
           </div>
 
           <div className={styles.detailBody}>
             <div className={styles.detailIntroBlock}>
-              <div className="leader-rank" style={{ marginBottom: '0.5rem', color: 'var(--gold)' }}>
+              <div className="leader-rank" style={{ marginBottom: '0.5rem', color: 'var(--signal)' }}>
                 {activeCard.detailTitle}
               </div>
               <p className={styles.detailIntro}>{activeCard.detailIntro}</p>

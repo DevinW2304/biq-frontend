@@ -14,6 +14,27 @@ type FetchJSONOptions = RequestInit & {
   };
 };
 
+/**
+ * Carries the HTTP status so callers can tell "this player does not exist"
+ * (404) from "the backend is unavailable" (503/5xx). Rendering notFound() for
+ * both turns an outage into a misleading "not found" page.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly path: string;
+
+  constructor(status: number, path: string, detail?: string) {
+    super(`Request failed: ${status} ${path}${detail ? ` - ${detail}` : ''}`);
+    this.name = 'ApiError';
+    this.status = status;
+    this.path = path;
+  }
+
+  get isNotFound() {
+    return this.status === 404;
+  }
+}
+
 export async function fetchJSON<T>(
   path: string,
   options: FetchJSONOptions = {}
@@ -21,7 +42,15 @@ export async function fetchJSON<T>(
   const res = await fetch(buildUrl(path), options);
 
   if (!res.ok) {
-    throw new Error(`Request failed: ${res.status}`);
+    // FastAPI reports the reason in `detail`; keep it for the server-side log.
+    let detail: string | undefined;
+    try {
+      const body = await res.json();
+      detail = typeof body?.detail === 'string' ? body.detail : undefined;
+    } catch {
+      detail = undefined;
+    }
+    throw new ApiError(res.status, path, detail);
   }
 
   return res.json();

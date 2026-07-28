@@ -1,135 +1,113 @@
 import Link from 'next/link';
 
 const navStyles = `
-  .nav-link:hover { color: var(--text) !important; }
-  .nav-link::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0.875rem;
-    right: 0.875rem;
-    height: 1px;
-    background: var(--gold);
-    transform: scaleX(0);
-    transition: transform 0.2s ease;
-    transform-origin: left;
-  }
-  .nav-link:hover::after { transform: scaleX(1); }
+  .nav-link { color: var(--ink-2); font-size: 14px; font-weight: 500; transition: color 0.15s ease; }
+  .nav-link:hover, .nav-link:focus-visible { color: var(--ink); }
+  .nav-link-live { color: var(--key); }
+  .nav-link-live:hover, .nav-link-live:focus-visible { color: var(--key-deep); }
+  .nav-search::placeholder { color: var(--fog); }
+  .nav-search:focus { border-color: var(--key); }
+  @media (max-width: 900px) { .nav-search { display: none; } }
+  @media (max-width: 720px) { .nav-tagline { display: none; } }
 `;
 
 const navLinks = [
-  { href: '/players?q=',              label: 'Players',    external: false },
-  { href: '/leaderboard',             label: 'Leaderboard',external: false },
-  { href: '/teams',                   label: 'Teams',      external: false },
-  { href: '/compare?a=2544&b=201939', label: 'Compare',    external: false },
-  { href: '/model',                   label: 'Model',      external: false },
+  { href: '/players?q=',              label: 'Players',     external: false },
+  { href: '/leaderboard',             label: 'Leaderboard', external: false },
+  { href: '/teams',                   label: 'Teams',       external: false },
+  { href: '/compare?a=2544&b=201939', label: 'Compare',     external: false },
+  { href: '/model',                   label: 'Model',       external: false },
   { href: 'https://biq-coach.vercel.app', label: 'HoopCoach', external: true },
 ];
 
 export function Navbar() {
   return (
     <header
-      className="navbar"
       style={{
         position: 'sticky',
         top: 0,
         zIndex: 200,
-        background: 'rgba(6, 7, 9, 0.88)',
-        backdropFilter: 'blur(20px) saturate(1.4)',
-        borderBottom: '1px solid var(--border)',
+        background: 'rgba(250, 249, 246, 0.94)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        borderBottom: '1px solid var(--line)',
       }}
     >
       <div
-        aria-hidden="true"
         style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '2px',
-          background:
-            'linear-gradient(90deg, transparent 0%, var(--gold) 30%, var(--teal) 70%, transparent 100%)',
-          opacity: 0.7,
-        }}
-      />
-
-      <div
-        className="page-shell"
-        style={{
+          maxWidth: 1200,
+          margin: '0 auto',
+          padding: '0 24px',
+          height: 64,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          paddingTop: '0.875rem',
-          paddingBottom: '0.875rem',
-          position: 'relative',
+          gap: 24,
         }}
       >
-        <Link href="/" style={{ display: 'flex', alignItems: 'baseline', gap: '0.625rem' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span
+            aria-hidden
             style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '2rem',
-              letterSpacing: '0.06em',
-              color: 'var(--gold)',
-              lineHeight: 1,
+              width: 10,
+              height: 10,
+              background: 'var(--key)',
+              borderRadius: 3,
+              flexShrink: 0,
             }}
+          />
+          <span
+            className="biq-display"
+            style={{ fontSize: 22, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.02em' }}
           >
             BIQ
           </span>
-          <span
-            style={{
-              fontFamily: 'var(--font-condensed)',
-              fontSize: '0.6rem',
-              fontWeight: 700,
-              letterSpacing: '0.22em',
-              textTransform: 'uppercase',
-              color: 'var(--muted)',
-            }}
-          >
+          <span className="nav-tagline" style={{ fontSize: 13, color: 'var(--fog)' }}>
             Basketball Intelligence
           </span>
         </Link>
 
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          {navLinks.map((link) => {
-            const baseStyle = {
-              fontFamily: 'var(--font-condensed)',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase' as const,
-              padding: '0.4rem 0.875rem',
-              transition: 'color 0.15s ease',
-              position: 'relative' as const,
-            };
-
-            if (link.external) {
-              return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <nav style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+            {navLinks.map((link) =>
+              link.external ? (
                 <a
                   key={link.href}
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="nav-link"
-                  style={{ ...baseStyle, color: 'var(--gold)' }}
+                  className="nav-link nav-link-live"
                 >
                   {link.label}
                 </a>
-              );
-            }
+              ) : (
+                <Link key={link.href} href={link.href} className="nav-link">
+                  {link.label}
+                </Link>
+              ),
+            )}
+          </nav>
 
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="nav-link"
-                style={{ ...baseStyle, color: 'var(--muted)' }}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
+          {/* Server-safe search: submits to the existing /players?q= flow */}
+          <form action="/players" method="get" style={{ display: 'flex' }}>
+            <input
+              name="q"
+              placeholder="Search players"
+              className="nav-search"
+              style={{
+                width: 160,
+                background: '#fff',
+                border: '1px solid var(--line)',
+                borderRadius: 999,
+                color: 'var(--ink)',
+                fontSize: 13,
+                padding: '7px 14px',
+                outline: 'none',
+                transition: 'border-color 0.15s ease',
+              }}
+            />
+          </form>
+        </div>
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: navStyles }} />

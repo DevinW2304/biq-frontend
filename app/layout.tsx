@@ -46,7 +46,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    // The inline script below adds `js-motion` to <html> before hydration, so
+    // the class attribute legitimately differs from the server render.
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Arms the homepage motion before first paint. Everything anime.js
             animates is hidden only under `.js-motion`, so if this never runs

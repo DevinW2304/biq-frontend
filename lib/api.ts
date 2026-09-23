@@ -3,6 +3,12 @@ import type { ModelSummary } from './types';
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
+// The localhost fallback is for development. In a production build it means
+// the env var was never set and every fetch will fail, so say so once.
+if (!process.env.NEXT_PUBLIC_API_BASE_URL && process.env.NODE_ENV === 'production') {
+  console.warn('NEXT_PUBLIC_API_BASE_URL is not set; API requests will go to http://localhost:8000.');
+}
+
 function buildUrl(path: string) {
   const base = API_BASE_URL.replace(/\/$/, '');
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;

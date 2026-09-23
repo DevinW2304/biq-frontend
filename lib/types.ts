@@ -173,3 +173,17 @@ export type CompareResponse = {
   playerB: ComparePlayerCard;
   summary: string;
 };
+export type ModelComponent = {
+  label: string;
+  weight: number;
+  explanation: string;
+};
+
+export type ModelSummary = {
+  components: ModelComponent[];
+  rankBlend: ModelComponent[];
+  tiers: { minScore: number; label: string }[];
+  /** Leaderboard qualification: both gates must be met. */
+  minGames: number;
+  minMinutes: number;
+};

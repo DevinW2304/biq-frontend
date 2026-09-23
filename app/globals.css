@@ -4,9 +4,10 @@
 
 /* ══════════════════════════════════════════════════════════════════════
    BIQ // COURT PAPER — global stylesheet
-   Light analytics product. Canonical tokens live in app/styles/biq-theme.css;
-   this file keeps the legacy variable and class names (used by the
-   leaderboard, teams, and model pages) mapped onto the same palette.
+   Light analytics product. Canonical tokens and classes live in
+   app/styles/biq-theme.css. This file holds the reset, the ticker, and the
+   legacy variable names (still read by the ticker and stacked leaderboard)
+   mapped onto the same palette. New work uses the biq-* classes.
    ══════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -82,13 +83,6 @@ body {
   --font-mono:      var(--font-file);
 }
 
-/* ─── Layout ──────────────────────────────────────────────────────────── */
-
-.page-shell {
-  @apply mx-auto max-w-7xl px-5 py-8 md:px-8;
-  position: relative;
-}
-
 /* ─── BIQ Ticker ──────────────────────────────────────────────────────── */
 
 .ticker-wrapper {
@@ -152,211 +146,9 @@ body {
   .ticker-item { padding: 0 1rem; font-size: 0.7rem; height: 30px; }
 }
 
-/* ─── Ruled Grid ──────────────────────────────────────────────────────── */
+/* ─── Legacy display face (stacked leaderboard cards) ─────────────────── */
 
-.grid-ruled {
-  display: grid;
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  overflow: hidden;
-}
-
-.grid-ruled > * {
-  background: #fff;
-  transition: background var(--transition-fast);
-}
-
-.grid-ruled > *:hover { background: var(--s1); }
-
-/* ─── Cards ──────────────────────────────────────────────────────────── */
-
-.card {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-}
-
-.card-flush {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-}
-
-/* ─── Typography ──────────────────────────────────────────────────────── */
-
-.display      { font-family: var(--font-display); font-weight: 650; letter-spacing: -0.02em; line-height: 1.02; }
-.body-copy    { font-family: var(--font-body); font-weight: 400; }
-.mono         { font-family: var(--font-file); }
-
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--font-file);
-  font-size: 0.68rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.eyebrow::before {
-  content: '';
-  display: block;
-  width: 18px;
-  height: 2px;
-  background: var(--signal);
-  border-radius: 999px;
-  flex-shrink: 0;
-}
-
-.section-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 12px;
-  margin-bottom: 0;
-}
-
-.section-title {
-  font-family: var(--font-display);
-  font-size: 1.35rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--text);
-  line-height: 1.1;
-}
-
-.section-link {
-  font-family: var(--font-body);
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--signal);
-  transition: color var(--transition-fast);
-}
-
-.section-link:hover { color: #1b34a0; text-decoration: underline; text-underline-offset: 3px; }
-
-.muted-copy {
-  font-family: var(--font-body);
-  font-size: 0.875rem;
-  line-height: 1.75;
-  color: var(--text-2);
-}
-
-/* ─── Stat Block ──────────────────────────────────────────────────────── */
-
-.stat-block { padding: 1.125rem 1.25rem; }
-
-.stat-label {
-  display: block;
-  font-family: var(--font-file);
-  font-size: 0.62rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--muted);
-  margin-bottom: 0.5rem;
-}
-
-.stat-val {
-  font-family: var(--font-display);
-  font-size: 2.1rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-
-.stat-sub {
-  font-family: var(--font-file);
-  font-size: 0.6rem;
-  color: var(--muted);
-  margin-top: 0.35rem;
-  letter-spacing: 0.05em;
-}
-
-.stat-delta.flat { color: var(--text-2); }
-
-.teal { color: var(--signal); }
-
-/* ─── Badges ──────────────────────────────────────────────────────────── */
-
-.badge {
-  display: inline-block;
-  padding: 4px 12px;
-  font-family: var(--font-file);
-  font-size: 0.62rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-.badge-gold { background: #e9edfa; color: #1b34a0; border: 0; }
-
-/* ─── Buttons ─────────────────────────────────────────────────────────── */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0.65rem 1.3rem;
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  border-radius: var(--r-md);
-  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
-  white-space: nowrap;
-}
-
-.btn-primary {
-  background: var(--signal);
-  color: #fff;
-}
-
-.btn-primary:hover { background: #1b34a0; }
-
-.btn-ghost {
-  background: transparent;
-  color: var(--text);
-  border: 1px solid var(--border-strong);
-}
-
-.btn-ghost:hover { border-color: var(--text); background: #fff; }
-
-.leader-rank {
-  font-family: var(--font-file);
-  font-size: 0.62rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 0.75rem;
-  display: block;
-}
-
-/* ─── Stat Card ───────────────────────────────────────────────────────── */
-
-.stat-card {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  padding: 1.25rem;
-  transition: border-color var(--transition-fast);
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card:hover { border-color: var(--border-strong); }
+.display { font-family: var(--font-display); font-weight: 650; letter-spacing: -0.02em; line-height: 1.02; }
 
 /* ─── Reduced Motion ──────────────────────────────────────────────────── */
 

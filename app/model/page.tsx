@@ -1,7 +1,13 @@
+// app/model/page.tsx — COURT PAPER model explainer. Every weight, tier band
+// and gate on this page comes from /api/model, so it describes the model the
+// live scores are computed with rather than a copy that can drift.
+export const revalidate = 3600;
+
 import Link from 'next/link';
+import { fetchModelSummary } from '@/lib/api';
 import { pageMetadata } from '@/lib/site';
-import { BIQStorySwap } from '@/components/BIQStorySwap';
-import styles from './page.module.css';
+import type { ModelComponent } from '@/lib/types';
+import { MeterBar, SectionHeader } from '@/components/biq/BiqKit';
 
 export const metadata = pageMetadata({
   title: 'How the model works',
@@ -9,240 +15,137 @@ export const metadata = pageMetadata({
   path: '/model',
 });
 
-const pillars = [
-  {
-    label: 'Engine',
-    value: 'Usage + pressure',
-    text: 'Measures how much offensive work a player can carry without the entire possession collapsing.',
-  },
-  {
-    label: 'Creation',
-    value: 'Advantage generation',
-    text: 'Captures who bends the defense, creates clean looks, and turns possessions into real scoring chances.',
-  },
-  {
-    label: 'Impact',
-    value: 'Winning signal',
-    text: 'Looks beyond raw totals to ask how strongly a player’s possessions translate to team value.',
-  },
-];
+function pct(weight: number) {
+  return `${Math.round(weight * 100)}%`;
+}
 
-const outcomes = [
-  'A scoring model built to reward useful offensive burden, not just volume.',
-  'Player pages that explain why someone grades highly instead of only displaying a rank.',
-  'A cleaner analytics experience that feels more editorial than spreadsheet-heavy.',
-];
-
-export default function ModelPage() {
+function WeightRows({ rows }: { rows: ModelComponent[] }) {
   return (
-    <>
-     
-
-      <main className="page-shell" style={{ paddingTop: '2.5rem', paddingBottom: '4rem' }}>
-        <section
-          className="card"
-          style={{
-            position: 'relative',
-            overflow: 'hidden',
-            padding: '2rem',
-            marginBottom: '2rem',
-            background:
-              'var(--panel)',
-          }}
-        >
-          <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              top: '-2rem',
-              right: '-1rem',
-              fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(8rem, 18vw, 14rem)',
-              lineHeight: 1,
-              color: 'transparent',
-              WebkitTextStroke: '1px rgba(30, 28, 23, 0.1)',
-              letterSpacing: '0.05em',
-              pointerEvents: 'none',
-              userSelect: 'none',
-            }}
-          >
-            MODEL
+    <ol className="biq-ledger" style={{ marginTop: 12 }}>
+      {rows.map((row) => (
+        <li key={row.label} className="biq-row">
+          <div className="model-weight-row">
+            <span className="biq-display" style={{ fontSize: 17, fontWeight: 600 }}>
+              {row.label}
+            </span>
+            <span style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>{row.explanation}</span>
+            <span className="model-weight-bar">
+              <MeterBar value={row.weight * 100} />
+            </span>
+            <span className="biq-num" style={{ fontSize: 20, fontWeight: 600, textAlign: 'right' }}>
+              {pct(row.weight)}
+            </span>
           </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
 
-          <div style={{ position: 'relative', zIndex: 1, maxWidth: 900 }}>
-            <p className="eyebrow" style={{ marginBottom: '1rem' }}>
-              BIQ Model
+export default async function ModelPage() {
+  const model = await fetchModelSummary();
+  const components = model ? [...model.components].sort((a, b) => b.weight - a.weight) : [];
+  const tiers = model?.tiers ?? [];
+
+  return (
+    <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+      {/* ---------------- COVER ---------------- */}
+      <section style={{ padding: '56px 0 40px' }}>
+        <p className="biq-mono">The BIQ model</p>
+        <h1 className="biq-display biq-hero-size" style={{ marginTop: 12, maxWidth: '15ch' }}>
+          How a BIQ score is built
+        </h1>
+        <p style={{ marginTop: 18, maxWidth: '62ch', fontSize: 16, lineHeight: 1.7, color: 'var(--ink-2)' }}>
+          BIQ turns a season of box-score and on-court data into one number from 0 to 100 for what
+          a player is worth to a team. Every input is scored as a percentile against the
+          league&apos;s rotation players, then blended with the weights below. Two scores come out
+          of it: BIQ, the broad read on value, and rank score, which orders the leaderboard.
+        </p>
+      </section>
+
+      {!model ? (
+        <section style={{ padding: '0 0 88px' }}>
+          <div className="biq-card" style={{ padding: 28 }}>
+            <p className="biq-display" style={{ fontSize: 18, fontWeight: 600 }}>
+              The model details didn&apos;t load
             </p>
-
-            <h1
-              className="display"
-              style={{
-                fontSize: 'clamp(3rem, 7vw, 6rem)',
-                lineHeight: 0.92,
-                color: 'var(--text)',
-                marginBottom: '1rem',
-                maxWidth: '10ch',
-              }}
-            >
-              HOW BIQ
-              <br />
-              WORKS,
-              <br />
-              LAYER BY
-              <br />
-              LAYER.
-            </h1>
-
-            <p
-              className="body-copy"
-              style={{
-                fontSize: '1.02rem',
-                lineHeight: 1.8,
-                color: 'var(--muted)',
-                maxWidth: 720,
-                marginBottom: '1.5rem',
-              }}
-            >
-              BIQ started as a way to think about player value more clearly than traditional box
-              score reading. The goal was not just to rank players, but to build an experience that
-              explains burden, creation, efficiency, and impact in a way that feels readable.
+            <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
+              The weights come straight from the scoring service, which isn&apos;t responding.
+              Reload in a minute, or see the scores themselves on the{' '}
+              <Link href="/leaderboard" className="biq-link">leaderboard</Link>.
             </p>
+          </div>
+        </section>
+      ) : (
+        <>
+          {/* ---------------- STEP 1: BIQ ---------------- */}
+          <section style={{ padding: '40px 0' }}>
+            <SectionHeader label={`Step 1 · ${components.length} weighted inputs`} title="The BIQ score" />
+            <p style={{ marginTop: 20, maxWidth: '64ch', fontSize: 15, lineHeight: 1.7, color: 'var(--ink-2)' }}>
+              BIQ is a weighted average of these inputs. Engine, impact and efficiency carry most of
+              it; the rest keep a one-dimensional scorer from grading like a complete player. Players
+              who have missed a large share of games take a small reduction on top.
+            </p>
+            <WeightRows rows={components} />
+          </section>
 
-            <div className="flex flex-wrap gap-3">
-              <Link href="/leaderboard" className="btn btn-primary btn-animated">
-                View Leaderboard
+          {/* ---------------- STEP 2: RANK SCORE ---------------- */}
+          <section style={{ padding: '40px 0' }}>
+            <SectionHeader label="Step 2 · What orders the board" title="Rank score" />
+            <p style={{ marginTop: 20, maxWidth: '64ch', fontSize: 15, lineHeight: 1.7, color: 'var(--ink-2)' }}>
+              Two players can post the same BIQ with very different jobs. Rank score separates them
+              by blending BIQ with two views of how much offense a player carries, then applying
+              adjustments: a bonus when someone is elite at carrying, creating and scoring
+              efficiently all at once, and penalties for profiles that look like stars on volume
+              alone.
+            </p>
+            <WeightRows rows={model.rankBlend} />
+          </section>
+
+          {/* ---------------- TIERS ---------------- */}
+          <section style={{ padding: '40px 0' }}>
+            <SectionHeader label="What a score means" title="Tiers" />
+            <ol className="biq-ledger" style={{ marginTop: 12 }}>
+              {tiers.map((tier, index) => {
+                const ceiling = index === 0 ? 100 : tiers[index - 1].minScore;
+                return (
+                  <li key={tier.label} className="biq-row">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '14px 8px' }}>
+                      <span className="biq-chip">{tier.label}</span>
+                      <span className="biq-num" style={{ fontSize: 15 }}>
+                        {index === 0
+                          ? `${tier.minScore}+`
+                          : tier.minScore === 0
+                            ? `Below ${ceiling}`
+                            : `${tier.minScore} to ${ceiling}`}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+
+          {/* ---------------- QUALIFICATION ---------------- */}
+          <section style={{ padding: '40px 0 88px' }}>
+            <SectionHeader label="Who gets ranked" title="Qualifying for the board" />
+            <p style={{ marginTop: 20, maxWidth: '64ch', fontSize: 15, lineHeight: 1.7, color: 'var(--ink-2)' }}>
+              The leaderboard only ranks players with at least {model.minGames} games at{' '}
+              {Math.round(model.minMinutes)}+ minutes a night, so it compares established starters
+              with enough of a sample to trust. Everyone else still gets a full profile and a BIQ
+              score.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 24 }}>
+              <Link href="/leaderboard" className="biq-btn">
+                See the leaderboard
               </Link>
-              <Link href="/players?q=" className="btn btn-ghost btn-animated">
-                Explore Players
+              <Link href="/players" className="biq-btn-ghost">
+                Search every player
               </Link>
             </div>
-          </div>
-        </section>
-
-        <section style={{ marginBottom: '3rem' }}>
-          <BIQStorySwap />
-        </section>
-
-        <section style={{ marginBottom: '2rem' }}>
-          <div className="section-head" style={{ marginBottom: '1px' }}>
-            <span className="section-title">What The Model Is Trying To Measure</span>
-          </div>
-
-          <div
-            className="grid-ruled"
-            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}
-          >
-            {pillars.map((item) => (
-              <article key={item.label} style={{ padding: '1.4rem' }}>
-                <div
-                  className="leader-rank"
-                  style={{ marginBottom: '0.75rem', color: 'var(--signal)' }}
-                >
-                  {item.label}
-                </div>
-                <h3
-                  className="display"
-                  style={{
-                    fontSize: '1.5rem',
-                    color: 'var(--text)',
-                    marginBottom: '0.55rem',
-                  }}
-                >
-                  {item.value}
-                </h3>
-                <p className="muted-copy" style={{ fontSize: '0.82rem' }}>
-                  {item.text}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section style={{ marginBottom: '2rem' }}>
-          <div className="section-head" style={{ marginBottom: '1px' }}>
-            <span className="section-title">What Came Out Of It</span>
-          </div>
-
-          <div className="grid-ruled" style={{ gridTemplateColumns: '1fr' }}>
-            {outcomes.map((item, index) => (
-              <div
-                key={item}
-                style={{
-                  padding: '1.15rem 1.4rem',
-                  display: 'grid',
-                  gridTemplateColumns: '72px 1fr',
-                  gap: '1rem',
-                  alignItems: 'start',
-                  borderBottom:
-                    index === outcomes.length - 1 ? 'none' : '1px solid var(--border)',
-                }}
-              >
-                <div
-                  className="display"
-                  style={{
-                    fontSize: '2rem',
-                    color: 'var(--faint)',
-                    lineHeight: 1,
-                  }}
-                >
-                  0{index + 1}
-                </div>
-                <p
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '0.96rem',
-                    lineHeight: 1.85,
-                    color: 'var(--text-2)',
-                  }}
-                >
-                  {item}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="card" style={{ padding: '1.5rem' }}>
-          <div className="section-head" style={{ marginBottom: '1rem' }}>
-            <span className="section-title">Why This Page Exists</span>
-          </div>
-
-          <div className={styles.whyGrid}>
-            <p
-              className="body-copy"
-              style={{
-                fontSize: '0.98rem',
-                lineHeight: 1.9,
-                color: 'var(--text-2)',
-              }}
-            >
-              BIQ is meant to feel like both a product and a point of view. This page gives the
-              model more narrative context: what problem it is solving, how the layers connect, and
-              how the interface supports the scoring logic rather than hiding it.
-            </p>
-
-            <div
-              className="card-flush"
-              style={{ padding: '1rem', borderLeft: '2px solid var(--signal)' }}
-            >
-              <div className="leader-rank" style={{ marginBottom: '0.55rem' }}>
-                Portfolio Context
-              </div>
-              <p
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.78rem',
-                  lineHeight: 1.75,
-                  color: 'var(--muted)',
-                }}
-              >
-                Product design, analytics thinking, interface systems, and full-stack implementation
-                all meet here.
-              </p>
-            </div>
-          </div>
-        </section>
-      </main>
-    </>
+          </section>
+        </>
+      )}
+    </main>
   );
 }

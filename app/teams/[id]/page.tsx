@@ -1,12 +1,15 @@
+// app/teams/[id]/page.tsx — COURT PAPER team dashboard.
 export const revalidate = 300;
 
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { ApiError, fetchCachedJSON } from '@/lib/api';
+import { ApiError, fetchCachedJSON, fetchCurrentSeason } from '@/lib/api';
 import { pageMetadata } from '@/lib/site';
 import { TeamProfile } from '@/lib/types';
-import { StatCard } from '@/components/StatCard';
+import { SectionHeader } from '@/components/biq/BiqKit';
+import { RuleGrid, StatCell } from '@/components/biq/StatGrid';
+import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
 
 // Shared by generateMetadata and the page; Next dedupes the identical fetch.
 function fetchTeam(id: string) {
@@ -31,6 +34,7 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
   // The API 422s on non-numeric ids; that's a missing page, not an outage.
   if (!/^\d+$/.test(params.id)) notFound();
 
+  const season = await fetchCurrentSeason();
   let team: TeamProfile;
   try {
     team = await fetchTeam(params.id);
@@ -41,192 +45,110 @@ export default async function TeamPage({ params }: { params: { id: string } }) {
     throw error;
   }
   const roster = team.rosterPreview ?? [];
+  const alignment = [team.conference, team.division].filter(Boolean).join(' · ');
 
   return (
-    <main style={{ maxWidth: 960, margin: '0 auto', padding: '2rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <style>{`
-        .roster-card { transition: border-color 0.15s ease; }
-        .roster-card:hover { border-color: var(--border-strong) !important; }
-      `}</style>
+    <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+      {/* ---------------- COVER ---------------- */}
+      <section style={{ padding: '56px 0 40px' }}>
+        <p className="biq-mono">Team dashboard{season ? ` · ${season}` : ''}</p>
 
-      {/* ── Hero ── */}
-      <section style={{
-        background: 'var(--s1)',
-        border: '1px solid var(--border)',
-        overflow: 'hidden',
-      }}>
-        <div style={{ padding: '1.75rem' }}>
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: '1rem',
-            marginBottom: '0.875rem',
-          }}>
-            <p style={{
-              fontSize: '0.65rem',
-              fontWeight: 700,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: 'var(--muted)',
-              margin: 0,
-            }}>
-              Team Dashboard
-            </p>
-            <Link href="/teams" style={{
-              fontSize: '0.75rem',
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 24, marginTop: 28, minWidth: 0 }}>
+          <span
+            aria-hidden="true"
+            className="biq-num"
+            style={{
+              display: 'grid',
+              placeItems: 'center',
+              flexShrink: 0,
+              width: 'clamp(72px, 10vw, 132px)',
+              aspectRatio: '1',
+              border: '1px solid var(--line)',
+              borderRadius: 'var(--radius)',
+              background: 'var(--panel)',
+              fontSize: 'clamp(18px, 2.4vw, 30px)',
               fontWeight: 600,
-              color: 'var(--muted)',
-              textDecoration: 'none',
-              letterSpacing: '0.04em',
-            }}>
-              ← Back to teams
-            </Link>
+            }}
+          >
+            {team.abbreviation}
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <h1 className="biq-display biq-hero-size">{team.name}</h1>
+            {alignment ? (
+              <p style={{ marginTop: 8, fontSize: 15, color: 'var(--fog)' }}>{alignment}</p>
+            ) : null}
           </div>
+        </div>
 
-          {/* Team name */}
-          <h1 style={{
-            fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
-            fontWeight: 700,
-            letterSpacing: '-0.02em',
-            color: 'var(--text)',
-            lineHeight: 1.1,
-            margin: 0,
-            marginBottom: 8,
-            fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-          }}>
-            {team.name}
-          </h1>
+        {team.lineupInsight ? (
+          <div
+            className="biq-card"
+            style={{ marginTop: 32, maxWidth: 860, padding: '20px 24px', borderLeft: '3px solid var(--key)' }}
+          >
+            <p className="biq-mono" style={{ marginBottom: 10 }}>Team read</p>
+            <p style={{ fontSize: 15, lineHeight: 1.75, color: 'var(--ink-2)' }}>{team.lineupInsight}</p>
+          </div>
+        ) : null}
 
-          {/* Conference / division badges */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: '1rem' }}>
-            {[team.abbreviation, team.conference, team.division].filter(Boolean).map((tag) => (
-              <span key={tag} style={{
-                fontSize: '0.65rem',
-                fontWeight: 600,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                padding: '3px 10px',
-                background: 'var(--s2)',
-                color: 'var(--muted)',
-                border: '1px solid var(--border)',
-              }}>
-                {tag}
-              </span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 28 }}>
+          <Link href="/teams" className="biq-btn-ghost">
+            All teams
+          </Link>
+        </div>
+      </section>
+
+      {/* ---------------- PROFILE ---------------- */}
+      <section style={{ padding: '40px 0' }}>
+        <SectionHeader label="Season to date" title="Team profile" />
+        <div style={{ marginTop: 24 }}>
+          <RuleGrid min={180}>
+            {team.stats.map((stat) => (
+              <StatCell key={stat.label} {...stat} />
             ))}
-          </div>
-
-          {/* Insight */}
-          {team.lineupInsight && (
-            <p style={{
-              fontSize: '0.875rem',
-              color: 'var(--muted)',
-              lineHeight: 1.6,
-              maxWidth: 600,
-              margin: 0,
-            }}>
-              {team.lineupInsight}
-            </p>
-          )}
+          </RuleGrid>
         </div>
       </section>
 
-      {/* ── Team Stats ── */}
-      <section>
-        <SectionHeader title="Team Profile" />
-        <div className="grid-ruled" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
-          {team.stats.map((stat) => (
-            <StatCard key={stat.label} {...stat} />
-          ))}
-        </div>
-      </section>
-
-      {/* ── Roster Preview ── */}
-      <section style={{
-        background: 'var(--s1)',
-        border: '1px solid var(--border)',
-        padding: '1.5rem',
-      }}>
-        <SectionHeader title="Roster Preview" />
-
+      {/* ---------------- ROSTER ---------------- */}
+      <section style={{ padding: '40px 0 88px' }}>
+        <SectionHeader label={`${roster.length} players`} title="Roster" />
         {roster.length > 0 ? (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '0.75rem',
-          }}>
+          <ul className="biq-ledger">
             {roster.map((player) => (
-              <Link
-                key={player.id}
-                href={`/players/${player.id}`}
-                className="roster-card"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.3rem',
-                  padding: '1rem',
-                  background: 'var(--s2)',
-                  border: '1px solid var(--border)',
-                  textDecoration: 'none',
-                }}
-              >
-                <span style={{
-                  fontSize: '0.62rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                }}>
-                  #{player.number || '--'} · {player.position || 'Player'}
-                </span>
-
-                <span style={{
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  letterSpacing: '-0.01em',
-                  color: 'var(--text)',
-                  lineHeight: 1.2,
-                  fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                }}>
-                  {player.name}
-                </span>
-
-                <span style={{
-                  fontSize: '0.65rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  color: 'var(--signal)',
-                  marginTop: 2,
-                }}>
-                  View profile →
-                </span>
-              </Link>
+              <li key={player.id} className="biq-row">
+                <Link
+                  href={`/players/${player.id}`}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '52px minmax(0, 1fr) auto',
+                    alignItems: 'center',
+                    gap: 20,
+                    padding: '14px 8px',
+                  }}
+                >
+                  <SubjectPhoto id={player.id} name={player.name} size={52} />
+                  <span style={{ minWidth: 0 }}>
+                    <span className="biq-ledger-name">{player.name}</span>
+                    <span className="biq-ledger-meta">
+                      {[player.number ? `#${player.number}` : '', player.position].filter(Boolean).join(' · ')}
+                    </span>
+                  </span>
+                  <span className="biq-link" style={{ fontSize: 14 }}>
+                    Open profile
+                  </span>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         ) : (
-          <p style={{ fontSize: '0.875rem', color: 'var(--muted)', margin: 0 }}>
-            No roster preview is available for this team yet.
-          </p>
+          <div className="biq-card" style={{ padding: 28, marginTop: 24 }}>
+            <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
+              This team&apos;s roster hasn&apos;t been synced yet. Every player is still in
+              the <Link href="/players" className="biq-link">player index</Link>.
+            </p>
+          </div>
         )}
       </section>
     </main>
-  );
-}
-
-function SectionHeader({ title }: { title: string }) {
-  return (
-    <div style={{ marginBottom: '0.875rem' }}>
-      <h2 style={{
-        fontSize: '0.7rem',
-        fontWeight: 700,
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        color: 'var(--muted)',
-        margin: 0,
-      }}>
-        {title}
-      </h2>
-    </div>
   );
 }

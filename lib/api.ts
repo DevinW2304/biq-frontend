@@ -1,3 +1,5 @@
+import type { ModelSummary } from './types';
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
@@ -82,6 +84,16 @@ export async function fetchCurrentSeason(): Promise<string | null> {
     return season || null;
   } catch (error) {
     console.error('Failed to load current season', error);
+    return null;
+  }
+}
+
+/** The live model weights, tiers and leaderboard gate. Null when unavailable. */
+export async function fetchModelSummary(): Promise<ModelSummary | null> {
+  try {
+    return await fetchCachedJSON<ModelSummary>('/api/model', 3600);
+  } catch (error) {
+    console.error('Failed to load model summary', error);
     return null;
   }
 }

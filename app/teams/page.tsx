@@ -1,329 +1,59 @@
-'use client';
+// app/teams/page.tsx — COURT PAPER team index: every team ranked by net
+// rating. Server component; the list filters client-side in TeamIndex.
+export const revalidate = 300;
 
-import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { TeamLeaderboardEntry } from '@/lib/types';
+import { fetchCachedJSON, fetchCurrentSeason } from '@/lib/api';
+import { pageMetadata } from '@/lib/site';
+import type { TeamLeaderboardEntry } from '@/lib/types';
+import { SectionHeader } from '@/components/biq/BiqKit';
+import { TeamIndex } from '@/components/TeamIndex';
 
-export default function TeamsPage() {
-  const [teams, setTeams] = useState<TeamLeaderboardEntry[]>([]);
-  const [query, setQuery] = useState('');
-  const [conference, setConference] = useState<'All' | 'Eastern' | 'Western'>('All');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const metadata = pageMetadata({
+  title: 'NBA teams',
+  description: 'Every NBA team ranked by net rating, with record, offense, defense and a dashboard for each.',
+  path: '/teams',
+});
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadTeams() {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const res = await fetch('/api/teams/search-page', {
-          cache: 'no-store',
-        });
-
-        const payload = await res.json().catch(() => null);
-
-        if (!res.ok) {
-          const message =
-            payload?.error ||
-            payload?.detail ||
-            `Request failed: ${res.status}`;
-          throw new Error(message);
-        }
-
-        if (isMounted) {
-          setTeams(payload as TeamLeaderboardEntry[]);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Failed to load teams.');
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadTeams();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const filteredTeams = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return teams
-      .filter((team) => {
-        const matchesConference =
-          conference === 'All' ? true : team.conference === conference;
-
-        const matchesQuery =
-          normalizedQuery.length === 0
-            ? true
-            : [team.name, team.abbreviation, team.conference, team.division]
-                .filter(Boolean)
-                .some((value) => value.toLowerCase().includes(normalizedQuery));
-
-        return matchesConference && matchesQuery;
-      })
-      .sort((a, b) => Number(b.netRating ?? 0) - Number(a.netRating ?? 0));
-  }, [teams, query, conference]);
+export default async function TeamsPage() {
+  // This page is prerendered, so a backend outage during a build must not
+  // fail the build; render the empty state and let revalidation recover it.
+  const [teams, season] = await Promise.all([
+    fetchCachedJSON<TeamLeaderboardEntry[]>('/api/teams/leaders?limit=30', 300).catch((error) => {
+      console.error('Failed to load teams', error);
+      return null;
+    }),
+    fetchCurrentSeason(),
+  ]);
+  const ranked = [...(teams ?? [])].sort((a, b) => b.netRating - a.netRating);
 
   return (
-    <main className="page-shell space-y-8">
-      <section className="card" style={{ padding: '1.5rem' }}>
-        <p className="eyebrow" style={{ marginBottom: '1rem' }}>
-          Team Index
-        </p>
-
-        <h1
-          className="display"
-          style={{
-            fontSize: 'clamp(2.5rem, 5vw, 4.25rem)',
-            lineHeight: 0.95,
-            color: 'var(--text)',
-            marginBottom: '1rem',
-          }}
-        >
-          TEAM
-          <br />
-          SEARCH
+    <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+      {/* ---------------- COVER ---------------- */}
+      <section style={{ padding: '56px 0 40px' }}>
+        <p className="biq-mono">Team index{season ? ` · ${season}` : ''}</p>
+        <h1 className="biq-display biq-hero-size" style={{ marginTop: 12, maxWidth: '16ch' }}>
+          Every team, ranked by net rating
         </h1>
-
-        <p
-          className="muted-copy"
-          style={{
-            maxWidth: '68ch',
-            fontSize: '0.95rem',
-            marginBottom: '1.5rem',
-          }}
-        >
-          Browse every team dashboard with live season context, efficiency profile,
-          roster view, and BIQ-style team framing.
+        <p style={{ marginTop: 18, maxWidth: '60ch', fontSize: 16, lineHeight: 1.7, color: 'var(--ink-2)' }}>
+          Net rating is points scored minus points allowed per 100 possessions, the cleanest single
+          read on how good a team has been. Open any team for its full profile and roster.
         </p>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1.4fr) minmax(180px, 0.6fr)',
-            gap: '0.9rem',
-          }}
-        >
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search teams, abbreviations, conferences, divisions..."
-            aria-label="Search teams"
-            style={{
-              width: '100%',
-              background: '#fff',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--r-md)',
-              color: 'var(--text)',
-              padding: '0.95rem 1rem',
-              outline: 'none',
-              fontSize: '0.95rem',
-            }}
-          />
-
-          <select
-            value={conference}
-            onChange={(e) =>
-              setConference(e.target.value as 'All' | 'Eastern' | 'Western')
-            }
-            aria-label="Filter by conference"
-            style={{
-              width: '100%',
-              background: '#fff',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--r-md)',
-              color: 'var(--text)',
-              padding: '0.95rem 1rem',
-              outline: 'none',
-              fontSize: '0.95rem',
-            }}
-          >
-            <option value="All">All conferences</option>
-            <option value="Eastern">Eastern</option>
-            <option value="Western">Western</option>
-          </select>
-        </div>
-
-        <div
-          style={{
-            marginTop: '0.9rem',
-            fontSize: '0.72rem',
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: 'var(--muted)',
-          }}
-        >
-          {loading ? 'Loading teams…' : `${filteredTeams.length} teams shown`}
-        </div>
       </section>
 
-      <section>
-        <div className="section-head">
-          <span className="section-title">All Team Dashboards</span>
-        </div>
-
-        {error ? (
-          <div className="card" style={{ padding: '1.25rem', color: 'var(--muted)' }}>
-            Failed to load teams: {error}
-          </div>
-        ) : loading ? (
-          <div className="card" style={{ padding: '1.25rem', color: 'var(--muted)' }}>
-            Loading team dashboards...
-          </div>
-        ) : filteredTeams.length === 0 ? (
-          <div className="card" style={{ padding: '1.25rem', color: 'var(--muted)' }}>
-            No teams matched your search.
-          </div>
+      {/* ---------------- THE LIST ---------------- */}
+      <section style={{ padding: '0 0 88px' }}>
+        <SectionHeader label="Net rating, best first" title={teams ? `All ${ranked.length} teams` : 'Teams'} />
+        {teams ? (
+          <TeamIndex teams={ranked} />
         ) : (
-          <div
-            className="grid-ruled"
-            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}
-          >
-            {filteredTeams.map((team, index) => (
-              <Link
-                key={team.id}
-                href={`/teams/${team.id}`}
-                className="card"
-                style={{
-                  padding: '1.25rem',
-                  display: 'grid',
-                  gap: '0.85rem',
-                  textDecoration: 'none',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    gap: '1rem',
-                  }}
-                >
-                  <div>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: '0.58rem',
-                        letterSpacing: '0.18em',
-                        textTransform: 'uppercase',
-                        color: 'var(--muted)',
-                        marginBottom: '0.55rem',
-                      }}
-                    >
-                      #{index + 1} · {team.abbreviation}
-                    </p>
-
-                    <h2
-                      style={{
-                        margin: 0,
-                        color: 'var(--text)',
-                        fontFamily: 'var(--font-display)',
-                        fontSize: '1.6rem',
-                        lineHeight: 0.98,
-                        letterSpacing: '0.02em',
-                      }}
-                    >
-                      {team.name}
-                    </h2>
-                  </div>
-
-                  <div
-                    style={{
-                      textAlign: 'right',
-                      color: 'var(--signal)',
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '1.2rem',
-                      lineHeight: 1,
-                    }}
-                  >
-                    {Number(team.netRating ?? 0).toFixed(1)}
-                  </div>
-                </div>
-
-                <p
-                  style={{
-                    margin: 0,
-                    color: 'var(--muted)',
-                    fontSize: '0.74rem',
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {team.conference} · {team.division}
-                </p>
-
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-                    gap: '0.75rem',
-                    paddingTop: '0.35rem',
-                    borderTop: '1px solid var(--border)',
-                  }}
-                >
-                  <div>
-                    <div className="stat-label">Record</div>
-                    <div className="stat-val" style={{ fontSize: '1.15rem' }}>
-                      {team.wins}-{team.losses}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="stat-label">Win%</div>
-                    <div className="stat-val" style={{ fontSize: '1.15rem' }}>
-                      {Number(team.winPct ?? 0).toFixed(3)}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="stat-label">Off</div>
-                    <div className="stat-val teal" style={{ fontSize: '1.15rem' }}>
-                      {Number(team.offRating ?? 0).toFixed(1)}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="stat-label">Def</div>
-                    <div className="stat-val" style={{ fontSize: '1.15rem' }}>
-                      {Number(team.defRating ?? 0).toFixed(1)}
-                    </div>
-                  </div>
-                </div>
-
-                <p
-                  style={{
-                    margin: 0,
-                    color: 'var(--muted)',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '0.9rem',
-                    lineHeight: 1.7,
-                  }}
-                >
-                  {team.reason ?? 'Current team profile unavailable.'}
-                </p>
-
-                <div
-                  style={{
-                    fontSize: '0.64rem',
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    color: 'var(--muted)',
-                  }}
-                >
-                  Open dashboard →
-                </div>
-              </Link>
-            ))}
+          <div className="biq-card" style={{ padding: 28, marginTop: 24 }}>
+            <p className="biq-display" style={{ fontSize: 18, fontWeight: 600 }}>
+              Team data didn&apos;t load
+            </p>
+            <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
+              The stats service isn&apos;t responding. This page retries on its own every few
+              minutes.
+            </p>
           </div>
         )}
       </section>

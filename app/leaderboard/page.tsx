@@ -1,15 +1,17 @@
+// app/leaderboard/page.tsx — COURT PAPER leaderboard: the full board in
+// three views (interactive stack, ranked list, component table).
 // Reading searchParams keeps this route dynamic; the win is the cached fetch
 // below, which spares the backend a leaderboard read on every request.
 export const revalidate = 300;
 
 import Link from 'next/link';
-import { fetchCachedJSON } from '@/lib/api';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { fetchCachedJSON, fetchCurrentSeason, fetchModelSummary } from '@/lib/api';
 import { pageMetadata } from '@/lib/site';
 import { BIQLeaderboardEntry } from '@/lib/types';
 import StackedLeaderboard from '@/components/stacked-leaderboard';
+import { MeterBar, SectionHeader } from '@/components/biq/BiqKit';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
-
-import { SpeedInsights } from '@vercel/speed-insights/next';
 
 // Every ?view= is the same ranking, so they all canonicalize to one URL.
 export const metadata = pageMetadata({
@@ -18,304 +20,213 @@ export const metadata = pageMetadata({
   path: '/leaderboard',
 });
 
-// ─── view toggle ──────────────────────────────────────────────────────────────
-function LeaderboardToggle({ activeView }: { activeView: 'visual' | 'stacked' | 'table' }) {
-  const linkStyle = (view: string) => ({
-    padding: '0.55rem 1rem',
-    border: '1px solid var(--border)',
-    borderRadius: 999,
-    background: activeView === view ? 'var(--text)' : '#fff',
-    color: activeView === view ? '#fff' : 'var(--text-2)',
-    textDecoration: 'none' as const,
-    fontSize: '0.8rem',
-    fontWeight: 500,
-    fontFamily: 'var(--font-body)',
-  });
+const VIEWS = [
+  { key: 'stacked', label: 'Interactive', href: '/leaderboard' },
+  { key: 'list', label: 'List', href: '/leaderboard?view=list' },
+  { key: 'table', label: 'Table', href: '/leaderboard?view=table' },
+] as const;
 
+type ViewKey = (typeof VIEWS)[number]['key'];
+
+function parseView(value: string | undefined): ViewKey {
+  // "visual" was the card grid this list replaced; keep old links working.
+  if (value === 'list' || value === 'visual') return 'list';
+  if (value === 'table') return 'table';
+  return 'stacked';
+}
+
+function ViewSwitch({ active }: { active: ViewKey }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', flexWrap: 'wrap' }}>
-      <Link href="/leaderboard"               style={linkStyle('stacked')}>Interactive</Link>
-      <Link href="/leaderboard?view=visual"   style={linkStyle('visual')} >Visual view</Link>
-      <Link href="/leaderboard?view=table"    style={linkStyle('table')}  >Table view</Link>
-    </div>
+    <nav aria-label="Leaderboard view" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      {VIEWS.map((view) => (
+        <Link
+          key={view.key}
+          href={view.href}
+          className="biq-btn-ghost"
+          aria-current={view.key === active ? 'page' : undefined}
+          style={{ padding: '8px 16px', fontSize: 13 }}
+        >
+          {view.label}
+        </Link>
+      ))}
+    </nav>
   );
 }
 
-// ─── visual cards ─────────────────────────────────────────────────────────────
-function StatMini({ label, value }: { label: string; value: number }) {
+function ListView({ players }: { players: BIQLeaderboardEntry[] }) {
   return (
-    <div
-      style={{
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--r-sm)',
-        background: 'var(--bg)',
-        padding: '0.72rem 0.8rem',
-      }}
-    >
-      <div className="stat-label" style={{ marginBottom: '0.35rem' }}>{label}</div>
-      <div
-        style={{
-          fontFamily: 'var(--font-file)',
-          fontSize: '1.05rem',
-          fontWeight: 600,
-          lineHeight: 1,
-          color: 'var(--text)',
-          fontVariantNumeric: 'tabular-nums',
-        }}
-      >
-        {value.toFixed(1)}
-      </div>
-    </div>
-  );
-}
-
-function VisualLeaderboardCard({
-  player,
-  index,
-  featured = false,
-}: {
-  player: BIQLeaderboardEntry;
-  index: number;
-  featured?: boolean;
-}) {
-  return (
-    <article
-      className="card"
-      style={{
-        padding: featured ? '1.5rem' : '1.25rem',
-        display: 'grid',
-        alignContent: 'start',
-        gap: '1rem',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <SubjectPhoto id={player.id} name={player.name} size={featured ? 72 : 56} />
-        <div style={{ minWidth: 0 }}>
-          <p className="leader-rank" style={{ marginBottom: '0.3rem' }}>Rank #{index + 1}</p>
-          <h3
-            className="display"
-            style={{
-              margin: 0,
-              fontSize: featured ? 'clamp(1.4rem, 2.4vw, 1.9rem)' : '1.2rem',
-              color: 'var(--text)',
-            }}
-          >
-            {player.name}
-          </h3>
-          <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: 'var(--muted)' }}>
-            {player.team} · {player.position}
-          </p>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.7rem' }}>
-        <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '0.8rem' }}>
-          <div className="stat-label" style={{ marginBottom: '0.35rem' }}>BIQ</div>
-          <div
-            style={{
-              fontFamily: 'var(--font-file)',
-              fontSize: featured ? '1.6rem' : '1.25rem',
-              fontWeight: 600,
-              lineHeight: 1,
-              color: 'var(--text)',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {player.biqScore.toFixed(1)}
-          </div>
-        </div>
-        <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '0.8rem' }}>
-          <div className="stat-label" style={{ marginBottom: '0.35rem' }}>Rank score</div>
-          <div
-            style={{
-              fontFamily: 'var(--font-file)',
-              fontSize: featured ? '1.6rem' : '1.25rem',
-              fontWeight: 600,
-              lineHeight: 1,
-              color: 'var(--signal)',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {player.biqRankScore.toFixed(1)}
-          </div>
-        </div>
-      </div>
-
-      <div><span className="badge badge-gold">{player.biqTier}</span></div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.6rem' }}>
-        <StatMini label="Engine"   value={player.engineScore} />
-        <StatMini label="Creation" value={player.creationScore} />
-        <StatMini label="Impact"   value={player.impactScore} />
-      </div>
-
-      <p style={{ margin: 0, color: 'var(--text-2)', fontFamily: 'var(--font-body)', fontSize: '0.85rem', lineHeight: 1.7 }}>
-        {player.reason}
-      </p>
-
-      <div><Link href={`/players/${player.id}`} className="section-link">View player</Link></div>
-    </article>
-  );
-}
-
-function VisualLeaderboard({ players }: { players: BIQLeaderboardEntry[] }) {
-  const featured = players.slice(0, 3);
-  const rest      = players.slice(3);
-  return (
-    <div style={{ display: 'grid', gap: '1.4rem' }}>
-      <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-        {featured.map((p, i) => <VisualLeaderboardCard key={p.id} player={p} index={i} featured />)}
-      </div>
-      <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
-        {rest.map((p, i) => <VisualLeaderboardCard key={p.id} player={p} index={i + 3} />)}
-      </div>
-    </div>
-  );
-}
-
-// ─── table view ───────────────────────────────────────────────────────────────
-function TableLeaderboard({ players }: { players: BIQLeaderboardEntry[] }) {
-  return (
-    <div className="card" style={{ overflow: 'hidden' }}>
-      <div style={{ overflowX: 'auto' }}>
-        <table className="biq-table" style={{ minWidth: 1480 }}>
-          <thead>
-            <tr>
-              {['Rank','Player','Team','Rank Score','BIQ','Tier','Star','Engine','Burden','Creation','Efficiency','Impact','Avail.','Model View'].map(label => (
-                <th key={label} style={{ padding: '0.75rem 0.85rem' }}>{label}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {players.map((player, index) => (
-              <tr key={player.id} style={{ verticalAlign: 'top' }}>
-                <td style={{ padding: '0.9rem 0.85rem', fontWeight: 600 }}>#{index + 1}</td>
-                <td style={{ padding: '0.9rem 0.85rem', minWidth: 250 }}>
-                  <Link href={`/players/${player.id}`} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <SubjectPhoto id={player.id} name={player.name} size={44} />
-                    <span style={{ minWidth: 0 }}>
-                      <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '0.95rem', fontWeight: 600, color: 'var(--text)' }}>
-                        {player.name}
-                      </span>
-                      <span style={{ display: 'block', marginTop: 2, fontSize: '0.7rem', color: 'var(--muted)' }}>
-                        {player.position}
-                      </span>
-                    </span>
-                  </Link>
-                </td>
-                <td style={{ padding: '0.9rem 0.85rem' }}>{player.team}</td>
-                <td style={{ padding: '0.9rem 0.85rem', color: 'var(--signal)', fontSize: '1rem', fontWeight: 600 }}>{player.biqRankScore.toFixed(1)}</td>
-                <td style={{ padding: '0.9rem 0.85rem' }}>{player.biqScore.toFixed(1)}</td>
-                <td style={{ padding: '0.9rem 0.85rem', minWidth: 160 }}><span className="badge badge-gold">{player.biqTier}</span></td>
-                <td style={{ padding: '0.9rem 0.85rem' }}>{player.starScore.toFixed(1)}</td>
-                <td style={{ padding: '0.9rem 0.85rem' }}>{player.engineScore.toFixed(1)}</td>
-                <td style={{ padding: '0.9rem 0.85rem' }}>{player.burdenScore.toFixed(1)}</td>
-                <td style={{ padding: '0.9rem 0.85rem' }}>{player.creationScore.toFixed(1)}</td>
-                <td style={{ padding: '0.9rem 0.85rem' }}>{player.efficiencyScore.toFixed(1)}</td>
-                <td style={{ padding: '0.9rem 0.85rem' }}>{player.impactScore.toFixed(1)}</td>
-                <td style={{ padding: '0.9rem 0.85rem' }}>{player.availabilityScore.toFixed(1)}</td>
-                <td style={{ padding: '0.9rem 0.85rem', minWidth: 300, maxWidth: 360, whiteSpace: 'normal', color: 'var(--muted)', fontFamily: 'var(--font-body)', fontSize: '0.82rem', lineHeight: 1.65 }}>
+    <ol className="biq-ledger">
+      {players.map((player, index) => (
+        <li key={player.id} className="biq-row">
+          <Link href={`/players/${player.id}`} className="biq-ledger-link">
+            <span className="biq-rank" style={{ fontSize: 15 }}>
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <SubjectPhoto id={player.id} name={player.name} size={52} />
+            <span style={{ minWidth: 0 }}>
+              <span className="biq-ledger-name">{player.name}</span>
+              <span className="biq-ledger-meta">
+                {player.team} · {player.biqTier}
+              </span>
+              {player.reason ? (
+                <span
+                  style={{ display: 'block', marginTop: 6, maxWidth: '62ch', fontSize: 13, lineHeight: 1.55, color: 'var(--ink-2)' }}
+                >
                   {player.reason}
-                </td>
-              </tr>
+                </span>
+              ) : null}
+            </span>
+            <span className="biq-ledger-score">
+              <span
+                className="biq-num biq-signal"
+                style={{ display: 'block', fontSize: 22, fontWeight: 600, textAlign: 'right' }}
+              >
+                {player.biqRankScore.toFixed(1)}
+              </span>
+              <span style={{ display: 'block', marginTop: 6 }}>
+                <MeterBar value={player.biqRankScore} />
+              </span>
+              <span className="biq-mono" style={{ display: 'block', marginTop: 6, fontSize: 9, textAlign: 'right' }}>
+                Rank score · BIQ {player.biqScore.toFixed(1)}
+              </span>
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+const TABLE_COLUMNS: { label: string; value: (p: BIQLeaderboardEntry) => number }[] = [
+  { label: 'BIQ', value: (p) => p.biqScore },
+  { label: 'Star', value: (p) => p.starScore },
+  { label: 'Engine', value: (p) => p.engineScore },
+  { label: 'Burden', value: (p) => p.burdenScore },
+  { label: 'Creation', value: (p) => p.creationScore },
+  { label: 'Efficiency', value: (p) => p.efficiencyScore },
+  { label: 'Impact', value: (p) => p.impactScore },
+  { label: 'Avail.', value: (p) => p.availabilityScore },
+];
+
+function TableView({ players }: { players: BIQLeaderboardEntry[] }) {
+  return (
+    <div className="biq-table-scroll" style={{ marginTop: 16 }}>
+      <table className="biq-table" style={{ minWidth: 980 }}>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Player</th>
+            <th scope="col">Team</th>
+            <th scope="col">Rank score</th>
+            {TABLE_COLUMNS.map((column) => (
+              <th key={column.label} scope="col" style={{ textAlign: 'right' }}>
+                {column.label}
+              </th>
             ))}
-          </tbody>
-        </table>
-      </div>
+            <th scope="col" style={{ paddingLeft: 14 }}>Tier</th>
+          </tr>
+        </thead>
+        <tbody>
+          {players.map((player, index) => (
+            <tr key={player.id}>
+              <td className="biq-rank">{String(index + 1).padStart(2, '0')}</td>
+              <td>
+                <Link href={`/players/${player.id}`} className="biq-link" style={{ fontFamily: 'var(--font-body)', fontWeight: 600 }}>
+                  {player.name}
+                </Link>
+              </td>
+              <td>{player.team}</td>
+              <td style={{ minWidth: 150 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span className="biq-signal" style={{ fontWeight: 600, width: '3.5ch' }}>
+                    {player.biqRankScore.toFixed(1)}
+                  </span>
+                  <span style={{ flex: 1 }}>
+                    <MeterBar value={player.biqRankScore} />
+                  </span>
+                </span>
+              </td>
+              {TABLE_COLUMNS.map((column) => (
+                <td key={column.label} style={{ textAlign: 'right' }}>
+                  {column.value(player).toFixed(1)}
+                </td>
+              ))}
+              <td style={{ paddingLeft: 14 }}>
+                <span className="biq-chip">{player.biqTier}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-// ─── page ─────────────────────────────────────────────────────────────────────
 export default async function LeaderboardPage({
   searchParams,
 }: {
   searchParams?: { view?: string };
 }) {
-  const view = searchParams?.view ?? 'stacked'; // default → interactive
+  const view = parseView(searchParams?.view);
 
-  const players = await fetchCachedJSON<BIQLeaderboardEntry[]>('/api/players/biq-leaders?limit=25', 300);
-
-  const viewLabel = view === 'table'
-    ? 'Current rankings · Table view'
-    : view === 'visual'
-    ? 'Current rankings · Visual view'
-    : 'Current rankings · Interactive';
+  const [players, season, model] = await Promise.all([
+    fetchCachedJSON<BIQLeaderboardEntry[]>('/api/players/biq-leaders?limit=25', 300),
+    fetchCurrentSeason(),
+    fetchModelSummary(),
+  ]);
 
   return (
-    <main className="page-shell space-y-8">
-      {/* ── hero header ──────────────────────────────────────────────────── */}
-      <section style={{ padding: '1.5rem 0 0' }}>
-        <p className="eyebrow" style={{ marginBottom: '1rem' }}>BIQ Leaderboard</p>
-
-        <h1
-          className="display"
-          style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', color: 'var(--text)', marginBottom: '1rem', maxWidth: '16ch' }}
-        >
-          Top 25 players by BIQ
+    <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+      {/* ---------------- COVER ---------------- */}
+      <section style={{ padding: '56px 0 40px' }}>
+        <p className="biq-mono">BIQ leaderboard{season ? ` · ${season}` : ''}</p>
+        <h1 className="biq-display biq-hero-size" style={{ marginTop: 12, maxWidth: '16ch' }}>
+          The {players.length || 25} most valuable players right now
         </h1>
-
-        <p className="muted-copy" style={{ maxWidth: '70ch', fontSize: '0.95rem' }}>
-          This board is built to answer a harder question than who has the biggest box-score line
-          or the loudest name value. BIQ starts with broad player utility, then pushes further by
-          asking which players are truly driving offense, handling real responsibility, and still
-          producing efficient, winning-level impact.
+        <p style={{ marginTop: 18, maxWidth: '62ch', fontSize: 16, lineHeight: 1.7, color: 'var(--ink-2)' }}>
+          Ordered by rank score, which blends a player&apos;s BIQ with how much of an offense they
+          actually carry.
+          {model
+            ? ` Only players with ${model.minGames}+ games at ${Math.round(model.minMinutes)}+ minutes a night qualify, so this is a read on established starters, not the whole league.`
+            : ' Only high-minute regulars qualify, so this is a read on established starters, not the whole league.'}
         </p>
-      </section>
-
-      {/* ── how to read ──────────────────────────────────────────────────── */}
-      <section className="card" style={{ padding: '1.5rem' }}>
-        <div style={{ display: 'grid', gap: '1.1rem' }}>
-          <div style={{ paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-            <p className="eyebrow" style={{ marginBottom: '0.7rem' }}>How to read the board</p>
-            <h2 className="display" style={{ margin: 0, fontSize: 'clamp(1.4rem, 2vw, 1.9rem)', color: 'var(--text)', maxWidth: '24ch' }}>
-              Current play shape over reputation
-            </h2>
-          </div>
-          <p style={{ margin: 0, maxWidth: '78ch', color: 'var(--text-2)', fontFamily: 'var(--font-body)', fontSize: '0.95rem', lineHeight: 1.8 }}>
-            BIQ is not trying to mirror popularity, scoring average, or traditional award logic. It
-            is built to identify which players create the most real offensive value once workload,
-            creation pressure, efficiency, and impact are viewed together.
-          </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginTop: 20 }}>
+          <Link href="/model" className="biq-link" style={{ fontSize: 14 }}>
+            How rank score works
+          </Link>
+          <Link href="/players" className="biq-link" style={{ fontSize: 14 }}>
+            Search every player
+          </Link>
         </div>
       </section>
 
-      {/* ── rankings section ─────────────────────────────────────────────── */}
-      <section style={{ display: 'grid', gap: '1rem' }}>
-        <div className="section-head">
-          <span className="section-title">{viewLabel}</span>
-          <Link href="/players?q=" className="section-link">Browse all players</Link>
-        </div>
+      {/* ---------------- THE BOARD ---------------- */}
+      <section style={{ padding: '0 0 88px' }}>
+        <SectionHeader
+          label={`${players.length} qualified players`}
+          title="Rankings"
+          action={<ViewSwitch active={view} />}
+        />
 
-        <LeaderboardToggle activeView={view as 'visual' | 'stacked' | 'table'} />
-
-        {view === 'table'   && <TableLeaderboard players={players} />}
-        {view === 'visual'  && <VisualLeaderboard players={players} />}
-        {view === 'stacked' && <StackedLeaderboard players={players} />}
-      </section>
-
-      {/* ── summary stats ────────────────────────────────────────────────── */}
-      <section>
-        <div
-          className="grid-ruled"
-          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}
-        >
-          <div className="stat-block">
-            <span className="stat-label">Leaderboard size</span>
-            <div className="stat-val" style={{ color: 'var(--signal)' }}>{players.length}</div>
-            <div className="stat-sub">Tracked players on page</div>
+        {players.length === 0 ? (
+          <div className="biq-card" style={{ padding: 28, marginTop: 24 }}>
+            <p className="biq-display" style={{ fontSize: 18, fontWeight: 600 }}>
+              No one has qualified yet
+            </p>
+            <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
+              The board fills in once players reach the games and minutes gate. Player profiles are
+              live in the meantime.
+            </p>
           </div>
-          <div className="stat-block">
-            <span className="stat-label">Top rank score</span>
-            <div className="stat-val">{players[0] ? players[0].biqRankScore.toFixed(1) : '0.0'}</div>
-            <div className="stat-sub">Current #1 ranking score</div>
+        ) : view === 'table' ? (
+          <TableView players={players} />
+        ) : view === 'list' ? (
+          <ListView players={players} />
+        ) : (
+          <div style={{ marginTop: 24 }}>
+            <StackedLeaderboard players={players} />
           </div>
-          <div className="stat-block">
-            <span className="stat-label">Top BIQ</span>
-            <div className="stat-val">{players[0] ? players[0].biqScore.toFixed(1) : '0.0'}</div>
-            <div className="stat-sub">Current #1 broad BIQ score</div>
-          </div>
-        </div>
+        )}
       </section>
 
       <SpeedInsights />

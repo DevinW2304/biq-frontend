@@ -4,6 +4,7 @@
 export const revalidate = 300;
 
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ApiError, fetchCachedJSON, fetchCurrentSeason } from '@/lib/api';
 import { PlayerProfile } from '@/lib/types';
@@ -11,6 +12,8 @@ import { MeterBar, ScoreMeter, SectionHeader } from '@/components/biq/BiqKit';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
 import { RuleGrid, StatCell } from '@/components/biq/StatGrid';
 import { TrendBars } from '@/components/biq/TrendBars';
+import { JsonLd } from '@/components/JsonLd';
+import { pageMetadata, SITE_URL } from '@/lib/site';
 
 function buildPlayerTagline(player: PlayerProfile) {
   if (player.biqScore >= 90) return 'An elite franchise-level utility profile with top-tier BIQ support.';
@@ -19,12 +22,36 @@ function buildPlayerTagline(player: PlayerProfile) {
   return 'A productive season profile with enough detail to support deeper BIQ evaluation.';
 }
 
+// Shared by generateMetadata and the page; Next dedupes the identical fetch.
+function fetchPlayer(id: string) {
+  return fetchCachedJSON<PlayerProfile>(`/api/players/${id}`, 300);
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  if (!/^\d+$/.test(params.id)) return { title: 'Player not found' };
+  try {
+    const player = await fetchPlayer(params.id);
+    return pageMetadata({
+      title: `${player.name} player profile`,
+      description: `${player.name} (${player.team}, ${player.position}): BIQ ${player.biqScore.toFixed(1)}, ${player.biqTier}. Recent form, efficiency, splits and game log.`,
+      path: `/players/${player.id}`,
+      image: `/players/${player.id}/opengraph-image`,
+    });
+  } catch {
+    // The page itself decides between 404 and an error; don't fail here first.
+    return { title: 'Player profile' };
+  }
+}
+
 export default async function PlayerPage({ params }: { params: { id: string } }) {
+  // The API 422s on non-numeric ids; that's a missing page, not an outage.
+  if (!/^\d+$/.test(params.id)) notFound();
+
   const season = await fetchCurrentSeason();
   let player: PlayerProfile;
 
   try {
-    player = await fetchCachedJSON<PlayerProfile>(`/api/players/${params.id}`, 300);
+    player = await fetchPlayer(params.id);
   } catch (error) {
     // Only a real 404 means the player doesn't exist. Anything else is a
     // backend problem and should surface as an error, not "not found".
@@ -35,10 +62,23 @@ export default async function PlayerPage({ params }: { params: { id: string } })
     throw error;
   }
 
+  const profileJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    url: `${SITE_URL}/players/${player.id}`,
+    mainEntity: {
+      '@type': 'Person',
+      name: player.name,
+      jobTitle: 'Professional basketball player',
+    },
+  };
+
   const sampleGames = (player.gameLog ?? []).length;
 
   return (
     <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+      <JsonLd data={profileJsonLd} />
+
       {/* ---------------- COVER ---------------- */}
       <section style={{ padding: '56px 0 40px' }}>
         <p className="biq-mono">Player profile{season ? ` · Evaluated ${season} season` : ''}</p>

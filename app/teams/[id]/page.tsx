@@ -1,10 +1,45 @@
+export const revalidate = 300;
+
 import Link from 'next/link';
-import { fetchJSON } from '@/lib/api';
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { ApiError, fetchCachedJSON } from '@/lib/api';
+import { pageMetadata } from '@/lib/site';
 import { TeamProfile } from '@/lib/types';
 import { StatCard } from '@/components/StatCard';
 
+// Shared by generateMetadata and the page; Next dedupes the identical fetch.
+function fetchTeam(id: string) {
+  return fetchCachedJSON<TeamProfile>(`/api/teams/${id}`, 300);
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  if (!/^\d+$/.test(params.id)) return { title: 'Team not found' };
+  try {
+    const team = await fetchTeam(params.id);
+    return pageMetadata({
+      title: `${team.name} dashboard`,
+      description: `${team.name} (${team.conference}, ${team.division}): season record, efficiency profile and roster BIQ.`,
+      path: `/teams/${team.id}`,
+    });
+  } catch {
+    return { title: 'Team dashboard' };
+  }
+}
+
 export default async function TeamPage({ params }: { params: { id: string } }) {
-  const team = await fetchJSON<TeamProfile>(`/api/teams/${params.id}`);
+  // The API 422s on non-numeric ids; that's a missing page, not an outage.
+  if (!/^\d+$/.test(params.id)) notFound();
+
+  let team: TeamProfile;
+  try {
+    team = await fetchTeam(params.id);
+  } catch (error) {
+    // Only a real 404 means the team doesn't exist; anything else is an outage.
+    if (error instanceof ApiError && error.isNotFound) notFound();
+    console.error(`Failed to load team ${params.id}`, error);
+    throw error;
+  }
   const roster = team.rosterPreview ?? [];
 
   return (

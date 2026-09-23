@@ -1,6 +1,13 @@
 import Link from 'next/link';
+import { pageMetadata } from '@/lib/site';
 import { BIQStorySwap } from '@/components/BIQStorySwap';
 import styles from './page.module.css';
+
+export const metadata = pageMetadata({
+  title: 'How the model works',
+  description: 'What goes into a BIQ score: engine, creation, efficiency, impact, availability and the rest, and how they are weighted.',
+  path: '/model',
+});
 
 const pillars = [
   {

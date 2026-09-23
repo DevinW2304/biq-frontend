@@ -6,6 +6,7 @@ export const revalidate = 300;
 
 import Link from 'next/link';
 import { fetchCachedJSON, fetchCurrentSeason } from '@/lib/api';
+import { pageMetadata } from '@/lib/site';
 import { CompareResponse, ComparePlayerCard } from '@/lib/types';
 import { MeterBar, ScoreMeter } from '@/components/biq/BiqKit';
 import { RuleGrid, StatCell } from '@/components/biq/StatGrid';
@@ -77,6 +78,13 @@ function SubjectCard({ player, slot }: { player: ComparePlayerCard; slot: 'A' | 
     </div>
   );
 }
+
+// Each ?a=&b= pair is a generated view, not a page worth indexing.
+export const metadata = pageMetadata({
+  title: 'Compare NBA players',
+  description: 'Put two NBA players side by side and see where their BIQ profiles split.',
+  path: '/compare',
+});
 
 export default async function ComparePage({
   searchParams,

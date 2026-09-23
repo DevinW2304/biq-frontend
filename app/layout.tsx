@@ -3,6 +3,7 @@ import './styles/biq-theme.css';
 import { Navbar } from '@/components/Navbar';
 import { SiteFooter } from '@/components/biq/SiteFooter';
 import type { Metadata } from 'next';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 import { Bricolage_Grotesque, Instrument_Sans, Spline_Sans_Mono } from 'next/font/google';
 
 const bricolage = Bricolage_Grotesque({
@@ -25,8 +26,22 @@ const splineMono = Spline_Sans_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'BIQ // Basketball Intelligence',
-  description: 'BIQ turns NBA data into a sharper read on player value.',
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: 'BIQ // Basketball Intelligence',
+    template: '%s · BIQ',
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: {
+    type: 'website',
+    siteName: SITE_NAME,
+    title: 'BIQ // Basketball Intelligence',
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

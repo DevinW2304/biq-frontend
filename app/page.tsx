@@ -4,6 +4,8 @@
 export const revalidate = 300;
 
 import Link from 'next/link';
+import type { Metadata } from 'next';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 import { PlayerSearchBar } from '@/components/PlayerSearchBar';
 import { BiqTicker } from '@/components/BiqTicker';
 import { fetchCachedJSON, fetchCurrentSeason } from '@/lib/api';
@@ -11,6 +13,7 @@ import { BIQLeaderboardEntry } from '@/lib/types';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { MeterBar, SectionHeader } from '@/components/biq/BiqKit';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
+import { JsonLd } from '@/components/JsonLd';
 import { HomeMotion } from '@/components/biq/motion/HomeMotion';
 import { BiqEngine } from '@/components/biq/motion/BiqEngine';
 
@@ -36,6 +39,32 @@ function getTopByMetric(
   if (!players.length) return null;
   return players.reduce((best, current) => (metric(current) > metric(best) ? current : best));
 }
+
+export const metadata: Metadata = {
+  title: { absolute: 'BIQ // Basketball Intelligence' },
+  description: SITE_DESCRIPTION,
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    siteName: SITE_NAME,
+    title: 'BIQ // Basketball Intelligence',
+    description: SITE_DESCRIPTION,
+    url: '/',
+  },
+};
+
+// Lets search engines offer a sitelinks search box that lands on /players.
+const WEBSITE_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE_NAME,
+  url: SITE_URL,
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: `${SITE_URL}/players?q={search_term_string}`,
+    'query-input': 'required name=search_term_string',
+  },
+};
 
 export default async function HomePage() {
   const season = await fetchCurrentSeason();
@@ -67,6 +96,8 @@ export default async function HomePage() {
       data-anime-root
       style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}
     >
+      <JsonLd data={WEBSITE_JSON_LD} />
+
       {/* ---------------- 1. HERO — the dark stage ---------------- */}
       <section className="biq-hero-dark" data-anime="hero" style={{ padding: '44px 0 64px' }}>
         <div

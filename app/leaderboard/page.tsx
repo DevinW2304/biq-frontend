@@ -4,11 +4,19 @@ export const revalidate = 300;
 
 import Link from 'next/link';
 import { fetchCachedJSON } from '@/lib/api';
+import { pageMetadata } from '@/lib/site';
 import { BIQLeaderboardEntry } from '@/lib/types';
 import StackedLeaderboard from '@/components/stacked-leaderboard';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
 
 import { SpeedInsights } from '@vercel/speed-insights/next';
+
+// Every ?view= is the same ranking, so they all canonicalize to one URL.
+export const metadata = pageMetadata({
+  title: 'Leaderboard',
+  description: 'The current BIQ rankings: the NBA\'s highest-minute players ordered by engine, creation, efficiency and impact.',
+  path: '/leaderboard',
+});
 
 // ─── view toggle ──────────────────────────────────────────────────────────────
 function LeaderboardToggle({ activeView }: { activeView: 'visual' | 'stacked' | 'table' }) {

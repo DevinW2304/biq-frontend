@@ -1,7 +1,9 @@
-export const dynamic = 'force-dynamic';
+// Reading searchParams keeps this route dynamic; the win is the cached fetch
+// below, which spares the backend a leaderboard read on every request.
+export const revalidate = 300;
 
 import Link from 'next/link';
-import { fetchJSON } from '@/lib/api';
+import { fetchCachedJSON } from '@/lib/api';
 import { BIQLeaderboardEntry } from '@/lib/types';
 import StackedLeaderboard from '@/components/stacked-leaderboard';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
@@ -220,12 +222,11 @@ function TableLeaderboard({ players }: { players: BIQLeaderboardEntry[] }) {
 export default async function LeaderboardPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ view?: string }>;
+  searchParams?: { view?: string };
 }) {
-  const params = searchParams ? await searchParams : undefined;
-  const view   = params?.view ?? 'stacked'; // default → interactive
+  const view = searchParams?.view ?? 'stacked'; // default → interactive
 
-  const players = await fetchJSON<BIQLeaderboardEntry[]>('/api/players/biq-leaders?limit=25');
+  const players = await fetchCachedJSON<BIQLeaderboardEntry[]>('/api/players/biq-leaders?limit=25', 300);
 
   const viewLabel = view === 'table'
     ? 'Current rankings · Table view'

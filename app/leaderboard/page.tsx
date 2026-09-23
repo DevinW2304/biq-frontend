@@ -7,6 +7,7 @@ export const revalidate = 300;
 import Link from 'next/link';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { fetchCachedJSON, fetchCurrentSeason, fetchModelSummary } from '@/lib/api';
+import { describeGate } from '@/lib/model';
 import { pageMetadata } from '@/lib/site';
 import { BIQLeaderboardEntry } from '@/lib/types';
 import StackedLeaderboard from '@/components/stacked-leaderboard';
@@ -187,7 +188,7 @@ export default async function LeaderboardPage({
           Ordered by rank score, which blends a player&apos;s BIQ with how much of an offense they
           actually carry.
           {model
-            ? ` Only players with ${model.minGames}+ games at ${Math.round(model.minMinutes)}+ minutes a night qualify, so this is a read on established starters, not the whole league.`
+            ? ` Only players with ${describeGate(model)} qualify, so this is a read on established starters, not the whole league.`
             : ' Only high-minute regulars qualify, so this is a read on established starters, not the whole league.'}
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginTop: 20 }}>

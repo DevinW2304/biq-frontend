@@ -5,6 +5,7 @@ export const revalidate = 3600;
 
 import Link from 'next/link';
 import { fetchModelSummary } from '@/lib/api';
+import { describeGate } from '@/lib/model';
 import { pageMetadata } from '@/lib/site';
 import type { ModelComponent } from '@/lib/types';
 import { MeterBar, SectionHeader } from '@/components/biq/BiqKit';
@@ -130,10 +131,9 @@ export default async function ModelPage() {
           <section style={{ padding: '40px 0 88px' }}>
             <SectionHeader label="Who gets ranked" title="Qualifying for the board" />
             <p style={{ marginTop: 20, maxWidth: '64ch', fontSize: 15, lineHeight: 1.7, color: 'var(--ink-2)' }}>
-              The leaderboard only ranks players with at least {model.minGames} games at{' '}
-              {Math.round(model.minMinutes)}+ minutes a night, so it compares established starters
-              with enough of a sample to trust. Everyone else still gets a full profile and a BIQ
-              score.
+              The leaderboard only ranks players with {describeGate(model)}, so it compares
+              established starters with enough of a sample to trust. Everyone else still gets a
+              full profile and a BIQ score.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 24 }}>
               <Link href="/leaderboard" className="biq-btn">

@@ -183,7 +183,12 @@ export type ModelSummary = {
   components: ModelComponent[];
   rankBlend: ModelComponent[];
   tiers: { minScore: number; label: string }[];
-  /** Leaderboard qualification: both gates must be met. */
+  /**
+   * Leaderboard qualification: both gates must be met. minGames is the
+   * full-season gate scaled to how many games have been played so far.
+   */
   minGames: number;
+  minGamesFullSeason: number;
+  gamesIntoSeason: number;
   minMinutes: number;
 };

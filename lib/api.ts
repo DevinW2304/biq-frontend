@@ -70,3 +70,18 @@ export async function fetchLiveJSON<T>(path: string): Promise<T> {
     cache: 'no-store',
   });
 }
+/**
+ * The season the backend serves when a request doesn't name one ("2025-26").
+ * It rolls over on its own, so pages label themselves from this rather than a
+ * hardcoded string. Label-only: on failure return null and let callers drop
+ * the season from the copy instead of breaking the page.
+ */
+export async function fetchCurrentSeason(): Promise<string | null> {
+  try {
+    const { season } = await fetchCachedJSON<{ season: string }>('/api/season', 300);
+    return season || null;
+  } catch (error) {
+    console.error('Failed to load current season', error);
+    return null;
+  }
+}

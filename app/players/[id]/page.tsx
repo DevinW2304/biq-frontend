@@ -5,7 +5,7 @@ export const revalidate = 300;
 
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ApiError, fetchCachedJSON } from '@/lib/api';
+import { ApiError, fetchCachedJSON, fetchCurrentSeason } from '@/lib/api';
 import { PlayerProfile } from '@/lib/types';
 import { MeterBar, ScoreMeter, SectionHeader } from '@/components/biq/BiqKit';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
@@ -20,6 +20,7 @@ function buildPlayerTagline(player: PlayerProfile) {
 }
 
 export default async function PlayerPage({ params }: { params: { id: string } }) {
+  const season = await fetchCurrentSeason();
   let player: PlayerProfile;
 
   try {
@@ -40,7 +41,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
     <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
       {/* ---------------- COVER ---------------- */}
       <section style={{ padding: '56px 0 40px' }}>
-        <p className="biq-mono">Player profile · Evaluated 2025-26 season</p>
+        <p className="biq-mono">Player profile{season ? ` · Evaluated ${season} season` : ''}</p>
 
         <div
           style={{

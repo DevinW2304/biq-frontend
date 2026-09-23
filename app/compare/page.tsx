@@ -5,7 +5,7 @@
 export const revalidate = 300;
 
 import Link from 'next/link';
-import { fetchCachedJSON } from '@/lib/api';
+import { fetchCachedJSON, fetchCurrentSeason } from '@/lib/api';
 import { CompareResponse, ComparePlayerCard } from '@/lib/types';
 import { MeterBar, ScoreMeter } from '@/components/biq/BiqKit';
 import { RuleGrid, StatCell } from '@/components/biq/StatGrid';
@@ -85,6 +85,7 @@ export default async function ComparePage({
 }) {
   const playerA = searchParams.a?.trim();
   const playerB = searchParams.b?.trim();
+  const season = await fetchCurrentSeason();
 
   let compare: CompareResponse | null = null;
 
@@ -101,7 +102,7 @@ export default async function ComparePage({
 
   return (
     <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-      <ComparePlayerPicker />
+      <ComparePlayerPicker season={season} />
 
       {compare && (
         <>

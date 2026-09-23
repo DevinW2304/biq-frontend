@@ -6,7 +6,7 @@ export const revalidate = 300;
 
 import Link from 'next/link';
 import { PlayerSearchBar } from '@/components/PlayerSearchBar';
-import { fetchCachedJSON, fetchLiveJSON } from '@/lib/api';
+import { fetchCachedJSON, fetchCurrentSeason, fetchLiveJSON } from '@/lib/api';
 import { SearchPlayerResult, BIQLeaderboardEntry } from '@/lib/types';
 import { MeterBar, SectionHeader } from '@/components/biq/BiqKit';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
@@ -17,6 +17,7 @@ export default async function PlayersPage({
   searchParams: { q?: string };
 }) {
   const q = (searchParams.q ?? '').trim();
+  const season = await fetchCurrentSeason();
 
   const results = q
     ? await fetchLiveJSON<SearchPlayerResult[]>(
@@ -35,7 +36,7 @@ export default async function PlayersPage({
     <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
       {/* ---------------- SEARCH ---------------- */}
       <section style={{ padding: '56px 0 40px' }}>
-        <p className="biq-mono">Player index · 2025-26</p>
+        <p className="biq-mono">Player index{season ? ` · ${season}` : ''}</p>
         <h1 className="biq-display biq-h2-size" style={{ marginTop: 12 }}>
           Find active NBA players
         </h1>

@@ -6,7 +6,7 @@ export const revalidate = 300;
 import Link from 'next/link';
 import { PlayerSearchBar } from '@/components/PlayerSearchBar';
 import { BiqTicker } from '@/components/BiqTicker';
-import { fetchCachedJSON } from '@/lib/api';
+import { fetchCachedJSON, fetchCurrentSeason } from '@/lib/api';
 import { BIQLeaderboardEntry } from '@/lib/types';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { MeterBar, SectionHeader } from '@/components/biq/BiqKit';
@@ -38,6 +38,7 @@ function getTopByMetric(
 }
 
 export default async function HomePage() {
+  const season = await fetchCurrentSeason();
   let tickerPlayers: BIQLeaderboardEntry[] = [];
 
   try {
@@ -78,7 +79,7 @@ export default async function HomePage() {
         >
           <div>
             <p className="biq-mono" data-anime="hero-eyebrow" data-anime-hide>
-              Basketball Intelligence Quotient · 2025-26
+              Basketball Intelligence Quotient{season ? ` · ${season}` : ''}
             </p>
             <h1
               className="biq-display biq-hero-size"

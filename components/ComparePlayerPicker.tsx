@@ -14,7 +14,7 @@ type SelectedPlayer = {
   label: string;
 };
 
-export function ComparePlayerPicker() {
+export function ComparePlayerPicker({ season }: { season: string | null }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -154,7 +154,7 @@ export function ComparePlayerPicker() {
 
   return (
     <section style={{ padding: '56px 0 0', borderBottom: '1px solid var(--line)' }}>
-      <p className="biq-mono">Player comparison · 2025-26</p>
+      <p className="biq-mono">Player comparison{season ? ` · ${season}` : ''}</p>
 
       <div
         style={{

@@ -1,5 +1,9 @@
+import { fetchCurrentSeason } from '@/lib/api';
+
 // Global footer: one quiet line on every page.
-export function SiteFooter() {
+export async function SiteFooter() {
+  const season = await fetchCurrentSeason();
+
   return (
     <footer style={{ borderTop: '1px solid var(--line)', background: 'var(--paper)' }}>
       <div
@@ -15,7 +19,9 @@ export function SiteFooter() {
           color: 'var(--fog)',
         }}
       >
-        <span>BIQ, the Basketball Intelligence Quotient. 2025-26 season.</span>
+        <span>
+          BIQ, the Basketball Intelligence Quotient.{season ? ` ${season} season.` : ''}
+        </span>
         <span>All evaluations are current-season only.</span>
       </div>
     </footer>

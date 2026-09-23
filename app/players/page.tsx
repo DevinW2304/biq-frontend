@@ -1,36 +1,70 @@
 // app/players/page.tsx — COURT PAPER player index: search plus results as
 // ranked list rows. Server component; data flow unchanged
-// (fetchLiveJSON for searches, fetchCachedJSON leaderboard default).
+// (paged /api/players for searches, fetchCachedJSON leaderboard default).
 
 export const revalidate = 300;
 
 import Link from 'next/link';
+import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/site';
 import { PlayerSearchBar } from '@/components/PlayerSearchBar';
-import { fetchCachedJSON, fetchCurrentSeason, fetchLiveJSON } from '@/lib/api';
-import { SearchPlayerResult, BIQLeaderboardEntry } from '@/lib/types';
+import { fetchCachedJSON, fetchCurrentSeason } from '@/lib/api';
+import { BIQLeaderboardEntry, PlayerDirectoryEntry, PlayerDirectoryPage } from '@/lib/types';
+
+const PAGE_SIZE = 50;
+
+function pageHref(q: string, page: number) {
+  const params = new URLSearchParams({ q });
+  if (page > 1) params.set('page', String(page));
+  return `/players?${params}`;
+}
 import { MeterBar, SectionHeader } from '@/components/biq/BiqKit';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
+
+export function generateMetadata({ searchParams }: { searchParams: { q?: string } }): Metadata {
+  // Search results are thin, near-duplicate pages; keep them out of the index
+  // but let crawlers follow through to the profiles.
+  return pageMetadata({
+    title: 'NBA player index',
+    description: 'Search every active NBA player and open their BIQ profile.',
+    path: '/players',
+    noindex: Boolean(searchParams.q?.trim()),
+  });
+}
 
 export default async function PlayersPage({
   searchParams,
 }: {
-  searchParams: { q?: string };
+  searchParams: { q?: string; page?: string };
 }) {
   const q = (searchParams.q ?? '').trim();
+  const page = Math.max(1, Math.floor(Number(searchParams.page)) || 1);
   const season = await fetchCurrentSeason();
 
-  const results = q
-    ? await fetchLiveJSON<SearchPlayerResult[]>(
-        `/api/players/search?q=${encodeURIComponent(q)}`
-      )
-    : await fetchCachedJSON<BIQLeaderboardEntry[]>(
-        '/api/players/biq-leaders?limit=12',
-        300
-      );
+  let results: (BIQLeaderboardEntry | PlayerDirectoryEntry)[];
+  let total: number;
+  let offset = 0;
 
+  if (q) {
+    const directory = await fetchCachedJSON<PlayerDirectoryPage>(
+      `/api/players?q=${encodeURIComponent(q)}&offset=${(page - 1) * PAGE_SIZE}&limit=${PAGE_SIZE}`,
+      300
+    );
+    results = directory.items;
+    total = directory.total;
+    offset = directory.offset;
+  } else {
+    results = await fetchCachedJSON<BIQLeaderboardEntry[]>(
+      '/api/players/biq-leaders?limit=12',
+      300
+    );
+    total = results.length;
+  }
+
+  const pageCount = Math.ceil(total / PAGE_SIZE);
   const countLine = q
-    ? `${results.length} active player${results.length === 1 ? '' : 's'} found`
-    : `${results.length} leaderboard player${results.length === 1 ? '' : 's'} shown`;
+    ? `${total} active player${total === 1 ? '' : 's'} found`
+    : `${total} leaderboard player${total === 1 ? '' : 's'} shown`;
 
   return (
     <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
@@ -75,7 +109,7 @@ export default async function PlayersPage({
                   }}
                 >
                   <span className="biq-rank" style={{ fontSize: 15 }}>
-                    {String(index + 1).padStart(2, '0')}
+                    {String(offset + index + 1).padStart(2, '0')}
                   </span>
                   <SubjectPhoto id={player.id} name={player.name} size={52} />
                   <span style={{ minWidth: 0 }}>
@@ -115,6 +149,28 @@ export default async function PlayersPage({
             );
           })}
         </ol>
+
+        {q && pageCount > 1 && (
+          <nav
+            aria-label="Search results pages"
+            className="biq-mono"
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginTop: 24 }}
+          >
+            {page > 1 ? (
+              <Link href={pageHref(q, page - 1)} className="biq-link">Previous</Link>
+            ) : (
+              <span />
+            )}
+            <span>
+              Page {page} of {pageCount}
+            </span>
+            {page < pageCount ? (
+              <Link href={pageHref(q, page + 1)} className="biq-link">Next</Link>
+            ) : (
+              <span />
+            )}
+          </nav>
+        )}
 
         {results.length === 0 && (
           <div className="biq-card" style={{ padding: 28, marginTop: 24 }}>

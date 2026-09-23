@@ -22,6 +22,19 @@ export type SearchPlayerResult = {
   position: string;
 };
 
+export type PlayerDirectoryEntry = SearchPlayerResult & {
+  /** Games played this season; 0 means no stats yet. */
+  gamesPlayed: number;
+};
+
+export type PlayerDirectoryPage = {
+  season: string;
+  total: number;
+  offset: number;
+  limit: number;
+  items: PlayerDirectoryEntry[];
+};
+
 export type FeaturedPlayer = {
   id: number;
   name: string;

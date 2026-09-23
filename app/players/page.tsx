@@ -90,42 +90,26 @@ export default async function PlayersPage({
           title={q ? `Results for "${q}"` : 'Current BIQ leaderboard'}
         />
 
-        <ol style={{ listStyle: 'none', margin: '8px 0 0', padding: 0 }}>
+        <ol className="biq-ledger">
           {results.map((player, index) => {
             const entry = 'biqRankScore' in player ? (player as BIQLeaderboardEntry) : null;
 
             return (
               <li key={player.id} className="biq-row">
-                <Link
-                  href={`/players/${player.id}`}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: entry
-                      ? '2.5rem 52px 1fr minmax(120px, 200px)'
-                      : '2.5rem 52px 1fr auto',
-                    alignItems: 'center',
-                    gap: 20,
-                    padding: '14px 8px',
-                  }}
-                >
+                <Link href={`/players/${player.id}`} className="biq-ledger-link">
                   <span className="biq-rank" style={{ fontSize: 15 }}>
                     {String(offset + index + 1).padStart(2, '0')}
                   </span>
                   <SubjectPhoto id={player.id} name={player.name} size={52} />
                   <span style={{ minWidth: 0 }}>
-                    <span
-                      className="biq-display"
-                      style={{ display: 'block', fontSize: 'clamp(17px, 1.8vw, 21px)', fontWeight: 600 }}
-                    >
-                      {player.name}
-                    </span>
-                    <span style={{ display: 'block', marginTop: 3, fontSize: 13, color: 'var(--fog)' }}>
+                    <span className="biq-ledger-name">{player.name}</span>
+                    <span className="biq-ledger-meta">
                       {player.team} · {player.position}
                       {entry ? ` · ${entry.biqTier}` : ''}
                     </span>
                   </span>
                   {entry ? (
-                    <span style={{ justifySelf: 'stretch' }}>
+                    <span className="biq-ledger-score">
                       <span
                         className="biq-num biq-signal"
                         style={{ display: 'block', fontSize: 22, fontWeight: 600, textAlign: 'right' }}
@@ -140,7 +124,7 @@ export default async function PlayersPage({
                       </span>
                     </span>
                   ) : (
-                    <span className="biq-link" style={{ justifySelf: 'end', fontSize: 14 }}>
+                    <span className="biq-link biq-ledger-score" style={{ fontSize: 14, textAlign: 'right' }}>
                       Open profile
                     </span>
                   )}

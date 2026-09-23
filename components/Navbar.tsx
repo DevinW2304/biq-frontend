@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
+import { MobileNav, type NavLink } from '@/components/MobileNav';
 
 const navStyles = `
   .nav-link { color: var(--ink-2); font-size: 14px; font-weight: 500; transition: color 0.15s ease; }
@@ -7,12 +9,39 @@ const navStyles = `
   .nav-link-live:hover, .nav-link-live:focus-visible { color: var(--key-deep); }
   .nav-search::placeholder { color: var(--fog); }
   .nav-search:focus { border-color: var(--key); }
-  @media (max-width: 900px) { .nav-search { display: none; } }
+  @media (max-width: 900px) { .nav-desktop .nav-search { display: none; } }
   @media (max-width: 720px) { .nav-tagline { display: none; } }
+
+  .nav-mobile { display: none; }
+  @media (max-width: 760px) {
+    .nav-desktop { display: none !important; }
+    .nav-mobile { display: block; }
+  }
+  .nav-menu-button {
+    font-family: var(--font-body); font-size: 14px; font-weight: 600; color: var(--ink);
+    background: transparent; border: 1px solid var(--line-strong); border-radius: var(--radius);
+    padding: 8px 14px; min-height: 40px; cursor: pointer;
+  }
+  .nav-panel {
+    position: absolute; left: 0; right: 0; top: 64px;
+    background: var(--paper); border-bottom: 1px solid var(--line);
+    padding: 8px 24px 20px;
+  }
+  .nav-panel[hidden] { display: none; }
+  .nav-panel nav { display: flex; flex-direction: column; }
+  .nav-panel-link {
+    display: block; padding: 14px 0; border-bottom: 1px solid var(--line);
+    font-size: 17px; font-weight: 500; color: var(--ink);
+  }
+  .nav-panel-search { margin-top: 16px; }
+  .nav-panel-search .nav-search {
+    width: 100%; background: #fff; border: 1px solid var(--line-strong); border-radius: var(--radius);
+    color: var(--ink); font-size: 16px; padding: 11px 14px;
+  }
 `;
 
-const navLinks = [
-  { href: '/players?q=',              label: 'Players',     external: false },
+const navLinks: NavLink[] = [
+  { href: '/players',                 label: 'Players',     external: false },
   { href: '/leaderboard',             label: 'Leaderboard', external: false },
   { href: '/teams',                   label: 'Teams',       external: false },
   { href: '/compare?a=2544&b=201939', label: 'Compare',     external: false },
@@ -67,7 +96,7 @@ export function Navbar() {
           </span>
         </Link>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <nav style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
             {navLinks.map((link) =>
               link.external ? (
@@ -108,6 +137,11 @@ export function Navbar() {
             />
           </form>
         </div>
+
+        {/* useSearchParams needs a Suspense boundary to keep pages static. */}
+        <Suspense fallback={null}>
+          <MobileNav links={navLinks} />
+        </Suspense>
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: navStyles }} />

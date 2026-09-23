@@ -24,12 +24,12 @@ function WeightRows({ rows }: { rows: ModelComponent[] }) {
     <ol className="biq-ledger" style={{ marginTop: 12 }}>
       {rows.map((row) => (
         <li key={row.label} className="biq-row">
-          <div className="model-weight-row">
+          <div className="biq-weight-row">
             <span className="biq-display" style={{ fontSize: 17, fontWeight: 600 }}>
               {row.label}
             </span>
             <span style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>{row.explanation}</span>
-            <span className="model-weight-bar">
+            <span className="biq-weight-bar">
               <MeterBar value={row.weight * 100} />
             </span>
             <span className="biq-num" style={{ fontSize: 20, fontWeight: 600, textAlign: 'right' }}>

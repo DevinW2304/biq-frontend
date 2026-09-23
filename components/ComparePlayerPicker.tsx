@@ -159,7 +159,7 @@ export function ComparePlayerPicker({ season }: { season: string | null }) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))',
           gap: 48,
           padding: '20px 0 48px',
         }}

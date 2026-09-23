@@ -118,7 +118,7 @@ export default async function ComparePage({
           <section
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))',
               gap: 20,
               padding: '40px 0',
             }}

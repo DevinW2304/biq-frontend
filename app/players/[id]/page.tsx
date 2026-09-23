@@ -194,22 +194,14 @@ export default async function PlayerPage({ params }: { params: { id: string } })
         <ol style={{ listStyle: 'none', margin: '12px 0 0', padding: 0 }}>
           {(player.biqBreakdown ?? []).map((component) => (
             <li key={component.label} className="biq-row">
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(120px, 12rem) 1fr minmax(110px, 13rem) 4.5rem',
-                  alignItems: 'center',
-                  gap: 24,
-                  padding: '16px 8px',
-                }}
-              >
+              <div className="biq-weight-row">
                 <span className="biq-display" style={{ fontSize: 16, fontWeight: 600 }}>
                   {component.label}
                 </span>
                 <span style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--fog)' }}>
                   {component.explanation}
                 </span>
-                <span>
+                <span className="biq-weight-bar">
                   <MeterBar value={component.score} />
                   <span className="biq-mono" style={{ display: 'block', marginTop: 6, fontSize: 10 }}>
                     Weight {Math.round(component.weight * 100)}%

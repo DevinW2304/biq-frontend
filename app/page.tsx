@@ -81,6 +81,9 @@ export default async function HomePage() {
   }
 
   const board = tickerPlayers.slice(0, 20);
+  // Open on the two players at the top right now, not a fixed pairing.
+  const compareHref =
+    board.length >= 2 ? `/compare?a=${board[0].id}&b=${board[1].id}` : '/compare?a=2544&b=201939';
 
   const signals = [
     { label: 'BEST ENGINE', player: getTopByMetric(tickerPlayers, (p) => p.engineScore), value: (p: BIQLeaderboardEntry) => p.engineScore },
@@ -131,7 +134,7 @@ export default async function HomePage() {
             </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 20 }}>
-              <Link href="/compare?a=2544&b=201939" className="biq-btn">
+              <Link href={compareHref} className="biq-btn">
                 Open a comparison
               </Link>
               <Link href="/players" className="biq-btn-ghost">

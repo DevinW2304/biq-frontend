@@ -258,7 +258,7 @@ export default async function LeaderboardPage({
             : ' Only high-minute regulars qualify, so this is a read on established starters, not the whole league.'}
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginTop: 20 }}>
-          <Link href="/model" className="biq-link" style={{ fontSize: 14 }}>
+          <Link href="/model#rank-score" className="biq-link" style={{ fontSize: 14 }}>
             How rank score works
           </Link>
           <Link href="/players" className="biq-link" style={{ fontSize: 14 }}>

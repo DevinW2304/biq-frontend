@@ -91,7 +91,7 @@ export default async function ModelPage() {
           </section>
 
           {/* ---------------- STEP 2: RANK SCORE ---------------- */}
-          <section style={{ padding: '40px 0' }}>
+          <section id="rank-score" className="biq-anchor" style={{ padding: '40px 0' }}>
             <SectionHeader label="Step 2 · What orders the board" title="Rank score" />
             <p style={{ marginTop: 20, maxWidth: '64ch', fontSize: 15, lineHeight: 1.7, color: 'var(--ink-2)' }}>
               Two players can post the same BIQ with very different jobs. Rank score separates them

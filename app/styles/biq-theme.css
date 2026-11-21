@@ -219,6 +219,35 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
   .biq-weight-row > .biq-weight-bar { grid-column: 1 / -1; grid-row: 3; }
 }
 
+/* Profile jump links: a sticky row under the 64px navbar. It scrolls
+   sideways on a phone rather than wrapping into a second sticky line. */
+.biq-jump {
+  position: sticky;
+  top: 64px;
+  z-index: 20;
+  display: flex;
+  gap: 22px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
+  margin: 0 -24px;
+  padding: 12px 24px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+.biq-jump::-webkit-scrollbar { display: none; }
+.biq-jump-link {
+  font-family: var(--font-file);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fog);
+  text-decoration: none;
+}
+.biq-jump-link:hover, .biq-jump-link:focus-visible { color: var(--key); }
+/* Land a jumped-to heading below the navbar and the jump row. */
+.biq-anchor { scroll-margin-top: 118px; }
+
 /* The leaderboard rank under the profile verdict follows its alignment. */
 .player-rank-line { margin-top: 12px; text-align: right; font-size: 11px; }
 

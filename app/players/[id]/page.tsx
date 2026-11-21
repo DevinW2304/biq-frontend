@@ -141,6 +141,21 @@ export default async function PlayerPage({ params }: { params: { id: string } })
   const dataThrough = seasonInfo?.season === season ? formatShortDate(seasonInfo?.dataThrough) : null;
   const advanced = player.advanced ?? null;
 
+  // Jump links for a page that runs ~17 phone screens. Only sections that
+  // will actually render are listed.
+  const shotsShown = Boolean(advanced?.shotProfile.some((zone) => zone.attempts > 0));
+  const jumpLinks = [
+    { id: 'topline', label: 'Topline' },
+    { id: 'breakdown', label: 'Breakdown' },
+    ...(advanced ? [{ id: 'per100', label: 'Per 100' }, { id: 'efficiency', label: 'Efficiency' }] : []),
+    ...(shotsShown ? [{ id: 'shots', label: 'Shots' }] : []),
+    ...(advanced?.onOff ? [{ id: 'onoff', label: 'On / off' }] : []),
+    { id: 'trend', label: 'Trend' },
+    { id: 'splits', label: 'Splits' },
+    { id: 'analytics', label: 'Analytics' },
+    { id: 'gamelog', label: 'Game log' },
+  ];
+
   return (
     <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
       <JsonLd data={profileJsonLd} />
@@ -234,8 +249,16 @@ export default async function PlayerPage({ params }: { params: { id: string } })
         </div>
       </section>
 
+      <nav aria-label="Profile sections" className="biq-jump">
+        {jumpLinks.map((link) => (
+          <a key={link.id} href={`#${link.id}`} className="biq-jump-link">
+            {link.label}
+          </a>
+        ))}
+      </nav>
+
       {/* ---------------- TOPLINE ---------------- */}
-      <section style={{ padding: '40px 0' }}>
+      <section id="topline" className="biq-anchor" style={{ padding: '40px 0' }}>
         <SectionHeader label="Core season indicators" title="Topline" />
         <div style={{ marginTop: 24 }}>
           <RuleGrid min={300}>
@@ -264,7 +287,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
       </section>
 
       {/* ---------------- BIQ BREAKDOWN ---------------- */}
-      <section style={{ padding: '40px 0' }}>
+      <section id="breakdown" className="biq-anchor" style={{ padding: '40px 0' }}>
         <SectionHeader label="Component scores" title="BIQ breakdown" />
         <p style={{ marginTop: 20, maxWidth: '64ch', fontSize: 14, lineHeight: 1.7, color: 'var(--ink-2)' }}>
           BIQ combines availability, efficiency, impact, team context, and box-score burden into
@@ -300,7 +323,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
           the score can be checked against the play behind it. */}
       {advanced ? (
         <>
-          <section style={{ padding: '40px 0' }}>
+          <section id="per100" className="biq-anchor" style={{ padding: '40px 0' }}>
             <SectionHeader
               label={`Pace and minutes removed · ${advanced.possessions.toLocaleString('en-US')} possessions on the floor`}
               title="Per 100 possessions"
@@ -322,7 +345,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
             </div>
           </section>
 
-          <section style={{ padding: '40px 0' }}>
+          <section id="efficiency" className="biq-anchor" style={{ padding: '40px 0' }}>
             <SectionHeader label="How the points and possessions come" title="Efficiency and role" />
             <div style={{ marginTop: 24 }}>
               <RuleGrid min={260}>
@@ -334,7 +357,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
           </section>
 
           {advanced.shotProfile.some((zone) => zone.attempts > 0) ? (
-            <section style={{ padding: '40px 0' }}>
+            <section id="shots" className="biq-anchor" style={{ padding: '40px 0' }}>
               <SectionHeader label="Where the shots come from, and how they fall" title="Shot profile" />
               <div style={{ marginTop: 24 }}>
                 <ShotProfile zones={advanced.shotProfile} />
@@ -343,7 +366,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
           ) : null}
 
           {advanced.onOff ? (
-            <section style={{ padding: '40px 0' }}>
+            <section id="onoff" className="biq-anchor" style={{ padding: '40px 0' }}>
               <SectionHeader label="Team results with and without him" title="On / off" />
               <p style={{ marginTop: 20, maxWidth: '68ch', fontSize: 14, lineHeight: 1.7, color: 'var(--ink-2)' }}>
                 Net rating is points scored minus points allowed per 100 possessions. On/off depends
@@ -359,7 +382,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
       ) : null}
 
       {/* ---------------- RECENT TREND ---------------- */}
-      <section style={{ padding: '40px 0' }}>
+      <section id="trend" className="biq-anchor" style={{ padding: '40px 0' }}>
         <SectionHeader label="Last 10 games · Points" title="Recent trend" />
         <div className="biq-card" style={{ marginTop: 24, padding: 24 }}>
           <TrendBars data={player.recentTrend ?? []} />
@@ -367,7 +390,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
       </section>
 
       {/* ---------------- SPLITS ---------------- */}
-      <section style={{ padding: '40px 0' }}>
+      <section id="splits" className="biq-anchor" style={{ padding: '40px 0' }}>
         <SectionHeader label="Situational production" title="Splits" />
         <div style={{ marginTop: 24 }}>
           <RuleGrid min={180}>
@@ -389,7 +412,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
       </section>
 
       {/* ---------------- ANALYTICS BLOCKS ---------------- */}
-      <section style={{ padding: '40px 0' }}>
+      <section id="analytics" className="biq-anchor" style={{ padding: '40px 0' }}>
         <SectionHeader label="Extended metrics" title="Analytics" />
         {(player.analyticsBlocks ?? []).map((block) => (
           <div key={block.title} style={{ marginTop: 32 }}>
@@ -404,7 +427,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
       </section>
 
       {/* ---------------- GAME LOG ---------------- */}
-      <section style={{ padding: '40px 0 88px' }}>
+      <section id="gamelog" className="biq-anchor" style={{ padding: '40px 0 88px' }}>
         <SectionHeader
           label={`Latest ${(player.gameLog ?? []).length} of ${gamesPlayed} games`}
           title="Game log"

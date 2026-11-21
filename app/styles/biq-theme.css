@@ -93,6 +93,10 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
   border-radius: 999px;
   transition: width 0.6s cubic-bezier(0.25, 0.6, 0.25, 1);
 }
+/* Snap rather than sweep for reduced motion, and on narrow screens. */
+@media (prefers-reduced-motion: reduce), (max-width: 1080px) {
+  .biq-meter-fill { transition: none; }
+}
 
 /* ---- tier chip -------------------------------------------------------- */
 
@@ -325,13 +329,13 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
 
 /* ==========================================================================
    DARK HERO — homepage showcase only. The page stays COURT PAPER; the hero
-   is a deliberate dark stage so the instrument's colour reads, handing back
-   to paper at the bottom of the instrument section.
+   and the board under it sit on a deliberate dark stage, handing back to
+   paper at the bottom of the board.
    ========================================================================== */
 
 /* The homepage main must be transparent or its paper background would hide
    the stage; body still carries the paper the hero fades back into. */
-.biq-page[data-anime-root] {
+.biq-page.biq-home {
   position: relative;
   z-index: 1;
   background: transparent;
@@ -362,7 +366,7 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
 
 /* The hand-off to paper happens once, on the last dark section only.
    Every dark section used to carry its own fade-to-transparent, so stacking
-   hero + instrument produced a wash of paper at the seam. The fade is a fixed
+   hero + board produced a wash of paper at the seam. The fade is a fixed
    distance rather than a percentage, so it reads the same however tall the
    last section is. */
 .biq-dark-end::before {
@@ -381,13 +385,7 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
 
 .biq-hero-dark {
   --eng-key: #6b8cff;
-  --eng-teal: #3fbf9a;
-  --eng-amber: #e8b13d;
-  --eng-dim: rgba(244, 241, 232, 0.34);
   --eng-line: rgba(244, 241, 232, 0.16);
-  --eng-tick: rgba(244, 241, 232, 0.58);
-  --eng-beam: rgba(107, 140, 255, 0.55);
-  --eng-well: rgba(255, 255, 255, 0.02);
   --eng-label: rgba(244, 241, 232, 0.5);
   --eng-ink: rgba(244, 241, 232, 0.92);
 }
@@ -432,85 +430,19 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
 .biq-dark-nav header .nav-panel-link { color: rgba(244, 241, 232, 0.9); border-bottom-color: rgba(244, 241, 232, 0.12); }
 .biq-dark-nav header .nav-panel-link.nav-link-live { color: #6b8cff; }
 
-/* ---- homepage motion (anime.js) -----------------------------------------
-   Armed states apply only while JS is running: an inline script in
-   app/layout.tsx puts `js-motion` on <html> before paint. With JS off the
-   class never lands, none of this applies, and the full page renders
-   statically. HomeMotion animates these back to their resting state.        */
+/* ---- the board (homepage) ------------------------------------------------
+   The top 20, printed on the dark stage under the hero: two columns of ten on
+   wide screens (1-10 left, 11-20 right), one column on narrow ones.          */
 
-.js-motion [data-anime-hide] { opacity: 0; }
-
-.js-motion [data-anime="rule"] {
-  opacity: 0;
-  transform: scaleX(0);
-  transform-origin: left center;
+.biq-board-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-top: 28px;
+  border-top: 1px solid var(--eng-line);
 }
-
-/* Driven meters take their width from --meter-pct, so a JS-less page still
-   shows filled gauges. Only the armed page empties them for anime to sweep,
-   and the CSS transition steps aside so a single system writes width.       */
-.biq-meter-fill[data-anime="meter"] {
-  width: var(--meter-pct, 0%);
-  transition: none;
-}
-.js-motion .biq-meter-fill[data-anime="meter"] { width: 0%; }
-
-/* ---- still: reduced motion, or a narrow screen ---------------------------
-   Comma is OR. Both render the homepage complete and still. HomeMotion
-   matches the same query and skips its timelines, so the two can never
-   disagree about what is on screen.                                         */
-
-@media (prefers-reduced-motion: reduce), (max-width: 1080px) {
-  .biq-meter-fill { transition: none; }
-  .js-motion [data-anime-hide] { opacity: 1; }
-  .js-motion [data-anime="rule"] { opacity: 1; transform: none; }
-  .js-motion .biq-meter-fill[data-anime="meter"] { width: var(--meter-pct, 0%); }
-}
-
-/* ---- the instrument (homepage) -------------------------------------------
-   A still drawing of the five lanes converging on the leader's score. The
-   component passes only geometry (--vb-aspect, --verdict-*), never layout,
-   so the narrow-screen rules below can put the SVG back into normal flow.   */
-
-.biq-engine {
-  position: relative;
-  width: 100%;
-  aspect-ratio: var(--vb-aspect);
-}
-.biq-engine-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-/* The score reads in real type rather than SVG text, positioned off the same
-   viewBox numbers the aperture is drawn from. */
-.biq-engine-verdict {
-  position: absolute;
-  left: var(--verdict-x);
-  top: var(--verdict-y);
-  width: var(--verdict-w);
-  transform: translate(-50%, -50%);
-  text-align: center;
-}
-
-/* Below this the aperture is too small to hold the score and a long name, so
-   the verdict drops out of the circle and prints under the drawing. */
-@media (max-width: 1080px) {
-  .biq-engine { aspect-ratio: auto; }
-  .biq-engine-svg { position: static; display: block; height: auto; }
-  .biq-engine-verdict {
-    position: static;
-    width: auto;
-    transform: none;
-    margin-top: 20px;
-  }
-}
-
-/* The top 20, printed under the instrument: two columns of ten on wide
-   screens (1-10 left, 11-20 right), one column on narrow ones. */
-.biq-board-label { margin-top: 40px; }
 .biq-board-rows {
   list-style: none;
   margin: 12px 0 0;

@@ -14,8 +14,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { MeterBar, SectionHeader } from '@/components/biq/BiqKit';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
 import { JsonLd } from '@/components/JsonLd';
-import { HomeMotion } from '@/components/biq/motion/HomeMotion';
-import { BiqEngine } from '@/components/biq/BiqEngine';
+import { DarkNavSwitch } from '@/components/biq/DarkNavSwitch';
 
 const METHOD_SECTIONS = [
   {
@@ -71,8 +70,8 @@ export default async function HomePage() {
   let tickerPlayers: BIQLeaderboardEntry[] = [];
 
   try {
-    // 25 is the backend's cap (26+ returns 422). Every tick in the hero
-    // instrument is one of these real players, so this sets its density.
+    // 25 is the backend's cap (26+ returns 422). The board shows the top 20;
+    // the component leaders below are picked from all 25.
     tickerPlayers = await fetchCachedJSON<BIQLeaderboardEntry[]>(
       '/api/players/biq-leaders?limit=25',
       300,
@@ -81,8 +80,7 @@ export default async function HomePage() {
     console.error('Failed to load homepage BIQ data', error);
   }
 
-  const board = tickerPlayers.slice(0, 10);
-  const heroLeader = board[0];
+  const board = tickerPlayers.slice(0, 20);
 
   const signals = [
     { label: 'BEST ENGINE', player: getTopByMetric(tickerPlayers, (p) => p.engineScore), value: (p: BIQLeaderboardEntry) => p.engineScore },
@@ -92,14 +90,13 @@ export default async function HomePage() {
 
   return (
     <main
-      className="biq-page"
-      data-anime-root
+      className="biq-page biq-home"
       style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}
     >
       <JsonLd data={WEBSITE_JSON_LD} />
 
       {/* ---------------- 1. HERO — the dark stage ---------------- */}
-      <section className="biq-hero-dark" data-anime="hero" style={{ padding: '44px 0 64px' }}>
+      <section className="biq-hero-dark" style={{ padding: '44px 0 64px' }}>
         <div
           style={{
             display: 'grid',
@@ -109,13 +106,11 @@ export default async function HomePage() {
           }}
         >
           <div>
-            <p className="biq-mono" data-anime="hero-eyebrow" data-anime-hide>
+            <p className="biq-mono">
               Basketball Intelligence Quotient{season ? ` · ${season}` : ''}
             </p>
             <h1
               className="biq-display biq-hero-size"
-              data-anime="hero-headline"
-              data-anime-hide
               style={{ marginTop: 16, maxWidth: '13ch' }}
             >
               One number for what a player is worth.
@@ -125,23 +120,21 @@ export default async function HomePage() {
           <div>
             <p
               className="biq-hero-copy"
-              data-anime="hero-body"
-              data-anime-hide
               style={{ maxWidth: '46ch', fontSize: 16, lineHeight: 1.7, color: 'var(--ink-2)' }}
             >
               BIQ blends workload, creation, efficiency, impact, and availability into a single
               current-season score, then shows its work.
             </p>
 
-            <div data-anime="hero-search" data-anime-hide style={{ maxWidth: 460, marginTop: 4 }}>
+            <div style={{ maxWidth: 460, marginTop: 4 }}>
               <PlayerSearchBar />
             </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 20 }}>
-              <Link href="/compare?a=2544&b=201939" className="biq-btn" data-anime="hero-cta" data-anime-hide>
+              <Link href="/compare?a=2544&b=201939" className="biq-btn">
                 Open a comparison
               </Link>
-              <Link href="/players?q=" className="biq-btn-ghost" data-anime="hero-cta" data-anime-hide>
+              <Link href="/players?q=" className="biq-btn-ghost">
                 Browse all players
               </Link>
             </div>
@@ -150,27 +143,29 @@ export default async function HomePage() {
 
       </section>
 
-      {/* ---------------- 2. THE INSTRUMENT + THE BOARD ---------------- */}
-      {heroLeader ? (
+      {/* ---------------- 2. THE BOARD — top 20, still on the dark stage ---------------- */}
+      {board.length ? (
         <section className="biq-hero-dark biq-dark-end" style={{ padding: '0 0 240px' }}>
-          <BiqEngine players={tickerPlayers} leader={heroLeader} />
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 16,
-              marginTop: 28,
-            }}
-          >
-            <span className="biq-mono">
-              Five components · {tickerPlayers.length} players · live
-            </span>
+          <div className="biq-board-head">
+            <p id="biq-board-label" className="biq-mono">
+              Top {board.length} by BIQ
+            </p>
             <Link href="/leaderboard" className="biq-link" style={{ fontSize: 14 }}>
               Full leaderboard →
             </Link>
           </div>
+          <ol className="biq-board-rows" aria-labelledby="biq-board-label">
+            {board.map((p, i) => (
+              <li key={p.id} className="biq-board-row">
+                <Link href={`/players/${p.id}`} className="biq-board-link">
+                  <span className="biq-mono biq-board-rank">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="biq-board-name">{p.name}</span>
+                  <span className="biq-mono biq-board-team">{p.team}</span>
+                  <span className="biq-num biq-board-score">{p.biqScore.toFixed(1)}</span>
+                </Link>
+              </li>
+            ))}
+          </ol>
         </section>
       ) : (
         <section className="biq-hero-dark biq-dark-end" style={{ padding: '0 0 240px' }}>
@@ -185,9 +180,8 @@ export default async function HomePage() {
 
       {/* ---------------- 3. COMPONENT LEADERS ------ */}
       <section style={{ padding: '48px 0' }}>
-        <SectionHeader label="Leaders by component" title="Live signals" driven />
+        <SectionHeader label="Leaders by component" title="Live signals" />
         <div
-          data-anime="signal-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
@@ -200,8 +194,6 @@ export default async function HomePage() {
               key={s.label}
               href={s.player ? `/players/${s.player.id}` : '/players?q='}
               className="biq-card"
-              data-anime="signal-card"
-              data-anime-hide
               style={{ padding: 24, display: 'block' }}
             >
               <p className="biq-mono">{s.label}</p>
@@ -216,15 +208,12 @@ export default async function HomePage() {
                   </div>
                   <span
                     className="biq-num biq-signal"
-                    data-anime="count"
-                    data-count-to={s.value(s.player)}
-                    data-count-decimals={1}
                     style={{ fontSize: 30, fontWeight: 600 }}
                   >
                     {s.value(s.player).toFixed(1)}
                   </span>
                   <div style={{ marginTop: 8 }}>
-                    <MeterBar value={s.value(s.player)} driven />
+                    <MeterBar value={s.value(s.player)} still />
                   </div>
                 </>
               ) : (
@@ -239,9 +228,8 @@ export default async function HomePage() {
 
       {/* ---------------- 4. WHAT BIQ MEASURES --------------------------- */}
       <section style={{ padding: '56px 0 72px' }}>
-        <SectionHeader label="How the score reads" title="What BIQ measures" driven />
+        <SectionHeader label="How the score reads" title="What BIQ measures" />
         <div
-          data-anime="method-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
@@ -253,8 +241,6 @@ export default async function HomePage() {
             <div
               key={m.title}
               className="biq-card"
-              data-anime="method-card"
-              data-anime-hide
               style={{ padding: 24 }}
             >
               <h3 className="biq-display" style={{ fontSize: 19, fontWeight: 600 }}>
@@ -268,7 +254,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <HomeMotion />
+      <DarkNavSwitch />
       <SpeedInsights />
     </main>
   );

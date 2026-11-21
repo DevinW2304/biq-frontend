@@ -1,9 +1,10 @@
 // BiqKit.tsx — COURT PAPER primitives. Plain React + biq-theme.css classes.
 // The ScoreMeter gauge fill is the site's single signature motion; everything
-// else is static with quiet hover states.
+// else is static with quiet hover states. The homepage opts out of even that
+// with `still`.
 'use client';
 
-import { useRef, type CSSProperties, type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { useInView } from './biq-motion';
 
 /* ------------------------------------------------------------------ */
@@ -11,37 +12,29 @@ import { useInView } from './biq-motion';
 /* transitions to value/max on first scroll-into-view. Reduced-motion  */
 /* users see it filled (transition disabled in CSS).                   */
 /*                                                                     */
-/* `driven` hands the fill over to an external timeline (the homepage  */
-/* HomeMotion component) instead of self-animating — two systems       */
-/* writing `width` would fight. Driven fills render their width from   */
-/* the --meter-pct custom property so a no-JS page still shows a full  */
-/* gauge; biq-theme.css empties them only under `.js-motion`.          */
+/* `still` renders the fill at its value from the start, with no       */
+/* scroll trigger. The homepage uses it; it has no motion at all.      */
 /* ------------------------------------------------------------------ */
 
 export function MeterBar({
   value,
   max = 100,
   className = '',
-  driven = false,
+  still = false,
 }: {
   value: number;
   max?: number;
   className?: string;
-  driven?: boolean;
+  still?: boolean;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const open = useInView(ref);
   const pct = Math.max(0, Math.min(100, (value / max) * 100));
 
-  if (driven) {
+  if (still) {
     return (
       <span className={`biq-meter-track ${className}`}>
-        <span
-          className="biq-meter-fill"
-          data-anime="meter"
-          data-meter-pct={`${pct}%`}
-          style={{ '--meter-pct': `${pct}%` } as CSSProperties}
-        />
+        <span className="biq-meter-fill" style={{ width: `${pct}%` }} />
       </span>
     );
   }
@@ -75,7 +68,7 @@ export function ScoreMeter({
   size = 'md',
   align = 'left',
   className = '',
-  driven = false,
+  still = false,
 }: {
   value: number;
   max?: number;
@@ -85,8 +78,8 @@ export function ScoreMeter({
   size?: keyof typeof SCORE_SIZES;
   align?: 'left' | 'right';
   className?: string;
-  /** Hand the gauge and the readout to an external timeline. See MeterBar. */
-  driven?: boolean;
+  /** Render the gauge filled, with no scroll trigger. See MeterBar. */
+  still?: boolean;
 }) {
   return (
     <div className={className} style={{ textAlign: align, minWidth: 0 }}>
@@ -103,9 +96,6 @@ export function ScoreMeter({
       >
         <span
           className="biq-display biq-signal"
-          data-anime={driven ? 'count' : undefined}
-          data-count-to={driven ? value : undefined}
-          data-count-decimals={driven ? decimals : undefined}
           style={{
             fontSize: SCORE_SIZES[size],
             fontWeight: 600,
@@ -119,7 +109,7 @@ export function ScoreMeter({
         {tier ? <span className="biq-chip">{tier}</span> : null}
       </div>
       <div style={{ marginTop: 10 }}>
-        <MeterBar value={value} max={max} driven={driven} />
+        <MeterBar value={value} max={max} still={still} />
       </div>
     </div>
   );
@@ -134,14 +124,11 @@ export function SectionHeader({
   title,
   action,
   className = '',
-  driven = false,
 }: {
   label: string;
   title: string;
   action?: ReactNode;
   className?: string;
-  /** Tag the rule so an external timeline can draw it. See MeterBar. */
-  driven?: boolean;
 }) {
   return (
     <div className={className}>
@@ -162,11 +149,7 @@ export function SectionHeader({
         </div>
         {action ?? null}
       </div>
-      <hr
-        className="biq-rule-line"
-        data-anime={driven ? 'rule' : undefined}
-        style={{ marginTop: 16 }}
-      />
+      <hr className="biq-rule-line" style={{ marginTop: 16 }} />
     </div>
   );
 }

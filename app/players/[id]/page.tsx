@@ -197,8 +197,8 @@ export default async function PlayerPage({ params }: { params: { id: string } })
           <Link href={`/compare?a=${player.id}&b=201939`} className="biq-btn">
             Compare this player
           </Link>
-          <Link href="/players?q=" className="biq-btn-ghost">
-            Back to search
+          <Link href="/players" className="biq-btn-ghost">
+            All players
           </Link>
         </div>
       </section>

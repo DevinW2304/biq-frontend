@@ -134,7 +134,7 @@ export default async function HomePage() {
               <Link href="/compare?a=2544&b=201939" className="biq-btn">
                 Open a comparison
               </Link>
-              <Link href="/players?q=" className="biq-btn-ghost">
+              <Link href="/players" className="biq-btn-ghost">
                 Browse all players
               </Link>
             </div>
@@ -197,7 +197,7 @@ export default async function HomePage() {
           {signals.map((s) => (
             <Link
               key={s.label}
-              href={s.player ? `/players/${s.player.id}` : '/players?q='}
+              href={s.player ? `/players/${s.player.id}` : '/players'}
               className="biq-card"
               style={{ padding: 24, display: 'block' }}
             >

@@ -116,7 +116,19 @@ export default async function ComparePage({
 
   return (
     <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-      <ComparePlayerPicker season={season} />
+      <ComparePlayerPicker
+        season={season}
+        known={
+          compare
+            ? Object.fromEntries(
+                [compare.playerA, compare.playerB].map((p) => [
+                  String(p.id),
+                  `${p.name} · ${p.team} · ${p.position}`,
+                ]),
+              )
+            : {}
+        }
+      />
 
       {compare && (
         <>

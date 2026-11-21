@@ -14,7 +14,21 @@ type SelectedPlayer = {
   label: string;
 };
 
-export function ComparePlayerPicker({ season }: { season: string | null }) {
+function slotFromUrl(id: string, known: Record<string, string>): SelectedPlayer | null {
+  if (!id) return null;
+  // Unknown only when the comparison itself failed to load.
+  return { id, label: known[id] ?? `Player ${id}` };
+}
+
+export function ComparePlayerPicker({
+  season,
+  known = {},
+}: {
+  season: string | null;
+  /** id -> display label for players the server already resolved, so a
+   *  comparison opened from a link shows names rather than raw ids. */
+  known?: Record<string, string>;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -30,14 +44,21 @@ export function ComparePlayerPicker({ season }: { season: string | null }) {
   const [loadingA, setLoadingA] = useState(false);
   const [loadingB, setLoadingB] = useState(false);
 
+  // The URL is the source of truth: a quick-matchup link or back/forward
+  // replaces both slots, and a slot only keeps its label when its id is
+  // unchanged (a picked player's label carries team and position).
+  const knownA = known[initialA];
+  const knownB = known[initialB];
   useEffect(() => {
-    if (initialA) {
-      setSelectedA((prev) => prev ?? { id: initialA, label: `Player ${initialA}` });
-    }
-    if (initialB) {
-      setSelectedB((prev) => prev ?? { id: initialB, label: `Player ${initialB}` });
-    }
-  }, [initialA, initialB]);
+    setSelectedA((prev) =>
+      prev?.id === initialA && !knownA ? prev : slotFromUrl(initialA, known),
+    );
+    setSelectedB((prev) =>
+      prev?.id === initialB && !knownB ? prev : slotFromUrl(initialB, known),
+    );
+    // `known` is rebuilt every render; its entries for these ids are the deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialA, initialB, knownA, knownB]);
 
   useEffect(() => {
     const controller = new AbortController();

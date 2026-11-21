@@ -143,12 +143,14 @@ export default async function HomePage() {
 
       </section>
 
-      {/* ---------------- 2. THE BOARD — top 20, still on the dark stage ---------------- */}
+      {/* ---------------- 2. THE BOARD — top 20, still on the dark stage ----------------
+          Ordered by rank score (the leaderboard's order), so rank score is the
+          headline number; BIQ alone would read out of order down the list. */}
       {board.length ? (
         <section className="biq-hero-dark biq-dark-end" style={{ padding: '0 0 240px' }}>
           <div className="biq-board-head">
             <p id="biq-board-label" className="biq-mono">
-              Top {board.length} by BIQ
+              Top {board.length} by rank score
             </p>
             <Link href="/leaderboard" className="biq-link" style={{ fontSize: 14 }}>
               Full leaderboard →
@@ -161,7 +163,10 @@ export default async function HomePage() {
                   <span className="biq-mono biq-board-rank">{String(i + 1).padStart(2, '0')}</span>
                   <span className="biq-board-name">{p.name}</span>
                   <span className="biq-mono biq-board-team">{p.team}</span>
-                  <span className="biq-num biq-board-score">{p.biqScore.toFixed(1)}</span>
+                  <span className="biq-board-score">
+                    <span className="biq-num">{p.biqRankScore.toFixed(1)}</span>
+                    <span className="biq-mono biq-board-biq">BIQ {p.biqScore.toFixed(1)}</span>
+                  </span>
                 </Link>
               </li>
             ))}

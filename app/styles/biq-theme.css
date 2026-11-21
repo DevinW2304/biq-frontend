@@ -456,7 +456,7 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
 .biq-board-link {
   display: grid;
   grid-template-columns: 2.5rem 1fr 4rem 4.5rem;
-  align-items: baseline;
+  align-items: center;
   gap: 16px;
   padding: 8px 0;
   border-bottom: 1px solid var(--eng-line);
@@ -472,4 +472,12 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
   font-size: 15px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+.biq-board-score .biq-num { color: inherit; }
+.biq-board-biq {
+  display: block;
+  margin-top: 3px;
+  color: var(--eng-label);
+  font-size: 10px;
+  font-weight: 400;
 }

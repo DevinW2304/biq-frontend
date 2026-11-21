@@ -141,17 +141,30 @@ function NeighborRow({
         </div>
       </div>
 
+      {/* Rank score, not BIQ: it is what these ranks are ordered by, so the
+          column reads in order. BIQ alone would put #3 above #2. */}
       <div
         style={{
+          textAlign: 'right',
           fontFamily: 'var(--font-file)',
-          fontSize: '0.95rem',
-          fontWeight: 600,
-          color: tc,
           lineHeight: 1,
           fontVariantNumeric: 'tabular-nums',
         }}
       >
-        {player.biqScore.toFixed(1)}
+        <div style={{ fontSize: '0.95rem', fontWeight: 600, color: tc }}>
+          {player.biqRankScore.toFixed(1)}
+        </div>
+        <div
+          style={{
+            marginTop: 4,
+            fontSize: '0.55rem',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: 'var(--muted)',
+          }}
+        >
+          BIQ {player.biqScore.toFixed(1)}
+        </div>
       </div>
     </Link>
   );

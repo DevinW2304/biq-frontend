@@ -34,26 +34,3 @@ export const RISE = {
   base: 18,
   card: 26,
 } as const;
-
-/**
- * THE TEARDOWN's three phases, as positions on one scrubbed timeline.
- *
- * These are timeline units, not milliseconds — the timeline never plays itself.
- * Scroll position across the pinned stage maps onto `total`, so these numbers
- * are really percentages of the reader's scroll: read the field, take the
- * aperture apart, land the board.
- */
-export const PHASE = {
-  read: 250,     // 0-17%   playhead crosses the lane field
-  resolve: 550,  // 17-37%  aperture and ring come apart
-  rank: 1150,    // 37-77%  the field reassembles as the board
-  total: 1500,   // 77-100% HOLD — the board sits still and readable
-} as const;
-
-/** Per-element offsets inside a phase, in the same timeline units. */
-export const TEAR = {
-  columnLight: 26,  // how long a column stays lit as the playhead passes
-  ringLag: 1.6,     // per-ring-tick stagger as the ring fans apart
-  tickLag: 7,       // per-player stagger as ticks fly to their rows
-  rowTravel: 26,    // px a row rises into place
-} as const;

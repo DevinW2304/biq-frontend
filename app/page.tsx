@@ -15,7 +15,7 @@ import { MeterBar, SectionHeader } from '@/components/biq/BiqKit';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
 import { JsonLd } from '@/components/JsonLd';
 import { HomeMotion } from '@/components/biq/motion/HomeMotion';
-import { BiqEngine } from '@/components/biq/motion/BiqEngine';
+import { BiqEngine } from '@/components/biq/BiqEngine';
 
 const METHOD_SECTIONS = [
   {
@@ -150,16 +150,26 @@ export default async function HomePage() {
 
       </section>
 
-      {/* ---------------- 2. THE TEARDOWN — the scroll stage ----------------
-          A tall section whose sticky child is what the reader watches. Scroll
-          across it scrubs the instrument apart and lands the top 20. Both the
-          height and the pin are `.js-motion` only, so a no-JS page gets plain
-          flow instead of four viewports of nothing. */}
+      {/* ---------------- 2. THE INSTRUMENT + THE BOARD ---------------- */}
       {heroLeader ? (
-        <section className="biq-hero-dark biq-stage" data-anime="stage">
-          <div className="biq-stage-pin">
-            <BiqEngine players={tickerPlayers} leader={heroLeader} />
-
+        <section className="biq-hero-dark biq-dark-end" style={{ padding: '0 0 240px' }}>
+          <BiqEngine players={tickerPlayers} leader={heroLeader} />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 16,
+              marginTop: 28,
+            }}
+          >
+            <span className="biq-mono">
+              Five components · {tickerPlayers.length} players · live
+            </span>
+            <Link href="/leaderboard" className="biq-link" style={{ fontSize: 14 }}>
+              Full leaderboard →
+            </Link>
           </div>
         </section>
       ) : (
@@ -172,31 +182,6 @@ export default async function HomePage() {
           </div>
         </section>
       )}
-
-      {/* The stage's caption, on the far side of the pin — it reads as the
-          board's footer once the teardown has landed. */}
-      {heroLeader ? (
-        <section className="biq-hero-dark biq-dark-end" style={{ padding: '0 0 240px' }}>
-          <div
-            data-anime="engine-footer"
-            data-anime-hide
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 16,
-            }}
-          >
-            <span className="biq-mono">
-              Five components · {tickerPlayers.length} players · live
-            </span>
-            <Link href="/leaderboard" className="biq-link" style={{ fontSize: 14 }}>
-              Full leaderboard →
-            </Link>
-          </div>
-        </section>
-      ) : null}
 
       {/* ---------------- 3. COMPONENT LEADERS ------ */}
       <section style={{ padding: '48px 0' }}>

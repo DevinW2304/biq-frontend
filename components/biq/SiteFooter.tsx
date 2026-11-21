@@ -1,8 +1,12 @@
-import { fetchCurrentSeason } from '@/lib/api';
+import { fetchSeasonInfo } from '@/lib/api';
+import { formatShortDate } from '@/lib/format';
 
-// Global footer: one quiet line on every page.
+// Global footer: one quiet line on every page, including how current the
+// numbers are so no one has to guess whether last night is in them.
 export async function SiteFooter() {
-  const season = await fetchCurrentSeason();
+  const info = await fetchSeasonInfo();
+  const season = info?.season ?? null;
+  const dataThrough = formatShortDate(info?.dataThrough);
 
   return (
     <footer style={{ borderTop: '1px solid var(--line)', background: 'var(--paper)' }}>
@@ -22,7 +26,9 @@ export async function SiteFooter() {
         <span>
           BIQ, the Basketball Intelligence Quotient.{season ? ` ${season} season.` : ''}
         </span>
-        <span>All evaluations are current-season only.</span>
+        <span>
+          {dataThrough ? `Games through ${dataThrough}. ` : ''}All evaluations are current-season only.
+        </span>
       </div>
     </footer>
   );

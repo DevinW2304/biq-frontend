@@ -50,10 +50,16 @@ function SubjectCard({ player, slot }: { player: ComparePlayerCard; slot: 'A' | 
 
       <div style={{ marginTop: 24, paddingTop: 18, borderTop: '1px solid var(--line)' }}>
         <p className="biq-mono">Recent form</p>
-        <p className="biq-num" style={{ fontSize: 22, fontWeight: 600, margin: '8px 0 6px' }}>
-          {player.recentFormScore.toFixed(1)}
+        <p
+          className="biq-num"
+          style={{ fontSize: 22, fontWeight: 600, margin: '8px 0 6px', color: player.recentFormScore == null ? 'var(--fog)' : undefined }}
+        >
+          {player.recentFormScore == null ? '—' : player.recentFormScore.toFixed(1)}
         </p>
-        <MeterBar value={player.recentFormScore} />
+        <MeterBar value={player.recentFormScore ?? 0} />
+        {player.recentFormScore == null ? (
+          <p className="biq-mono" style={{ marginTop: 6, fontSize: 10 }}>Needs a few more games</p>
+        ) : null}
       </div>
 
       <div style={{ marginTop: 24 }}>

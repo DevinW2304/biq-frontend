@@ -1,4 +1,4 @@
-import type { ModelSummary } from './types';
+import type { ModelSummary, SeasonInfo } from './types';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
@@ -85,9 +85,18 @@ export async function fetchLiveJSON<T>(path: string): Promise<T> {
  * the season from the copy instead of breaking the page.
  */
 export async function fetchCurrentSeason(): Promise<string | null> {
+  return (await fetchSeasonInfo())?.season ?? null;
+}
+
+/**
+ * The served season plus how current its data is (the date of the latest
+ * game on record). Label-only, like fetchCurrentSeason: null on failure.
+ * Next dedupes the request, so calling both on one page costs one fetch.
+ */
+export async function fetchSeasonInfo(): Promise<SeasonInfo | null> {
   try {
-    const { season } = await fetchCachedJSON<{ season: string }>('/api/season', 300);
-    return season || null;
+    const info = await fetchCachedJSON<SeasonInfo>('/api/season', 300);
+    return info?.season ? info : null;
   } catch (error) {
     console.error('Failed to load current season', error);
     return null;

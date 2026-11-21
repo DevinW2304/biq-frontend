@@ -219,10 +219,14 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
   .biq-weight-row > .biq-weight-bar { grid-column: 1 / -1; grid-row: 3; }
 }
 
+/* The leaderboard rank under the profile verdict follows its alignment. */
+.player-rank-line { margin-top: 12px; text-align: right; font-size: 11px; }
+
 /* The profile verdict sits right of the name on desktop; once the cover
    wraps on a phone it lands under the name, so align it left there. */
 @media (max-width: 640px) {
   .player-verdict { text-align: left !important; }
+  .player-rank-line { text-align: left !important; }
   .player-verdict > div { justify-content: flex-start !important; }
 }
 

@@ -8,7 +8,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ApiError, fetchCachedJSON, fetchSeasonInfo } from '@/lib/api';
 import { formatShortDate, formatSigned, signedColor } from '@/lib/format';
-import { OnOffSplit, PlayerProfile } from '@/lib/types';
+import { BIQLeaderboardEntry, OnOffSplit, PlayerProfile } from '@/lib/types';
 import { MeterBar, ScoreMeter, SectionHeader } from '@/components/biq/BiqKit';
 import { ShotProfile } from '@/components/biq/ShotProfile';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
@@ -118,6 +118,23 @@ export default async function PlayerPage({ params }: { params: { id: string } })
     },
   };
 
+  // Where the player sits on the leaderboard, read from the same cached top-25
+  // fetch the homepage and leaderboard use. The board is ordered by rank
+  // score, not BIQ, so without this a reader arriving from it sees a
+  // different number here with nothing tying the two together.
+  let leaders: BIQLeaderboardEntry[] = [];
+  try {
+    leaders = await fetchCachedJSON<BIQLeaderboardEntry[]>('/api/players/biq-leaders?limit=25', 300);
+  } catch (error) {
+    console.error('Failed to load leaderboard for profile rank', error);
+  }
+  const rankIndex = leaders.findIndex((p) => p.id === player.id);
+  const rankEntry = rankIndex >= 0 ? leaders[rankIndex] : null;
+  // Compare against the current #1 (or #2 when this is #1) rather than a
+  // fixed player, which made one profile offer a comparison with himself.
+  const rival = leaders.find((p) => p.id !== player.id);
+  const compareWith = rival?.id ?? (player.id === 201939 ? 2544 : 201939);
+
   // Older API responses carry no season or games count; fall back gracefully.
   const season = player.season ?? seasonInfo?.season ?? null;
   const gamesPlayed = player.gamesPlayed ?? (player.gameLog ?? []).length;
@@ -155,14 +172,28 @@ export default async function PlayerPage({ params }: { params: { id: string } })
             </div>
           </div>
 
-          <ScoreMeter
-            value={player.biqScore}
-            label="BIQ SCORE"
-            tier={player.biqTier}
-            size="xl"
-            align="right"
-            className="player-verdict"
-          />
+          <div>
+            <ScoreMeter
+              value={player.biqScore}
+              label="BIQ SCORE"
+              tier={player.biqTier}
+              size="xl"
+              align="right"
+              className="player-verdict"
+            />
+            <p className="biq-mono player-rank-line">
+              {rankEntry ? (
+                <Link href="/leaderboard?view=list" className="biq-link">
+                  Leaderboard #{rankIndex + 1} · rank score {rankEntry.biqRankScore.toFixed(1)}
+                </Link>
+              ) : leaders.length ? (
+                <Link href="/leaderboard" className="biq-link">
+                  {/* Off the board can mean not yet qualified, not just ranked lower. */}
+                  Not on the top-{leaders.length} leaderboard
+                </Link>
+              ) : null}
+            </p>
+          </div>
         </div>
 
         <div
@@ -194,7 +225,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 28 }}>
-          <Link href={`/compare?a=${player.id}&b=201939`} className="biq-btn">
+          <Link href={`/compare?a=${player.id}&b=${compareWith}`} className="biq-btn">
             Compare this player
           </Link>
           <Link href="/players" className="biq-btn-ghost">

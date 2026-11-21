@@ -183,7 +183,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
             />
             <p className="biq-mono player-rank-line">
               {rankEntry ? (
-                <Link href="/leaderboard?view=list" className="biq-link">
+                <Link href="/leaderboard" className="biq-link">
                   Leaderboard #{rankIndex + 1} · rank score {rankEntry.biqRankScore.toFixed(1)}
                 </Link>
               ) : leaders.length ? (

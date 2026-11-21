@@ -1,5 +1,6 @@
 // app/leaderboard/page.tsx — COURT PAPER leaderboard: the full board in
-// three views (interactive stack, ranked list, component table).
+// three views (ranked list by default, sortable component table, and the
+// interactive card stack).
 // Reading searchParams keeps this route dynamic; the win is the cached fetch
 // below, which spares the backend a leaderboard read on every request.
 export const revalidate = 300;
@@ -21,19 +22,22 @@ export const metadata = pageMetadata({
   path: '/leaderboard',
 });
 
+// List leads: a ranking is read by scanning, and the card stack shows one
+// player at a time.
 const VIEWS = [
-  { key: 'stacked', label: 'Interactive', href: '/leaderboard' },
-  { key: 'list', label: 'List', href: '/leaderboard?view=list' },
+  { key: 'list', label: 'List', href: '/leaderboard' },
   { key: 'table', label: 'Table', href: '/leaderboard?view=table' },
+  { key: 'stacked', label: 'Interactive', href: '/leaderboard?view=interactive' },
 ] as const;
 
 type ViewKey = (typeof VIEWS)[number]['key'];
 
 function parseView(value: string | undefined): ViewKey {
-  // "visual" was the card grid this list replaced; keep old links working.
-  if (value === 'list' || value === 'visual') return 'list';
+  // "stacked" was the card stack's old key; keep old links working.
+  if (value === 'interactive' || value === 'stacked') return 'stacked';
   if (value === 'table') return 'table';
-  return 'stacked';
+  // "visual" was the card grid the list replaced.
+  return 'list';
 }
 
 function ViewSwitch({ active }: { active: ViewKey }) {
@@ -98,18 +102,79 @@ function ListView({ players }: { players: BIQLeaderboardEntry[] }) {
   );
 }
 
-const TABLE_COLUMNS: { label: string; value: (p: BIQLeaderboardEntry) => number }[] = [
-  { label: 'BIQ', value: (p) => p.biqScore },
-  { label: 'Star', value: (p) => p.starScore },
-  { label: 'Engine', value: (p) => p.engineScore },
-  { label: 'Burden', value: (p) => p.burdenScore },
-  { label: 'Creation', value: (p) => p.creationScore },
-  { label: 'Efficiency', value: (p) => p.efficiencyScore },
-  { label: 'Impact', value: (p) => p.impactScore },
-  { label: 'Avail.', value: (p) => p.availabilityScore },
+const TABLE_COLUMNS: { key: string; label: string; value: (p: BIQLeaderboardEntry) => number }[] = [
+  { key: 'biq', label: 'BIQ', value: (p) => p.biqScore },
+  { key: 'star', label: 'Star', value: (p) => p.starScore },
+  { key: 'engine', label: 'Engine', value: (p) => p.engineScore },
+  { key: 'burden', label: 'Burden', value: (p) => p.burdenScore },
+  { key: 'creation', label: 'Creation', value: (p) => p.creationScore },
+  { key: 'efficiency', label: 'Efficiency', value: (p) => p.efficiencyScore },
+  { key: 'impact', label: 'Impact', value: (p) => p.impactScore },
+  { key: 'avail', label: 'Avail.', value: (p) => p.availabilityScore },
 ];
 
-function TableView({ players }: { players: BIQLeaderboardEntry[] }) {
+const RANK_COLUMN = { key: 'rank', label: 'Rank score', value: (p: BIQLeaderboardEntry) => p.biqRankScore };
+const SORTABLE = [RANK_COLUMN, ...TABLE_COLUMNS];
+
+type SortDir = 'desc' | 'asc';
+
+/**
+ * Sorting is plain links (?sort=&dir=), so it works without JS and a sorted
+ * view can be shared. Best-first is the natural first click for a score, so
+ * a new column starts descending and a second click flips it.
+ */
+function SortHeader({
+  column,
+  sort,
+  dir,
+  align = 'right',
+}: {
+  column: (typeof SORTABLE)[number];
+  sort: string;
+  dir: SortDir;
+  align?: 'left' | 'right';
+}) {
+  const active = column.key === sort;
+  const next: SortDir = active && dir === 'desc' ? 'asc' : 'desc';
+  const href =
+    column.key === 'rank' && next === 'desc'
+      ? '/leaderboard?view=table'
+      : `/leaderboard?view=table&sort=${column.key}&dir=${next}`;
+  return (
+    <th
+      scope="col"
+      aria-sort={active ? (dir === 'desc' ? 'descending' : 'ascending') : 'none'}
+      style={{ textAlign: align }}
+    >
+      <Link href={href} scroll={false} className={`biq-sort${active ? ' is-active' : ''}`}>
+        {column.label}
+        <span aria-hidden="true" className="biq-sort-arrow">
+          {active ? (dir === 'desc' ? '↓' : '↑') : '↕'}
+        </span>
+      </Link>
+    </th>
+  );
+}
+
+function TableView({
+  players,
+  sort,
+  dir,
+}: {
+  players: BIQLeaderboardEntry[];
+  sort: string;
+  dir: SortDir;
+}) {
+  // The # column stays the leaderboard rank whatever the sort, so a re-sorted
+  // table still says where each player stands.
+  const column = SORTABLE.find((c) => c.key === sort) ?? RANK_COLUMN;
+  const rows = players
+    .map((player, index) => ({ player, rank: index + 1 }))
+    .sort((a, b) => {
+      const diff = column.value(b.player) - column.value(a.player);
+      return (dir === 'desc' ? diff : -diff) || a.rank - b.rank;
+    });
+
   return (
     <div className="biq-table-scroll" style={{ marginTop: 16 }}>
       <table className="biq-table" style={{ minWidth: 980 }}>
@@ -118,19 +183,17 @@ function TableView({ players }: { players: BIQLeaderboardEntry[] }) {
             <th scope="col">#</th>
             <th scope="col">Player</th>
             <th scope="col">Team</th>
-            <th scope="col">Rank score</th>
-            {TABLE_COLUMNS.map((column) => (
-              <th key={column.label} scope="col" style={{ textAlign: 'right' }}>
-                {column.label}
-              </th>
+            <SortHeader column={RANK_COLUMN} sort={column.key} dir={dir} align="left" />
+            {TABLE_COLUMNS.map((c) => (
+              <SortHeader key={c.key} column={c} sort={column.key} dir={dir} />
             ))}
             <th scope="col" style={{ paddingLeft: 14 }}>Tier</th>
           </tr>
         </thead>
         <tbody>
-          {players.map((player, index) => (
+          {rows.map(({ player, rank }) => (
             <tr key={player.id}>
-              <td className="biq-rank">{String(index + 1).padStart(2, '0')}</td>
+              <td className="biq-rank">{String(rank).padStart(2, '0')}</td>
               <td>
                 <Link href={`/players/${player.id}`} className="biq-link" style={{ fontFamily: 'var(--font-body)', fontWeight: 600 }}>
                   {player.name}
@@ -147,9 +210,12 @@ function TableView({ players }: { players: BIQLeaderboardEntry[] }) {
                   </span>
                 </span>
               </td>
-              {TABLE_COLUMNS.map((column) => (
-                <td key={column.label} style={{ textAlign: 'right' }}>
-                  {column.value(player).toFixed(1)}
+              {TABLE_COLUMNS.map((c) => (
+                <td
+                  key={c.key}
+                  style={{ textAlign: 'right', fontWeight: c.key === column.key ? 600 : undefined }}
+                >
+                  {c.value(player).toFixed(1)}
                 </td>
               ))}
               <td style={{ paddingLeft: 14 }}>
@@ -166,7 +232,7 @@ function TableView({ players }: { players: BIQLeaderboardEntry[] }) {
 export default async function LeaderboardPage({
   searchParams,
 }: {
-  searchParams?: { view?: string };
+  searchParams?: { view?: string; sort?: string; dir?: string };
 }) {
   const view = parseView(searchParams?.view);
 
@@ -220,7 +286,11 @@ export default async function LeaderboardPage({
             </p>
           </div>
         ) : view === 'table' ? (
-          <TableView players={players} />
+          <TableView
+            players={players}
+            sort={searchParams?.sort ?? 'rank'}
+            dir={searchParams?.dir === 'asc' ? 'asc' : 'desc'}
+          />
         ) : view === 'list' ? (
           <ListView players={players} />
         ) : (

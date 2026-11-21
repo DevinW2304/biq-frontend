@@ -390,7 +390,9 @@ export default async function PlayerPage({ params }: { params: { id: string } })
             <tbody>
               {(player.gameLog ?? []).map((row, index) => (
                 <tr key={`${row.gameDate}-${row.matchup}-${index}`}>
-                  <td style={{ color: 'var(--fog)' }}>{row.gameDate}</td>
+                  <td style={{ color: 'var(--fog)', whiteSpace: 'nowrap' }}>
+                    {formatShortDate(row.gameDate) ?? row.gameDate}
+                  </td>
                   <td>{row.matchup}</td>
                   <td style={{ color: row.result === 'W' ? 'var(--up)' : 'var(--down)', fontWeight: 600 }}>
                     {row.result}

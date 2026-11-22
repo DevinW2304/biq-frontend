@@ -22,6 +22,7 @@ function pageHref(q: string, page: number) {
 
 import { SectionHeader } from '@/components/biq/BiqKit';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
+import { joinMeta, knownPosition } from '@/lib/format';
 
 export function generateMetadata({ searchParams }: { searchParams: { q?: string } }): Metadata {
   // Search results are thin, near-duplicate pages; keep them out of the index
@@ -93,10 +94,13 @@ export default async function PlayersPage({
                 <span style={{ minWidth: 0 }}>
                   <span className="biq-ledger-name">{player.name}</span>
                   <span className="biq-ledger-meta">
-                    {player.team} · {player.position} ·{' '}
-                    {player.gamesPlayed > 0
-                      ? `${player.gamesPlayed} game${player.gamesPlayed === 1 ? '' : 's'}`
-                      : 'No games yet'}
+                    {joinMeta(
+                      player.team,
+                      knownPosition(player.position),
+                      player.gamesPlayed > 0
+                        ? `${player.gamesPlayed} game${player.gamesPlayed === 1 ? '' : 's'}`
+                        : 'No games yet',
+                    )}
                   </span>
                 </span>
                 <span className="biq-link biq-ledger-score" style={{ fontSize: 14, textAlign: 'right' }}>

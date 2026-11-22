@@ -13,6 +13,7 @@ import { RuleGrid, StatCell } from '@/components/biq/StatGrid';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
 import { TrendBars } from '@/components/biq/TrendBars';
 import { ComparePlayerPicker } from '@/components/ComparePlayerPicker';
+import { joinMeta, knownPosition } from '@/lib/format';
 
 const QUICK_MATCHUPS = [
   { href: '/compare?a=2544&b=201939', label: 'LeBron vs Curry' },
@@ -41,7 +42,7 @@ function SubjectCard({ player, slot }: { player: ComparePlayerCard; slot: 'A' | 
             </span>
           </Link>
           <p style={{ marginTop: 4, fontSize: 14, color: 'var(--fog)' }}>
-            {player.team} · {player.position}
+            {joinMeta(player.team, knownPosition(player.position))}
           </p>
         </div>
       </div>
@@ -123,7 +124,7 @@ export default async function ComparePage({
             ? Object.fromEntries(
                 [compare.playerA, compare.playerB].map((p) => [
                   String(p.id),
-                  `${p.name} · ${p.team} · ${p.position}`,
+                  joinMeta(p.name, p.team, knownPosition(p.position)),
                 ]),
               )
             : {}

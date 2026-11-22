@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { SearchPlayerResult } from '@/lib/types';
+import { joinMeta, knownPosition } from '@/lib/format';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
@@ -141,7 +142,7 @@ export function ComparePlayerPicker({
   }, [selectedA, selectedB]);
 
   function choosePlayer(slot: PickerSlot, player: SearchPlayerResult) {
-    const label = `${player.name} · ${player.team} · ${player.position}`;
+    const label = joinMeta(player.name, player.team, knownPosition(player.position));
 
     if (slot === 'a') {
       setSelectedA({ id: String(player.id), label });
@@ -333,7 +334,7 @@ export function ComparePlayerPicker({
                             {player.name}
                           </span>
                           <span style={{ display: 'block', marginTop: 3, fontSize: 12, color: 'var(--fog)' }}>
-                            {player.team} · {player.position}
+                            {joinMeta(player.team, knownPosition(player.position))}
                           </span>
                         </button>
                       ))

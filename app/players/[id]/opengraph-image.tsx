@@ -1,6 +1,7 @@
 import { fetchCachedJSON } from '@/lib/api';
 import { OG_CONTENT_TYPE, OG_SIZE, ogCard } from '@/lib/og';
 import type { PlayerProfile } from '@/lib/types';
+import { joinMeta, knownPosition } from '@/lib/format';
 
 export const alt = 'BIQ player profile';
 export const size = OG_SIZE;
@@ -13,7 +14,7 @@ export default async function Image({ params }: { params: { id: string } }) {
     return await ogCard({
       eyebrow: 'BIQ player profile',
       title: player.name,
-      meta: `${player.team} · ${player.position}`,
+      meta: joinMeta(player.team, knownPosition(player.position)),
       score: { value: player.biqScore, label: player.biqTier || 'BIQ' },
     });
   } catch {

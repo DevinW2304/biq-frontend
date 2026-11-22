@@ -5,7 +5,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ApiError, fetchCachedJSON, fetchSeasonInfo } from '@/lib/api';
-import { formatPct, formatShortDate, formatSigned, ordinal, signedColor } from '@/lib/format';
+import { formatPct, formatShortDate, formatSigned, joinMeta, knownPosition, ordinal, signedColor } from '@/lib/format';
 import { pageMetadata } from '@/lib/site';
 import { TeamFactor, TeamLineup, TeamProfile, TeamRosterPlayer } from '@/lib/types';
 import { MeterBar, SectionHeader } from '@/components/biq/BiqKit';
@@ -123,7 +123,7 @@ function Roster({ roster }: { roster: TeamRosterPlayer[] }) {
         <tbody>
           {roster.map((player) => {
             const played = (player.gamesPlayed ?? 0) > 0;
-            const detail = [player.number ? `#${player.number}` : '', player.position].filter(Boolean).join(' · ');
+            const detail = joinMeta(player.number ? `#${player.number}` : '', knownPosition(player.position));
             return (
               <tr key={player.id}>
                 <td className="biq-hide-sm" style={{ width: 44, paddingRight: 12 }}>

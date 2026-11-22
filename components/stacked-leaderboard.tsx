@@ -4,6 +4,7 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 import Link from 'next/link';
 import { Spring } from '@/lib/spring';
 import { BIQLeaderboardEntry } from '@/lib/types';
+import { joinMeta, knownPosition } from '@/lib/format';
 
 // ─── constants ────────────────────────────────────────────────────────────────
 const VISIBLE_SIDE = 3;
@@ -137,7 +138,7 @@ function NeighborRow({
             marginTop: 4,
           }}
         >
-          {player.team} · {player.position}
+          {joinMeta(player.team, knownPosition(player.position))}
         </div>
       </div>
 
@@ -585,7 +586,7 @@ export default function StackedLeaderboard({
                       marginBottom: 7,
                     }}
                   >
-                    {player.team} · {player.position}
+                    {joinMeta(player.team, knownPosition(player.position))}
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
@@ -794,7 +795,7 @@ export default function StackedLeaderboard({
                     color: 'var(--muted)',
                   }}
                 >
-                  {active.team} · {active.position}
+                  {joinMeta(active.team, knownPosition(active.position))}
                 </div>
               </div>
 

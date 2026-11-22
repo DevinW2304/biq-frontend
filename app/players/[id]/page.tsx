@@ -7,7 +7,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ApiError, fetchCachedJSON, fetchSeasonInfo } from '@/lib/api';
-import { formatShortDate, formatSigned, signedColor } from '@/lib/format';
+import { formatShortDate, formatSigned, joinMeta, knownPosition, signedColor } from '@/lib/format';
 import { BIQLeaderboardEntry, OnOffSplit, PlayerProfile } from '@/lib/types';
 import { MeterBar, ScoreMeter, SectionHeader } from '@/components/biq/BiqKit';
 import { ShotProfile } from '@/components/biq/ShotProfile';
@@ -78,7 +78,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const player = await fetchPlayer(params.id);
     return pageMetadata({
       title: `${player.name} player profile`,
-      description: `${player.name} (${player.team}, ${player.position}): BIQ ${player.biqScore.toFixed(1)}, ${player.biqTier}. Recent form, efficiency, splits and game log.`,
+      description: `${player.name} (${[player.team, knownPosition(player.position)].filter(Boolean).join(', ')}): BIQ ${player.biqScore.toFixed(1)}, ${player.biqTier}. Recent form, efficiency, splits and game log.`,
       path: `/players/${player.id}`,
       image: `/players/${player.id}/opengraph-image`,
     });
@@ -182,7 +182,11 @@ export default async function PlayerPage({ params }: { params: { id: string } })
             <div style={{ minWidth: 0 }}>
               <h1 className="biq-display biq-hero-size">{player.name}</h1>
               <p style={{ marginTop: 8, fontSize: 15, color: 'var(--fog)' }}>
-                {player.team} · {player.position} · {gamesPlayed} {gamesPlayed === 1 ? 'game' : 'games'} played
+                {joinMeta(
+                  player.team,
+                  knownPosition(player.position),
+                  `${gamesPlayed} ${gamesPlayed === 1 ? 'game' : 'games'} played`,
+                )}
               </p>
             </div>
           </div>

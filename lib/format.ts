@@ -35,3 +35,20 @@ export function formatShortDate(isoDate: string | null | undefined): string | nu
   const month = months[Number(match[2]) - 1];
   return month ? `${month} ${Number(match[3])}` : null;
 }
+
+/**
+ * The API fills a missing position with a placeholder ("Active Player", "N/A",
+ * "Player", or empty). None of those is a position, so treat them all as
+ * unknown rather than printing them where a position belongs.
+ */
+const POSITION_PLACEHOLDERS = new Set(['', 'active player', 'n/a', 'player']);
+
+export function knownPosition(position: string | null | undefined): string | null {
+  const value = (position ?? '').trim();
+  return POSITION_PLACEHOLDERS.has(value.toLowerCase()) ? null : value;
+}
+
+/** Joins the parts that exist with " · ", so a missing one leaves no gap. */
+export function joinMeta(...parts: (string | null | undefined | false)[]): string {
+  return parts.filter(Boolean).join(' · ');
+}

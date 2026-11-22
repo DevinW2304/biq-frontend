@@ -52,3 +52,25 @@ export function knownPosition(position: string | null | undefined): string | nul
 export function joinMeta(...parts: (string | null | undefined | false)[]): string {
   return parts.filter(Boolean).join(' · ');
 }
+
+/** Stat labels compared loosely: "3PA rate" and "3PA Rate" are one stat. */
+function statKey(label: string): string {
+  return label.toLowerCase().replace(/\s+/g, '');
+}
+
+/**
+ * Returns a filter that keeps the first appearance of each stat label across
+ * every list it is applied to, in call order. Call it on a page's sections
+ * top to bottom so a stat shows once, where it first appears. `alreadyShown`
+ * seeds labels the page prints elsewhere (the cover's BIQ verdict, say).
+ */
+export function firstShowing(alreadyShown: string[] = []) {
+  const seen = new Set(alreadyShown.map(statKey));
+  return <T extends { label: string }>(items: T[]): T[] =>
+    items.filter((item) => {
+      const key = statKey(item.label);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}

@@ -72,7 +72,8 @@ function SubjectCard({ player, slot }: { player: ComparePlayerCard; slot: 'A' | 
 
       <div style={{ marginTop: 24 }}>
         <RuleGrid min={150}>
-          {player.stats.map((stat) => (
+          {/* BIQ is the ScoreMeter above; don't print it twice. */}
+          {player.stats.filter((stat) => stat.label !== 'BIQ').map((stat) => (
             <StatCell key={`${player.id}-${stat.label}`} {...stat} />
           ))}
         </RuleGrid>

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ApiError, fetchCachedJSON, fetchSeasonInfo } from '@/lib/api';
-import { formatShortDate, formatSigned, joinMeta, knownPosition, signedColor } from '@/lib/format';
+import { firstShowing, formatShortDate, formatSigned, joinMeta, knownPosition, signedColor } from '@/lib/format';
 import { BIQLeaderboardEntry, OnOffSplit, PlayerProfile } from '@/lib/types';
 import { MeterBar, ScoreMeter, SectionHeader } from '@/components/biq/BiqKit';
 import { ShotProfile } from '@/components/biq/ShotProfile';
@@ -141,6 +141,17 @@ export default async function PlayerPage({ params }: { params: { id: string } })
   const dataThrough = seasonInfo?.season === season ? formatShortDate(seasonInfo?.dataThrough) : null;
   const advanced = player.advanced ?? null;
 
+  // Each stat shows once, in the first section down the page that carries it:
+  // the API repeats TS%, PPG, APG, AST/TOV, eFG%, 3PA and FT rate across the
+  // topline, efficiency and analytics lists, and BIQ is already the cover's
+  // verdict. Order matters: call in render order.
+  const keepNew = firstShowing(['BIQ']);
+  const toplineStats = keepNew(player.stats ?? []);
+  const efficiencyStats = advanced ? keepNew(advanced.efficiency) : [];
+  const analyticsBlocks = (player.analyticsBlocks ?? [])
+    .map((block) => ({ ...block, stats: keepNew(block.stats) }))
+    .filter((block) => block.stats.length > 0);
+
   // Jump links for a page that runs ~17 phone screens. Only sections that
   // will actually render are listed.
   const shotsShown = Boolean(advanced?.shotProfile.some((zone) => zone.attempts > 0));
@@ -152,7 +163,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
     ...(advanced?.onOff ? [{ id: 'onoff', label: 'On / off' }] : []),
     { id: 'trend', label: 'Trend' },
     { id: 'splits', label: 'Splits' },
-    { id: 'analytics', label: 'Analytics' },
+    ...(analyticsBlocks.length ? [{ id: 'analytics', label: 'Analytics' }] : []),
     { id: 'gamelog', label: 'Game log' },
   ];
 
@@ -266,7 +277,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
         <SectionHeader label="Core season indicators" title="Topline" />
         <div style={{ marginTop: 24 }}>
           <RuleGrid min={300}>
-            {(player.stats ?? []).map((stat) => (
+            {toplineStats.map((stat) => (
               <StatCell key={stat.label} {...stat} />
             ))}
           </RuleGrid>
@@ -353,7 +364,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
             <SectionHeader label="How the points and possessions come" title="Efficiency and role" />
             <div style={{ marginTop: 24 }}>
               <RuleGrid min={260}>
-                {advanced.efficiency.map((stat) => (
+                {efficiencyStats.map((stat) => (
                   <StatCell key={`efficiency-${stat.label}`} {...stat} />
                 ))}
               </RuleGrid>
@@ -416,19 +427,21 @@ export default async function PlayerPage({ params }: { params: { id: string } })
       </section>
 
       {/* ---------------- ANALYTICS BLOCKS ---------------- */}
-      <section id="analytics" className="biq-anchor" style={{ padding: '40px 0' }}>
-        <SectionHeader label="Extended metrics" title="Analytics" />
-        {(player.analyticsBlocks ?? []).map((block) => (
-          <div key={block.title} style={{ marginTop: 32 }}>
-            <p className="biq-mono biq-signal" style={{ marginBottom: 14 }}>{block.title}</p>
-            <RuleGrid>
-              {block.stats.map((stat) => (
-                <StatCell key={`${block.title}-${stat.label}`} {...stat} />
-              ))}
-            </RuleGrid>
-          </div>
-        ))}
-      </section>
+      {analyticsBlocks.length ? (
+        <section id="analytics" className="biq-anchor" style={{ padding: '40px 0' }}>
+          <SectionHeader label="Extended metrics" title="Analytics" />
+          {analyticsBlocks.map((block) => (
+            <div key={block.title} style={{ marginTop: 32 }}>
+              <p className="biq-mono biq-signal" style={{ marginBottom: 14 }}>{block.title}</p>
+              <RuleGrid>
+                {block.stats.map((stat) => (
+                  <StatCell key={`${block.title}-${stat.label}`} {...stat} />
+                ))}
+              </RuleGrid>
+            </div>
+          ))}
+        </section>
+      ) : null}
 
       {/* ---------------- GAME LOG ---------------- */}
       <section id="gamelog" className="biq-anchor" style={{ padding: '40px 0 88px' }}>

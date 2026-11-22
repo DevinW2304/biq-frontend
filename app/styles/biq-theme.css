@@ -74,8 +74,7 @@ a.biq-card { transition: border-color 0.15s ease; }
 a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
 
 /* ---- the signature: BIQ meter gauge ----------------------------------
-   A 3px track under every BIQ score; the fill transitions to score/100 on
-   first scroll-into-view. The site's single signature motion.            */
+   A 3px track under every BIQ score, filled to score/100. Static.        */
 
 .biq-meter-track {
   display: block;
@@ -91,11 +90,6 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
   width: 0%;
   background: var(--key);
   border-radius: 999px;
-  transition: width 0.6s cubic-bezier(0.25, 0.6, 0.25, 1);
-}
-/* Snap rather than sweep for reduced motion, and on narrow screens. */
-@media (prefers-reduced-motion: reduce), (max-width: 1080px) {
-  .biq-meter-fill { transition: none; }
 }
 
 /* ---- tier chip -------------------------------------------------------- */

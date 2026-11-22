@@ -1,8 +1,9 @@
 # COURT PAPER kit
 
 Primitives for the BIQ light design system. Tokens and classes live in
-`app/styles/biq-theme.css` (imported once in `app/layout.tsx`). Everything in
-`BiqKit.tsx` is `"use client"`; the rest is server-component safe.
+`app/styles/biq-theme.css` (imported once in `app/layout.tsx`). Only
+`SubjectPhoto.tsx` (missing-headshot fallback) and `DarkNavSwitch.tsx` are client components;
+everything else here is plain, server-component safe React.
 
 ## BiqKit.tsx
 
@@ -10,7 +11,7 @@ Primitives for the BIQ light design system. Tokens and classes live in
 import { MeterBar, ScoreMeter, SectionHeader, TierChip } from '@/components/biq/BiqKit';
 
 // The consistent BIQ score unit: label, tabular number, tier chip, gauge.
-// The gauge fill on scroll-into-view is the site's ONE signature motion.
+// The gauge is static: it renders filled to value/max from the first paint.
 <ScoreMeter value={player.biqScore} label="BIQ SCORE" tier={player.biqTier} size="xl" />
 
 // Bare gauge for rows and small tiles (value out of 100 by default).

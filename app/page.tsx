@@ -221,7 +221,7 @@ export default async function HomePage() {
                     {s.value(s.player).toFixed(1)}
                   </span>
                   <div style={{ marginTop: 8 }}>
-                    <MeterBar value={s.value(s.player)} still />
+                    <MeterBar value={s.value(s.player)} />
                   </div>
                 </>
               ) : (

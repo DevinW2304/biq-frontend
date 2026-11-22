@@ -1,47 +1,28 @@
 // BiqKit.tsx — COURT PAPER primitives. Plain React + biq-theme.css classes.
-// The ScoreMeter gauge fill is the site's single signature motion; everything
-// else is static with quiet hover states. The homepage opts out of even that
-// with `still`.
-'use client';
+// Everything here is static: gauges render at their value from the first
+// paint, with only quiet hover states elsewhere. No hooks, so these render
+// on the server wherever they are used.
 
-import { useRef, type ReactNode } from 'react';
-import { useInView } from './biq-motion';
+import type { ReactNode } from 'react';
 
 /* ------------------------------------------------------------------ */
-/* MeterBar: the signature gauge. A 3px track whose key-blue fill      */
-/* transitions to value/max on first scroll-into-view. Reduced-motion  */
-/* users see it filled (transition disabled in CSS).                   */
-/*                                                                     */
-/* `still` renders the fill at its value from the start, with no       */
-/* scroll trigger. The homepage uses it; it has no motion at all.      */
+/* MeterBar: the signature gauge. A 3px track whose key-blue fill sits */
+/* at value/max.                                                       */
 /* ------------------------------------------------------------------ */
 
 export function MeterBar({
   value,
   max = 100,
   className = '',
-  still = false,
 }: {
   value: number;
   max?: number;
   className?: string;
-  still?: boolean;
 }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const open = useInView(ref);
   const pct = Math.max(0, Math.min(100, (value / max) * 100));
-
-  if (still) {
-    return (
-      <span className={`biq-meter-track ${className}`}>
-        <span className="biq-meter-fill" style={{ width: `${pct}%` }} />
-      </span>
-    );
-  }
-
   return (
-    <span ref={ref} className={`biq-meter-track ${className}`}>
-      <span className="biq-meter-fill" style={{ width: open ? `${pct}%` : '0%' }} />
+    <span className={`biq-meter-track ${className}`}>
+      <span className="biq-meter-fill" style={{ width: `${pct}%` }} />
     </span>
   );
 }
@@ -68,7 +49,6 @@ export function ScoreMeter({
   size = 'md',
   align = 'left',
   className = '',
-  still = false,
 }: {
   value: number;
   max?: number;
@@ -78,8 +58,6 @@ export function ScoreMeter({
   size?: keyof typeof SCORE_SIZES;
   align?: 'left' | 'right';
   className?: string;
-  /** Render the gauge filled, with no scroll trigger. See MeterBar. */
-  still?: boolean;
 }) {
   return (
     <div className={className} style={{ textAlign: align, minWidth: 0 }}>
@@ -109,7 +87,7 @@ export function ScoreMeter({
         {tier ? <span className="biq-chip">{tier}</span> : null}
       </div>
       <div style={{ marginTop: 10 }}>
-        <MeterBar value={value} max={max} still={still} />
+        <MeterBar value={value} max={max} />
       </div>
     </div>
   );

@@ -186,8 +186,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       description: `${team.name} (${team.conference}, ${team.division}): season record, efficiency profile and roster BIQ.`,
       path: `/teams/${team.id}`,
     });
-  } catch {
-    return { title: 'Team dashboard' };
+  } catch (error) {
+    return { title: error instanceof ApiError && error.isNotFound ? 'Team not found' : 'Team dashboard' };
   }
 }
 

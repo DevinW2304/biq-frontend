@@ -7,19 +7,50 @@ export const revalidate = 300;
 import Link from 'next/link';
 import { fetchCachedJSON, fetchCurrentSeason } from '@/lib/api';
 import { pageMetadata } from '@/lib/site';
-import { CompareResponse, ComparePlayerCard } from '@/lib/types';
+import { BIQLeaderboardEntry, CompareResponse, ComparePlayerCard } from '@/lib/types';
 import { MeterBar, ScoreMeter } from '@/components/biq/BiqKit';
-import { RuleGrid, StatCell } from '@/components/biq/StatGrid';
+import { EdgeTag, RuleGrid, StatCell } from '@/components/biq/StatGrid';
+import { headToHead, type HeadToHead, type Side } from '@/lib/compare';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
 import { TrendBars } from '@/components/biq/TrendBars';
 import { ComparePlayerPicker } from '@/components/ComparePlayerPicker';
 import { joinMeta, knownPosition } from '@/lib/format';
 
-const QUICK_MATCHUPS = [
+// Used only if the leaderboard can't be read.
+const FALLBACK_MATCHUPS = [
   { href: '/compare?a=2544&b=201939', label: 'LeBron vs Curry' },
-  { href: '/compare?a=1629029&b=203999', label: 'Luka vs Jokic' },
+  { href: '/compare?a=1629029&b=203999', label: 'Luka vs Jokić' },
   { href: '/compare?a=1628369&b=2544', label: 'Tatum vs LeBron' },
 ];
+
+function surname(name: string) {
+  const parts = name.trim().split(/\s+/);
+  // "Jaren Jackson Jr." reads as Jackson, not Jr.
+  const last = parts[parts.length - 1];
+  return /^(jr|sr|ii|iii|iv)\.?$/i.test(last) && parts.length > 2 ? parts[parts.length - 2] : last;
+}
+
+/** Neighbours on the current leaderboard: #1 v #2, #3 v #4, #5 v #6. */
+function leaderMatchups(leaders: BIQLeaderboardEntry[]) {
+  const pairs = [];
+  for (let i = 0; i + 1 < Math.min(leaders.length, 6); i += 2) {
+    const [a, b] = [leaders[i], leaders[i + 1]];
+    pairs.push({ href: `/compare?a=${a.id}&b=${b.id}`, label: `${surname(a.name)} vs ${surname(b.name)}` });
+  }
+  return pairs.length ? pairs : FALLBACK_MATCHUPS;
+}
+
+function MatchupLinks({ matchups }: { matchups: { href: string; label: string }[] }) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginTop: 20 }}>
+      {matchups.map((matchup) => (
+        <Link key={matchup.href} href={matchup.href} className="biq-link" style={{ fontSize: 14 }}>
+          {matchup.label}
+        </Link>
+      ))}
+    </div>
+  );
+}
 
 function getAdvantageLine(a: ComparePlayerCard, b: ComparePlayerCard) {
   const gap = Math.abs(a.biqScore - b.biqScore).toFixed(1);
@@ -28,7 +59,28 @@ function getAdvantageLine(a: ComparePlayerCard, b: ComparePlayerCard) {
   return 'BIQ advantage 0.0 · Even';
 }
 
-function SubjectCard({ player, slot }: { player: ComparePlayerCard; slot: 'A' | 'B' }) {
+/** "Dončić leads 4 of 7 head-to-head · Wembanyama 3", ties named if any. */
+function tallyLine(a: ComparePlayerCard, b: ComparePlayerCard, h2h: HeadToHead) {
+  const even = h2h.total - h2h.wins.a - h2h.wins.b;
+  const [lead, trail, leadWins, trailWins] =
+    h2h.wins.a >= h2h.wins.b ? [a, b, h2h.wins.a, h2h.wins.b] : [b, a, h2h.wins.b, h2h.wins.a];
+  const head =
+    leadWins === trailWins
+      ? `Split ${leadWins}–${trailWins} head-to-head`
+      : `${surname(lead.name)} leads ${leadWins} of ${h2h.total} head-to-head · ${surname(trail.name)} ${trailWins}`;
+  return even > 0 ? `${head} · ${even} even` : head;
+}
+
+function SubjectCard({
+  player,
+  slot,
+  h2h,
+}: {
+  player: ComparePlayerCard;
+  slot: 'A' | 'B';
+  h2h: HeadToHead;
+}) {
+  const side: Side = slot === 'A' ? 'a' : 'b';
   return (
     <div className="biq-card" style={{ padding: 28, height: '100%' }}>
       <p className="biq-mono">Player {slot}</p>
@@ -50,10 +102,18 @@ function SubjectCard({ player, slot }: { player: ComparePlayerCard; slot: 'A' | 
       <ScoreMeter value={player.biqScore} label="BIQ SCORE" tier={player.biqTier} size="lg" />
 
       <div style={{ marginTop: 24, paddingTop: 18, borderTop: '1px solid var(--line)' }}>
-        <p className="biq-mono">Recent form</p>
+        <p className="biq-mono" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          Recent form
+          {h2h.form === side ? <EdgeTag /> : null}
+        </p>
         <p
           className="biq-num"
-          style={{ fontSize: 22, fontWeight: 600, margin: '8px 0 6px', color: player.recentFormScore == null ? 'var(--fog)' : undefined }}
+          style={{
+            fontSize: 22,
+            fontWeight: 600,
+            margin: '8px 0 6px',
+            color: player.recentFormScore == null ? 'var(--fog)' : h2h.form === side ? 'var(--key)' : undefined,
+          }}
         >
           {player.recentFormScore == null ? '—' : player.recentFormScore.toFixed(1)}
         </p>
@@ -74,7 +134,7 @@ function SubjectCard({ player, slot }: { player: ComparePlayerCard; slot: 'A' | 
         <RuleGrid min={150}>
           {/* BIQ is the ScoreMeter above; don't print it twice. */}
           {player.stats.filter((stat) => stat.label !== 'BIQ').map((stat) => (
-            <StatCell key={`${player.id}-${stat.label}`} {...stat} />
+            <StatCell key={`${player.id}-${stat.label}`} {...stat} edge={h2h.stats.get(stat.label) === side} />
           ))}
         </RuleGrid>
       </div>
@@ -103,6 +163,14 @@ export default async function ComparePage({
   const playerB = searchParams.b?.trim();
   const season = await fetchCurrentSeason();
 
+  let leaders: BIQLeaderboardEntry[] = [];
+  try {
+    leaders = await fetchCachedJSON<BIQLeaderboardEntry[]>('/api/players/biq-leaders?limit=25', 300);
+  } catch (error) {
+    console.error('Failed to load leaders for matchups', error);
+  }
+  const matchups = leaderMatchups(leaders);
+
   let compare: CompareResponse | null = null;
 
   if (playerA && playerB) {
@@ -115,6 +183,8 @@ export default async function ComparePage({
       console.error('Failed to load compare data', error);
     }
   }
+
+  const h2h = compare ? headToHead(compare.playerA, compare.playerB) : null;
 
   return (
     <main className="biq-page" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
@@ -132,7 +202,7 @@ export default async function ComparePage({
         }
       />
 
-      {compare && (
+      {compare && h2h && (
         <>
           {/* ---------------- THE SUBJECT CARDS ---------------- */}
           <section
@@ -143,8 +213,8 @@ export default async function ComparePage({
               padding: '40px 0',
             }}
           >
-            <SubjectCard player={compare.playerA} slot="A" />
-            <SubjectCard player={compare.playerB} slot="B" />
+            <SubjectCard player={compare.playerA} slot="A" h2h={h2h} />
+            <SubjectCard player={compare.playerB} slot="B" h2h={h2h} />
           </section>
 
           {/* ---------------- THE VERDICT ---------------- */}
@@ -154,22 +224,30 @@ export default async function ComparePage({
               <p className="biq-display" style={{ marginTop: 10, fontSize: 'clamp(18px, 2vw, 24px)' }}>
                 {getAdvantageLine(compare.playerA, compare.playerB)}
               </p>
+              {h2h.total > 0 ? (
+                <p className="biq-mono" style={{ marginTop: 10 }}>
+                  {tallyLine(compare.playerA, compare.playerB, h2h)}
+                </p>
+              ) : null}
               <hr className="biq-rule-line" style={{ margin: '18px 0' }} />
               <p style={{ maxWidth: '80ch', fontSize: 15, lineHeight: 1.75, color: 'var(--ink-2)' }}>
                 {compare.summary}
               </p>
             </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginTop: 20 }}>
-              {QUICK_MATCHUPS.map((matchup) => (
-                <Link key={matchup.href} href={matchup.href} className="biq-link" style={{ fontSize: 14 }}>
-                  {matchup.label}
-                </Link>
-              ))}
-            </div>
+            <MatchupLinks matchups={matchups} />
           </section>
         </>
       )}
+
+      {/* Nothing picked yet: offer the closest races at the top of the board
+          rather than an empty page under the picker. */}
+      {!playerA && !playerB ? (
+        <section style={{ padding: '8px 0 88px' }}>
+          <p className="biq-mono">Close races on the leaderboard</p>
+          <MatchupLinks matchups={matchups} />
+        </section>
+      ) : null}
 
       {!compare && playerA && playerB && (
         <section style={{ padding: '40px 0' }}>

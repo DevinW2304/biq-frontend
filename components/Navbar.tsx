@@ -1,10 +1,18 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { MobileNav, type NavLink } from '@/components/MobileNav';
+import { NavLinks } from '@/components/NavLinks';
 
 const navStyles = `
   .nav-link { color: var(--ink-2); font-size: 14px; font-weight: 500; transition: color 0.15s ease; }
   .nav-link:hover, .nav-link:focus-visible { color: var(--ink); }
+  .nav-link[aria-current="page"] {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--key);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 8px;
+  }
   .nav-link-live { color: var(--key); }
   .nav-link-live:hover, .nav-link-live:focus-visible { color: var(--key-deep); }
   .nav-search::placeholder { color: var(--fog); }
@@ -33,6 +41,7 @@ const navStyles = `
     display: block; padding: 14px 0; border-bottom: 1px solid var(--line);
     font-size: 17px; font-weight: 500; color: var(--ink);
   }
+  .nav-panel-link[aria-current="page"] { color: var(--key); font-weight: 600; }
   .nav-panel-search { margin-top: 16px; }
   .nav-panel-search .nav-search {
     width: 100%; background: #fff; border: 1px solid var(--line-strong); border-radius: var(--radius);
@@ -98,30 +107,16 @@ export function Navbar() {
 
         <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <nav style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-            {navLinks.map((link) =>
-              link.external ? (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="nav-link nav-link-live"
-                >
-                  {link.label}
-                </a>
-              ) : (
-                <Link key={link.href} href={link.href} className="nav-link">
-                  {link.label}
-                </Link>
-              ),
-            )}
+            <NavLinks links={navLinks} className="nav-link" />
           </nav>
 
           {/* Server-safe search: submits to the existing /players?q= flow */}
           <form action="/players" method="get" style={{ display: 'flex' }}>
             <input
               name="q"
+              type="search"
               placeholder="Search players"
+              aria-label="Search players"
               className="nav-search"
               style={{
                 width: 160,

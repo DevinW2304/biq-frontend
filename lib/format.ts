@@ -74,3 +74,20 @@ export function firstShowing(alreadyShown: string[] = []) {
       return true;
     });
 }
+
+/**
+ * The team line for a profile: the current team, or, for a player the roster
+ * sync found on no NBA roster, his last team marked as such.
+ */
+export function teamLabel(player: { team: string; onRoster?: boolean }): string {
+  return player.onRoster === false ? `Not on a roster (last: ${player.team})` : player.team;
+}
+
+/**
+ * Whether a profile's BIQ score is a real grade. The API marks ungraded
+ * players rated: false; older responses didn't, but a player with no games
+ * can't have been graded either way.
+ */
+export function isRated(player: { rated?: boolean; gamesPlayed?: number }): boolean {
+  return player.rated !== false && player.gamesPlayed !== 0;
+}

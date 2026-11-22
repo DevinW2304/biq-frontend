@@ -86,12 +86,44 @@ body {
 /* ─── BIQ Ticker ──────────────────────────────────────────────────────── */
 
 .ticker-wrapper {
+  display: flex;
+  align-items: stretch;
   overflow: hidden;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-  background: #fff;
+  background: var(--s1);
   padding: 0;
-  position: relative;
+}
+
+/* The LIVE BIQ label sits in its own cell, outside the moving track. */
+.ticker-label {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-right: 1px solid var(--border);
+}
+.ticker-label-pill {
+  background: var(--key);
+  color: #fff;
+  font-family: var(--font-file);
+  font-weight: 600;
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 3px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* The track scrolls inside this window. A short fade at each edge lets
+   names arrive and leave gradually instead of being cut off mid-word. */
+.ticker-viewport {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent);
 }
 
 @keyframes biq-ticker {
@@ -144,6 +176,7 @@ body {
 @media (max-width: 768px) {
   .ticker-track { animation-duration: 22s; }
   .ticker-item { padding: 0 1rem; font-size: 0.7rem; height: 30px; }
+  .ticker-label { padding: 0 10px; }
 }
 
 /* ─── Legacy display face (stacked leaderboard cards) ─────────────────── */
@@ -157,5 +190,5 @@ body {
     animation: none !important;
     transform: none !important;
   }
-  .ticker-wrapper { overflow-x: auto; }
+  .ticker-viewport { overflow-x: auto; }
 }

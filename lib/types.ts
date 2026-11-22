@@ -163,6 +163,12 @@ export type PlayerProfile = {
   biqTier: string;
   biqBreakdown: BIQComponent[];
   advanced?: PlayerAdvanced | null;
+  /** False once the roster sync finds him on no NBA roster; `team` is then
+   *  his last team. Absent from older API responses, which means rostered. */
+  onRoster?: boolean;
+  /** False when BIQ couldn't grade him (no season stats yet): biqScore is a
+   *  placeholder then. Absent from older API responses. */
+  rated?: boolean;
 };
 
 export type TeamSearchResult = {

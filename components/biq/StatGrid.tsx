@@ -50,13 +50,37 @@ export function PercentileMark({ value }: { value: number }) {
   );
 }
 
-export function StatCell({ label, value, subtext, description, percentile }: StatCardData) {
+/** The small "Edge" tag a compare card puts on the number its player leads. */
+export function EdgeTag() {
+  return <span className="biq-edge-tag">Edge</span>;
+}
+
+export function StatCell({
+  label,
+  value,
+  subtext,
+  description,
+  percentile,
+  edge = false,
+}: StatCardData & {
+  /** On a compare card: this player is ahead on this number. */
+  edge?: boolean;
+}) {
   return (
     <div style={{ padding: 20 }}>
-      <p className="biq-mono">{label}</p>
+      <p className="biq-mono" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {label}
+        {edge ? <EdgeTag /> : null}
+      </p>
       <p
         className="biq-num"
-        style={{ fontSize: 26, fontWeight: 600, marginTop: 10, letterSpacing: '-0.01em' }}
+        style={{
+          fontSize: 26,
+          fontWeight: 600,
+          marginTop: 10,
+          letterSpacing: '-0.01em',
+          color: edge ? 'var(--key)' : undefined,
+        }}
       >
         {value}
       </p>

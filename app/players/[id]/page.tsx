@@ -7,7 +7,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ApiError, fetchCachedJSON, fetchSeasonInfo } from '@/lib/api';
-import { firstShowing, formatShortDate, formatSigned, joinMeta, knownPosition, signedColor } from '@/lib/format';
+import { firstShowing, formatShortDate, formatSigned, isRated, joinMeta, knownPosition, signedColor, teamLabel } from '@/lib/format';
 import { BIQLeaderboardEntry, OnOffSplit, PlayerProfile } from '@/lib/types';
 import { MeterBar, ScoreMeter, SectionHeader } from '@/components/biq/BiqKit';
 import { ShotProfile } from '@/components/biq/ShotProfile';
@@ -16,13 +16,6 @@ import { RuleGrid, StatCell } from '@/components/biq/StatGrid';
 import { TrendBars } from '@/components/biq/TrendBars';
 import { JsonLd } from '@/components/JsonLd';
 import { pageMetadata, SITE_URL } from '@/lib/site';
-
-function buildPlayerTagline(player: PlayerProfile) {
-  if (player.biqScore >= 90) return 'An elite franchise-level utility profile with top-tier BIQ support.';
-  if (player.biqScore >= 80) return 'A high-level team utility profile backed by strong BIQ indicators.';
-  if ((player.recentFormScore ?? 0) >= 88) return 'Playing at a high level with strong recent form and measurable season impact.';
-  return 'A productive season profile with enough detail to support deeper BIQ evaluation.';
-}
 
 // A 0-100 score that the API withholds until there are enough games for it.
 function ScoreCard({ label, value, caption, pending }: {
@@ -78,13 +71,13 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const player = await fetchPlayer(params.id);
     return pageMetadata({
       title: `${player.name} player profile`,
-      description: `${player.name} (${[player.team, knownPosition(player.position)].filter(Boolean).join(', ')}): BIQ ${player.biqScore.toFixed(1)}, ${player.biqTier}. Recent form, efficiency, splits and game log.`,
+      description: `${player.name} (${[teamLabel(player), knownPosition(player.position)].filter(Boolean).join(', ')}): ${isRated(player) ? `BIQ ${player.biqScore.toFixed(1)}, ${player.biqTier}` : 'not yet rated'}. Recent form, efficiency, splits and game log.`,
       path: `/players/${player.id}`,
       image: `/players/${player.id}/opengraph-image`,
     });
-  } catch {
+  } catch (error) {
     // The page itself decides between 404 and an error; don't fail here first.
-    return { title: 'Player profile' };
+    return { title: error instanceof ApiError && error.isNotFound ? 'Player not found' : 'Player profile' };
   }
 }
 
@@ -138,6 +131,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
   // Older API responses carry no season or games count; fall back gracefully.
   const season = player.season ?? seasonInfo?.season ?? null;
   const gamesPlayed = player.gamesPlayed ?? (player.gameLog ?? []).length;
+  const rated = isRated({ rated: player.rated, gamesPlayed });
   const dataThrough = seasonInfo?.season === season ? formatShortDate(seasonInfo?.dataThrough) : null;
   const advanced = player.advanced ?? null;
 
@@ -194,7 +188,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
               <h1 className="biq-display biq-hero-size">{player.name}</h1>
               <p style={{ marginTop: 8, fontSize: 15, color: 'var(--fog)' }}>
                 {joinMeta(
-                  player.team,
+                  teamLabel(player),
                   knownPosition(player.position),
                   `${gamesPlayed} ${gamesPlayed === 1 ? 'game' : 'games'} played`,
                 )}
@@ -203,14 +197,24 @@ export default async function PlayerPage({ params }: { params: { id: string } })
           </div>
 
           <div>
-            <ScoreMeter
-              value={player.biqScore}
-              label="BIQ SCORE"
-              tier={player.biqTier}
-              size="xl"
-              align="right"
-              className="player-verdict"
-            />
+            {rated ? (
+              <ScoreMeter
+                value={player.biqScore}
+                label="BIQ SCORE"
+                tier={player.biqTier}
+                size="xl"
+                align="right"
+                className="player-verdict"
+              />
+            ) : (
+              // No grade to show: the API's 50.0 here is a placeholder.
+              <div className="player-verdict" style={{ textAlign: 'right' }}>
+                <p className="biq-mono">BIQ score</p>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+                  <span className="biq-chip">Not yet rated</span>
+                </div>
+              </div>
+            )}
             <p className="biq-mono player-rank-line">
               {rankEntry ? (
                 <Link href="/leaderboard" className="biq-link">
@@ -234,259 +238,271 @@ export default async function PlayerPage({ params }: { params: { id: string } })
             marginTop: 40,
           }}
         >
-          <ScoreCard
-            label="Recent form"
-            value={player.recentFormScore}
-            caption="Latest games against his season"
-            pending="Needs a few more games"
-          />
-          <ScoreCard
-            label="Consistency"
-            value={player.consistencyScore}
-            caption="Game-to-game stability"
-            pending="Needs a few more games"
-          />
-          <div className="biq-card" style={{ padding: 20, gridColumn: 'span 1' }}>
-            <p className="biq-mono">Read</p>
-            <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
-              {buildPlayerTagline(player)}
-            </p>
-          </div>
+          {/* Form and consistency need games; with none they would only say so twice. */}
+          {gamesPlayed > 0 ? (
+            <>
+            <ScoreCard
+              label="Recent form"
+              value={player.recentFormScore}
+              caption="Latest games against his season"
+              pending="Needs a few more games"
+            />
+            <ScoreCard
+              label="Consistency"
+              value={player.consistencyScore}
+              caption="Game-to-game stability"
+              pending="Needs a few more games"
+            />
+            </>
+          ) : null}
+          {/* The player-specific note, in the cover rather than a section of its
+              own further down; the old one-line "read" only restated the tier. */}
+          {player.insight && gamesPlayed > 0 ? (
+            <div className="biq-card" style={{ padding: 20, borderLeft: '3px solid var(--key)' }}>
+              <p className="biq-mono">Analyst note</p>
+              <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
+                {player.insight}
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 28 }}>
-          <Link href={`/compare?a=${player.id}&b=${compareWith}`} className="biq-btn">
-            Compare this player
-          </Link>
+          {gamesPlayed > 0 ? (
+            <Link href={`/compare?a=${player.id}&b=${compareWith}`} className="biq-btn">
+              Compare this player
+            </Link>
+          ) : null}
           <Link href="/players" className="biq-btn-ghost">
             All players
           </Link>
         </div>
       </section>
 
-      <nav aria-label="Profile sections" className="biq-jump">
-        {jumpLinks.map((link) => (
-          <a key={link.id} href={`#${link.id}`} className="biq-jump-link">
-            {link.label}
-          </a>
-        ))}
-      </nav>
-
-      {/* ---------------- TOPLINE ---------------- */}
-      <section id="topline" className="biq-anchor" style={{ padding: '40px 0' }}>
-        <SectionHeader label="Core season indicators" title="Topline" />
-        <div style={{ marginTop: 24 }}>
-          <RuleGrid min={300}>
-            {toplineStats.map((stat) => (
-              <StatCell key={stat.label} {...stat} />
-            ))}
-          </RuleGrid>
-        </div>
-      </section>
-
-      {/* ---------------- ANALYST NOTE ---------------- */}
-      <section style={{ padding: '40px 0' }}>
-        <SectionHeader label="BIQ insight" title="Analyst note" />
-        <div
-          className="biq-card"
-          style={{
-            marginTop: 24,
-            maxWidth: 860,
-            padding: '20px 24px',
-            borderLeft: '3px solid var(--key)',
-          }}
-        >
-          <p className="biq-mono" style={{ marginBottom: 10 }}>What the profile suggests</p>
-          <p style={{ fontSize: 15, lineHeight: 1.75, color: 'var(--ink-2)' }}>{player.insight}</p>
-        </div>
-      </section>
-
-      {/* ---------------- BIQ BREAKDOWN ---------------- */}
-      <section id="breakdown" className="biq-anchor" style={{ padding: '40px 0' }}>
-        <SectionHeader label="Component scores" title="BIQ breakdown" />
-        <p style={{ marginTop: 20, maxWidth: '64ch', fontSize: 14, lineHeight: 1.7, color: 'var(--ink-2)' }}>
-          BIQ combines availability, efficiency, impact, team context, and box-score burden into
-          one team-utility score.
-        </p>
-        <ol style={{ listStyle: 'none', margin: '12px 0 0', padding: 0 }}>
-          {(player.biqBreakdown ?? []).map((component) => (
-            <li key={component.label} className="biq-row">
-              <div className="biq-weight-row">
-                <span className="biq-display" style={{ fontSize: 16, fontWeight: 600 }}>
-                  {component.label}
-                </span>
-                <span style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--fog)' }}>
-                  {component.explanation}
-                </span>
-                <span className="biq-weight-bar">
-                  <MeterBar value={component.score} />
-                  <span className="biq-mono" style={{ display: 'block', marginTop: 6, fontSize: 10 }}>
-                    Weight {Math.round(component.weight * 100)}%
-                  </span>
-                </span>
-                <span className="biq-num" style={{ fontSize: 20, fontWeight: 600, justifySelf: 'end' }}>
-                  {Math.round(component.score)}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      {/* ---------------- PER 100, EFFICIENCY, SHOTS, ON/OFF ----------------
-          Play-by-play detail. None of it feeds the BIQ score; it is here so
-          the score can be checked against the play behind it. */}
-      {advanced ? (
+      {gamesPlayed > 0 ? (
         <>
-          <section id="per100" className="biq-anchor" style={{ padding: '40px 0' }}>
-            <SectionHeader
-              label={`Pace and minutes removed · ${advanced.possessions.toLocaleString('en-US')} possessions on the floor`}
-              title="Per 100 possessions"
-            />
-            <p style={{ marginTop: 20, maxWidth: '68ch', fontSize: 14, lineHeight: 1.7, color: 'var(--ink-2)' }}>
-              Per-game numbers reward minutes and a fast team. These count what he does per 100
-              possessions he is on the floor for. Percentiles are against the league&apos;s rotation
-              players, and a fuller gauge is always better.
-              {advanced.lowSample
-                ? ' He has played too few possessions for these to have settled; read them as early returns.'
-                : ''}
-            </p>
-            <div style={{ marginTop: 24 }}>
-              <RuleGrid min={180}>
-                {advanced.per100.map((stat) => (
-                  <StatCell key={`per100-${stat.label}`} {...stat} />
-                ))}
-              </RuleGrid>
-            </div>
-          </section>
+        <nav aria-label="Profile sections" className="biq-jump">
+          {jumpLinks.map((link) => (
+            <a key={link.id} href={`#${link.id}`} className="biq-jump-link">
+              {link.label}
+            </a>
+          ))}
+        </nav>
 
-          <section id="efficiency" className="biq-anchor" style={{ padding: '40px 0' }}>
-            <SectionHeader label="How the points and possessions come" title="Efficiency and role" />
-            <div style={{ marginTop: 24 }}>
-              <RuleGrid min={260}>
-                {efficiencyStats.map((stat) => (
-                  <StatCell key={`efficiency-${stat.label}`} {...stat} />
-                ))}
-              </RuleGrid>
-            </div>
-          </section>
+        {/* ---------------- TOPLINE ---------------- */}
+        <section id="topline" className="biq-anchor" style={{ padding: '40px 0' }}>
+          <SectionHeader label="Core season indicators" title="Topline" />
+          <div style={{ marginTop: 24 }}>
+            <RuleGrid min={300}>
+              {toplineStats.map((stat) => (
+                <StatCell key={stat.label} {...stat} />
+              ))}
+            </RuleGrid>
+          </div>
+        </section>
 
-          {advanced.shotProfile.some((zone) => zone.attempts > 0) ? (
-            <section id="shots" className="biq-anchor" style={{ padding: '40px 0' }}>
-              <SectionHeader label="Where the shots come from, and how they fall" title="Shot profile" />
-              <div style={{ marginTop: 24 }}>
-                <ShotProfile zones={advanced.shotProfile} />
-              </div>
-            </section>
-          ) : null}
+        {/* ---------------- BIQ BREAKDOWN ---------------- */}
+        <section id="breakdown" className="biq-anchor" style={{ padding: '40px 0' }}>
+          <SectionHeader label="Component scores" title="BIQ breakdown" />
+          <p style={{ marginTop: 20, maxWidth: '64ch', fontSize: 14, lineHeight: 1.7, color: 'var(--ink-2)' }}>
+            BIQ combines availability, efficiency, impact, team context, and box-score burden into
+            one team-utility score.
+          </p>
+          <ol style={{ listStyle: 'none', margin: '12px 0 0', padding: 0 }}>
+            {(player.biqBreakdown ?? []).map((component) => (
+              <li key={component.label} className="biq-row">
+                <div className="biq-weight-row">
+                  <span className="biq-display" style={{ fontSize: 16, fontWeight: 600 }}>
+                    {component.label}
+                  </span>
+                  <span style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--fog)' }}>
+                    {component.explanation}
+                  </span>
+                  <span className="biq-weight-bar">
+                    <MeterBar value={component.score} />
+                    <span className="biq-mono" style={{ display: 'block', marginTop: 6, fontSize: 10 }}>
+                      Weight {Math.round(component.weight * 100)}%
+                    </span>
+                  </span>
+                  <span className="biq-num" style={{ fontSize: 20, fontWeight: 600, justifySelf: 'end' }}>
+                    {Math.round(component.score)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
 
-          {advanced.onOff ? (
-            <section id="onoff" className="biq-anchor" style={{ padding: '40px 0' }}>
-              <SectionHeader label="Team results with and without him" title="On / off" />
+        {/* ---------------- PER 100, EFFICIENCY, SHOTS, ON/OFF ----------------
+            Play-by-play detail. None of it feeds the BIQ score; it is here so
+            the score can be checked against the play behind it. */}
+        {advanced ? (
+          <>
+            <section id="per100" className="biq-anchor" style={{ padding: '40px 0' }}>
+              <SectionHeader
+                label={`Pace and minutes removed · ${advanced.possessions.toLocaleString('en-US')} possessions on the floor`}
+                title="Per 100 possessions"
+              />
               <p style={{ marginTop: 20, maxWidth: '68ch', fontSize: 14, lineHeight: 1.7, color: 'var(--ink-2)' }}>
-                Net rating is points scored minus points allowed per 100 possessions. On/off depends
-                heavily on who he shares the floor with and who replaces him, so it is context for the
-                score rather than a verdict on its own.
+                Per-game numbers reward minutes and a fast team. These count what he does per 100
+                possessions he is on the floor for. Percentiles are against the league&apos;s rotation
+                players, and a fuller gauge is always better.
+                {advanced.lowSample
+                  ? ' He has played too few possessions for these to have settled; read them as early returns.'
+                  : ''}
               </p>
               <div style={{ marginTop: 24 }}>
-                <OnOffTiles onOff={advanced.onOff} />
+                <RuleGrid min={180}>
+                  {advanced.per100.map((stat) => (
+                    <StatCell key={`per100-${stat.label}`} {...stat} />
+                  ))}
+                </RuleGrid>
               </div>
             </section>
-          ) : null}
-        </>
-      ) : null}
 
-      {/* ---------------- RECENT TREND ---------------- */}
-      <section id="trend" className="biq-anchor" style={{ padding: '40px 0' }}>
-        <SectionHeader label="Last 10 games · Points" title="Recent trend" />
-        <div className="biq-card" style={{ marginTop: 24, padding: 24 }}>
-          <TrendBars data={player.recentTrend ?? []} />
-        </div>
-      </section>
+            <section id="efficiency" className="biq-anchor" style={{ padding: '40px 0' }}>
+              <SectionHeader label="How the points and possessions come" title="Efficiency and role" />
+              <div style={{ marginTop: 24 }}>
+                <RuleGrid min={260}>
+                  {efficiencyStats.map((stat) => (
+                    <StatCell key={`efficiency-${stat.label}`} {...stat} />
+                  ))}
+                </RuleGrid>
+              </div>
+            </section>
 
-      {/* ---------------- SPLITS ---------------- */}
-      <section id="splits" className="biq-anchor" style={{ padding: '40px 0' }}>
-        <SectionHeader label="Situational production" title="Splits" />
-        <div style={{ marginTop: 24 }}>
-          <RuleGrid min={180}>
-            {(player.splits ?? []).map((split) => (
-              <div key={split.label} style={{ padding: 20 }}>
-                <p className="biq-mono">{split.label}</p>
-                <p className="biq-num" style={{ marginTop: 10, fontSize: 22, fontWeight: 600 }}>
-                  {split.value}
+            {advanced.shotProfile.some((zone) => zone.attempts > 0) ? (
+              <section id="shots" className="biq-anchor" style={{ padding: '40px 0' }}>
+                <SectionHeader label="Where the shots come from, and how they fall" title="Shot profile" />
+                <div style={{ marginTop: 24 }}>
+                  <ShotProfile zones={advanced.shotProfile} />
+                </div>
+              </section>
+            ) : null}
+
+            {advanced.onOff ? (
+              <section id="onoff" className="biq-anchor" style={{ padding: '40px 0' }}>
+                <SectionHeader label="Team results with and without him" title="On / off" />
+                <p style={{ marginTop: 20, maxWidth: '68ch', fontSize: 14, lineHeight: 1.7, color: 'var(--ink-2)' }}>
+                  Net rating is points scored minus points allowed per 100 possessions. On/off depends
+                  heavily on who he shares the floor with and who replaces him, so it is context for the
+                  score rather than a verdict on its own.
                 </p>
-                {split.games != null ? (
-                  <p className="biq-mono" style={{ marginTop: 8, fontSize: 10 }}>
-                    {split.games} {split.games === 1 ? 'game' : 'games'}
+                <div style={{ marginTop: 24 }}>
+                  <OnOffTiles onOff={advanced.onOff} />
+                </div>
+              </section>
+            ) : null}
+          </>
+        ) : null}
+
+        {/* ---------------- RECENT TREND ---------------- */}
+        <section id="trend" className="biq-anchor" style={{ padding: '40px 0' }}>
+          <SectionHeader label="Last 10 games · Points" title="Recent trend" />
+          <div className="biq-card" style={{ marginTop: 24, padding: 24 }}>
+            <TrendBars data={player.recentTrend ?? []} />
+          </div>
+        </section>
+
+        {/* ---------------- SPLITS ---------------- */}
+        <section id="splits" className="biq-anchor" style={{ padding: '40px 0' }}>
+          <SectionHeader label="Situational production" title="Splits" />
+          <div style={{ marginTop: 24 }}>
+            <RuleGrid min={180}>
+              {(player.splits ?? []).map((split) => (
+                <div key={split.label} style={{ padding: 20 }}>
+                  <p className="biq-mono">{split.label}</p>
+                  <p className="biq-num" style={{ marginTop: 10, fontSize: 22, fontWeight: 600 }}>
+                    {split.value}
                   </p>
-                ) : null}
+                  {split.games != null ? (
+                    <p className="biq-mono" style={{ marginTop: 8, fontSize: 10 }}>
+                      {split.games} {split.games === 1 ? 'game' : 'games'}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </RuleGrid>
+          </div>
+        </section>
+
+        {/* ---------------- ANALYTICS BLOCKS ---------------- */}
+        {analyticsBlocks.length ? (
+          <section id="analytics" className="biq-anchor" style={{ padding: '40px 0' }}>
+            <SectionHeader label="Extended metrics" title="Analytics" />
+            {analyticsBlocks.map((block) => (
+              <div key={block.title} style={{ marginTop: 32 }}>
+                <p className="biq-mono biq-signal" style={{ marginBottom: 14 }}>{block.title}</p>
+                <RuleGrid>
+                  {block.stats.map((stat) => (
+                    <StatCell key={`${block.title}-${stat.label}`} {...stat} />
+                  ))}
+                </RuleGrid>
               </div>
             ))}
-          </RuleGrid>
-        </div>
-      </section>
+          </section>
+        ) : null}
 
-      {/* ---------------- ANALYTICS BLOCKS ---------------- */}
-      {analyticsBlocks.length ? (
-        <section id="analytics" className="biq-anchor" style={{ padding: '40px 0' }}>
-          <SectionHeader label="Extended metrics" title="Analytics" />
-          {analyticsBlocks.map((block) => (
-            <div key={block.title} style={{ marginTop: 32 }}>
-              <p className="biq-mono biq-signal" style={{ marginBottom: 14 }}>{block.title}</p>
-              <RuleGrid>
-                {block.stats.map((stat) => (
-                  <StatCell key={`${block.title}-${stat.label}`} {...stat} />
-                ))}
-              </RuleGrid>
-            </div>
-          ))}
-        </section>
-      ) : null}
-
-      {/* ---------------- GAME LOG ---------------- */}
-      <section id="gamelog" className="biq-anchor" style={{ padding: '40px 0 88px' }}>
-        <SectionHeader
-          label={`Latest ${(player.gameLog ?? []).length} of ${gamesPlayed} games`}
-          title="Game log"
-        />
-        <div style={{ overflowX: 'auto', marginTop: 24 }}>
-          <table className="biq-table" style={{ minWidth: 980 }}>
-            <thead>
-              <tr>
-                {['DATE', 'MATCHUP', 'W/L', 'MIN', 'PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV', 'FG%', '3PT%', 'FT%', '+/-'].map((label) => (
-                  <th key={label}>{label}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {(player.gameLog ?? []).map((row, index) => (
-                <tr key={`${row.gameDate}-${row.matchup}-${index}`}>
-                  <td style={{ color: 'var(--fog)', whiteSpace: 'nowrap' }}>
-                    {formatShortDate(row.gameDate) ?? row.gameDate}
-                  </td>
-                  <td>{row.matchup}</td>
-                  <td style={{ color: row.result === 'W' ? 'var(--up)' : 'var(--down)', fontWeight: 600 }}>
-                    {row.result}
-                  </td>
-                  <td style={{ color: 'var(--fog)' }}>{row.minutes}</td>
-                  <td style={{ fontWeight: 600 }}>{row.points}</td>
-                  <td>{row.rebounds}</td>
-                  <td>{row.assists}</td>
-                  <td>{row.steals}</td>
-                  <td>{row.blocks}</td>
-                  <td>{row.turnovers}</td>
-                  <td>{row.fgPct.toFixed(1)}</td>
-                  <td>{row.threePct.toFixed(1)}</td>
-                  <td>{row.ftPct.toFixed(1)}</td>
-                  <td style={{ color: signedColor(row.plusMinus) }}>
-                    {formatSigned(row.plusMinus, 0)}
-                  </td>
+        {/* ---------------- GAME LOG ---------------- */}
+        <section id="gamelog" className="biq-anchor" style={{ padding: '40px 0 88px' }}>
+          <SectionHeader
+            label={`Latest ${(player.gameLog ?? []).length} of ${gamesPlayed} games`}
+            title="Game log"
+          />
+          <div style={{ overflowX: 'auto', marginTop: 24 }}>
+            <table className="biq-table" style={{ minWidth: 980 }}>
+              <thead>
+                <tr>
+                  {['DATE', 'MATCHUP', 'W/L', 'MIN', 'PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV', 'FG%', '3PT%', 'FT%', '+/-'].map((label) => (
+                    <th key={label}>{label}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+              </thead>
+              <tbody>
+                {(player.gameLog ?? []).map((row, index) => (
+                  <tr key={`${row.gameDate}-${row.matchup}-${index}`}>
+                    <td style={{ color: 'var(--fog)', whiteSpace: 'nowrap' }}>
+                      {formatShortDate(row.gameDate) ?? row.gameDate}
+                    </td>
+                    <td>{row.matchup}</td>
+                    <td style={{ color: row.result === 'W' ? 'var(--up)' : 'var(--down)', fontWeight: 600 }}>
+                      {row.result}
+                    </td>
+                    <td style={{ color: 'var(--fog)' }}>{row.minutes}</td>
+                    <td style={{ fontWeight: 600 }}>{row.points}</td>
+                    <td>{row.rebounds}</td>
+                    <td>{row.assists}</td>
+                    <td>{row.steals}</td>
+                    <td>{row.blocks}</td>
+                    <td>{row.turnovers}</td>
+                    <td>{row.fgPct.toFixed(1)}</td>
+                    <td>{row.threePct.toFixed(1)}</td>
+                    <td>{row.ftPct.toFixed(1)}</td>
+                    <td style={{ color: signedColor(row.plusMinus) }}>
+                      {formatSigned(row.plusMinus, 0)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+        </>
+      ) : (
+        // Every section below is built from his games; with none, each would
+        // be a grid of zeros.
+        <section style={{ padding: '8px 0 88px' }}>
+          <div className="biq-card" style={{ padding: 28, maxWidth: 640 }}>
+            <p className="biq-display" style={{ fontSize: 18, fontWeight: 600 }}>
+              No games yet this season
+            </p>
+            <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
+              {player.name}&apos;s profile fills in after his first game: the BIQ grade, stats,
+              shot profile and game log all come from what he does on the floor.
+            </p>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

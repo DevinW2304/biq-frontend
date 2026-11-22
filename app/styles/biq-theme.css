@@ -92,6 +92,19 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
   border-radius: 999px;
 }
 
+/* ---- head-to-head edge (compare cards) --------------------------------- */
+
+.biq-edge-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--key);
+  color: #fff;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  line-height: 1.5;
+}
+
 /* ---- tier chip -------------------------------------------------------- */
 
 .biq-chip {
@@ -458,6 +471,7 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
 .biq-dark-nav header .nav-link:hover,
 .biq-dark-nav header .nav-link:focus-visible { color: #fff; }
 .biq-dark-nav header .nav-link-live { color: #6b8cff; }
+.biq-dark-nav header .nav-link[aria-current="page"] { color: #fff; text-decoration-color: #6b8cff; }
 .biq-dark-nav header .nav-tagline { color: rgba(244, 241, 232, 0.48) !important; }
 .biq-dark-nav header .nav-search {
   background: rgba(255, 255, 255, 0.07) !important;

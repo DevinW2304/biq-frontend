@@ -1,30 +1,39 @@
 'use client';
 
+// The main player search (homepage, player index, 404). Suggests teams and
+// players as you type; picking one opens its page, while Search (or Enter
+// with nothing highlighted) still lists every player match on /players.
+
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { PlayerTypeahead } from '@/components/PlayerTypeahead';
 
 type PlayerSearchBarProps = {
   placeholder?: string;
   initialValue?: string;
 };
 
+function resultsHref(query: string) {
+  return `/players?q=${encodeURIComponent(query)}`;
+}
+
 export function PlayerSearchBar({
-  placeholder = 'Search active NBA players',
+  placeholder = 'Search players or teams',
   initialValue = '',
 }: PlayerSearchBarProps) {
   const [query, setQuery] = useState(initialValue);
-  const [focused, setFocused] = useState(false);
   const router = useRouter();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = query.trim();
     if (!trimmed) return;
-    router.push(`/players?q=${encodeURIComponent(trimmed)}`);
+    router.push(resultsHref(trimmed));
   }
 
   return (
     <form
+      role="search"
       onSubmit={handleSubmit}
       style={{
         display: 'flex',
@@ -33,16 +42,9 @@ export function PlayerSearchBar({
         marginTop: '1.5rem',
       }}
     >
-      <div
-        style={{
-          flex: 1,
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        {/* Search icon */}
+      <div className="biq-search-field">
         <svg
+          className="biq-search-icon"
           width="14"
           height="14"
           viewBox="0 0 24 24"
@@ -51,36 +53,21 @@ export function PlayerSearchBar({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          style={{
-            position: 'absolute',
-            left: '0.875rem',
-            color: focused ? 'var(--key)' : 'var(--fog)',
-            transition: 'color 0.15s ease',
-            pointerEvents: 'none',
-            flexShrink: 0,
-          }}
+          aria-hidden="true"
         >
           <circle cx="11" cy="11" r="8" />
           <path d="m21 21-4.35-4.35" />
         </svg>
 
-        <input
+        <PlayerTypeahead
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          onValueChange={setQuery}
+          onPick={(player) => router.push(`/players/${player.id}`)}
+          onPickTeam={(team) => router.push(`/teams/${team.id}`)}
+          label="Search players and teams"
           placeholder={placeholder}
-          style={{
-            width: '100%',
-            background: '#fff',
-            border: `1px solid ${focused ? 'var(--key)' : 'var(--line)'}`,
-            borderRadius: 'var(--radius)',
-            padding: '0.7rem 1rem 0.7rem 2.5rem',
-            color: 'var(--ink)',
-            fontSize: '0.9rem',
-            outline: 'none',
-            transition: 'border-color 0.15s ease',
-          }}
+          inputClassName="biq-search-input"
+          allResultsHref={resultsHref}
         />
       </div>
 

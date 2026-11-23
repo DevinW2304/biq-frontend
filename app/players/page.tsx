@@ -1,5 +1,6 @@
 // app/players/page.tsx — COURT PAPER player index: search, or with no search
 // every active player A–Z. Both come from the paged /api/players directory.
+// A search also lists the teams it matches, so "celtics" isn't a dead end.
 
 export const revalidate = 300;
 
@@ -8,9 +9,23 @@ import type { Metadata } from 'next';
 import { pageMetadata } from '@/lib/site';
 import { PlayerSearchBar } from '@/components/PlayerSearchBar';
 import { fetchCachedJSON, fetchCurrentSeason } from '@/lib/api';
-import { PlayerDirectoryPage } from '@/lib/types';
+import type { PlayerDirectoryPage, TeamSearchResult } from '@/lib/types';
 
 const PAGE_SIZE = 50;
+/** Teams listed above the players on a search, at most. */
+const TEAM_LIMIT = 3;
+
+/** Teams matching a search; none when there's no search or the call fails
+ *  (the players are the page, the teams a shortcut). */
+async function matchingTeams(q: string): Promise<TeamSearchResult[]> {
+  if (!q) return [];
+  try {
+    const teams = await fetchCachedJSON<TeamSearchResult[]>(`/api/teams/search?q=${encodeURIComponent(q)}`, 300);
+    return teams.slice(0, TEAM_LIMIT);
+  } catch {
+    return [];
+  }
+}
 
 function pageHref(q: string, page: number) {
   const params = new URLSearchParams();
@@ -46,15 +61,21 @@ export default async function PlayersPage({
 
   // One directory call serves both modes: a name search, or (q empty) the
   // whole active list A–Z, so "Browse all players" really browses.
-  const directory = await fetchCachedJSON<PlayerDirectoryPage>(
-    `/api/players?q=${encodeURIComponent(q)}&offset=${(page - 1) * PAGE_SIZE}&limit=${PAGE_SIZE}`,
-    300
-  );
+  const [directory, teams] = await Promise.all([
+    fetchCachedJSON<PlayerDirectoryPage>(
+      `/api/players?q=${encodeURIComponent(q)}&offset=${(page - 1) * PAGE_SIZE}&limit=${PAGE_SIZE}`,
+      300
+    ),
+    page === 1 ? matchingTeams(q) : Promise.resolve([]),
+  ]);
   const results = directory.items;
   const total = directory.total;
   const offset = directory.offset;
 
   const pageCount = Math.ceil(total / PAGE_SIZE);
+  // "celtics" finds the team and no players: the team is the answer, so skip
+  // an empty players section under it.
+  const showPlayers = !(q && teams.length && total === 0);
   const countLine = q
     ? `${total} active player${total === 1 ? '' : 's'} found`
     : `${total} active players, A–Z`;
@@ -76,76 +97,107 @@ export default async function PlayersPage({
         </div>
       </section>
 
-      {/* ---------------- RESULTS ---------------- */}
-      <section style={{ padding: '0 0 88px' }}>
-        <SectionHeader
-          label={countLine}
-          title={q ? `Results for "${q}"` : 'All active players'}
-        />
-
-        <ol className="biq-ledger">
-          {results.map((player, index) => (
-            <li key={player.id} className="biq-row">
-              <Link href={`/players/${player.id}`} className="biq-ledger-link">
-                <span className="biq-rank" style={{ fontSize: 15 }}>
-                  {String(offset + index + 1).padStart(2, '0')}
-                </span>
-                <SubjectPhoto id={player.id} name={player.name} size={52} />
-                <span style={{ minWidth: 0 }}>
-                  <span className="biq-ledger-name">{player.name}</span>
-                  <span className="biq-ledger-meta">
-                    {joinMeta(
-                      player.team,
-                      knownPosition(player.position),
-                      player.gamesPlayed > 0
-                        ? `${player.gamesPlayed} game${player.gamesPlayed === 1 ? '' : 's'}`
-                        : 'No games yet',
-                    )}
+      {/* ---------------- TEAMS ---------------- */}
+      {teams.length > 0 && (
+        <section style={{ padding: showPlayers ? '0 0 48px' : '0 0 88px' }}>
+          <SectionHeader
+            label={`${teams.length} team${teams.length === 1 ? '' : 's'} found`}
+            title={`Teams matching “${q}”`}
+          />
+          <ol className="biq-ledger">
+            {teams.map((team) => (
+              <li key={team.id} className="biq-row">
+                <Link href={`/teams/${team.id}`} className="biq-ledger-link">
+                  <span aria-hidden="true" />
+                  <span aria-hidden="true" className="biq-num biq-team-badge">
+                    {team.abbreviation}
                   </span>
-                </span>
-                <span className="biq-link biq-ledger-score" style={{ fontSize: 14, textAlign: 'right' }}>
-                  Open profile
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ol>
+                  <span style={{ minWidth: 0 }}>
+                    <span className="biq-ledger-name">{team.name}</span>
+                    <span className="biq-ledger-meta">{joinMeta(team.conference, team.division)}</span>
+                  </span>
+                  <span className="biq-link biq-ledger-score" style={{ fontSize: 14, textAlign: 'right' }}>
+                    Open team
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
-        {pageCount > 1 && (
-          <nav
-            aria-label="Search results pages"
-            className="biq-mono"
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginTop: 24 }}
-          >
-            {page > 1 ? (
-              <Link href={pageHref(q, page - 1)} className="biq-link">Previous</Link>
-            ) : (
-              <span />
-            )}
-            <span>
-              Page {page} of {pageCount}
-            </span>
-            {page < pageCount ? (
-              <Link href={pageHref(q, page + 1)} className="biq-link">Next</Link>
-            ) : (
-              <span />
-            )}
-          </nav>
-        )}
+      {/* ---------------- RESULTS ---------------- */}
+      {showPlayers && (
+        <section style={{ padding: '0 0 88px' }}>
+          <SectionHeader
+            label={countLine}
+            title={q ? (teams.length ? `Players matching “${q}”` : `Results for “${q}”`) : 'All active players'}
+          />
 
-        {results.length === 0 && (
-          <div className="biq-card" style={{ padding: 28, marginTop: 24 }}>
-            <p className="biq-display" style={{ fontSize: 18, fontWeight: 600 }}>
-              {q ? 'No active players found' : 'No players found'}
-            </p>
-            <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
-              {q
-                ? 'Try searching for a current NBA player by name.'
-                : 'The player directory is unavailable right now.'}
-            </p>
-          </div>
-        )}
-      </section>
+          <ol className="biq-ledger">
+            {results.map((player, index) => (
+              <li key={player.id} className="biq-row">
+                <Link href={`/players/${player.id}`} className="biq-ledger-link">
+                  <span className="biq-rank" style={{ fontSize: 15 }}>
+                    {String(offset + index + 1).padStart(2, '0')}
+                  </span>
+                  <SubjectPhoto id={player.id} name={player.name} size={52} />
+                  <span style={{ minWidth: 0 }}>
+                    <span className="biq-ledger-name">{player.name}</span>
+                    <span className="biq-ledger-meta">
+                      {joinMeta(
+                        player.team,
+                        knownPosition(player.position),
+                        player.gamesPlayed > 0
+                          ? `${player.gamesPlayed} game${player.gamesPlayed === 1 ? '' : 's'}`
+                          : 'No games yet',
+                      )}
+                    </span>
+                  </span>
+                  <span className="biq-link biq-ledger-score" style={{ fontSize: 14, textAlign: 'right' }}>
+                    Open profile
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+
+          {pageCount > 1 && (
+            <nav
+              aria-label="Search results pages"
+              className="biq-mono"
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginTop: 24 }}
+            >
+              {page > 1 ? (
+                <Link href={pageHref(q, page - 1)} className="biq-link">Previous</Link>
+              ) : (
+                <span />
+              )}
+              <span>
+                Page {page} of {pageCount}
+              </span>
+              {page < pageCount ? (
+                <Link href={pageHref(q, page + 1)} className="biq-link">Next</Link>
+              ) : (
+                <span />
+              )}
+            </nav>
+          )}
+
+          {results.length === 0 && (
+            <div className="biq-card" style={{ padding: 28, marginTop: 24 }}>
+              <p className="biq-display" style={{ fontSize: 18, fontWeight: 600 }}>
+                {q ? 'No active players found' : 'No players found'}
+              </p>
+              <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
+                {q
+                  ? 'Try a current NBA player’s name. Accents and apostrophes are optional.'
+                  : 'The player directory is unavailable right now.'}
+              </p>
+            </div>
+          )}
+        </section>
+      )}
     </main>
   );
 }

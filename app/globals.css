@@ -3,43 +3,44 @@
 @tailwind utilities;
 
 /* ══════════════════════════════════════════════════════════════════════
-   BIQ // COURT PAPER — global stylesheet
-   Light analytics product. Canonical tokens and classes live in
+   BIQ — global stylesheet
+   Dark analytics product. Canonical tokens and classes live in
    app/styles/biq-theme.css. This file holds the reset, the ticker, and the
    legacy variable names (still read by the ticker and stacked leaderboard)
    mapped onto the same palette. New work uses the biq-* classes.
    ══════════════════════════════════════════════════════════════════════ */
 
 :root {
-  color-scheme: light;
+  /* Native controls and scrollbars follow the dark theme too. */
+  color-scheme: dark;
 
-  /* Legacy surface tokens → COURT PAPER neutrals */
-  --bg:  #faf9f6;
-  --s1:  #f3f1eb;
-  --s2:  #ece9e1;
-  --s3:  #e4e0d5;
-  --s4:  #dbd6c8;
+  /* Legacy surface tokens → the dark neutrals in biq-theme.css */
+  --bg:  #131210;
+  --s1:  #1b1916;
+  --s2:  #24221e;
+  --s3:  #2e2b26;
+  --s4:  #3a362f;
 
-  --border:        #e3dfd5;
-  --border-strong: #cfc9bb;
-  --border-focus:  #2545cb;
+  --border:        #2e2b26;
+  --border-strong: #45413a;
+  --border-focus:  #6b8cff;
 
-  --text:   #1e1c17;
-  --text-2: #4f4b42;
-  --muted:  #6f695c;
-  --faint:  #a39c8c;
+  --text:   #f4f1e8;
+  --text-2: #c9c4b8;
+  --muted:  #9a9486;
+  --faint:  #7a7468; /* decorative only: placeholders, separators */
 
-  --overlay-text-strong: #1e1c17;
-  --overlay-text:        #1e1c17;
-  --overlay-text-soft:   #4f4b42;
-  --overlay-text-faint:  #6f695c;
+  --overlay-text-strong: #f4f1e8;
+  --overlay-text:        #f4f1e8;
+  --overlay-text-soft:   #c9c4b8;
+  --overlay-text-faint:  #9a9486;
 
   /* Legacy accent slots → the key blue */
-  --signal: #2545cb;
+  --signal: #6b8cff;
 
-  /* Dossier-era aliases, kept so stragglers stay coherent on light paper */
-  --rule: #e3dfd5;
-  --bone: #1e1c17;
+  /* Dossier-era aliases, kept so stragglers stay coherent */
+  --rule: #2e2b26;
+  --bone: #f4f1e8;
 
   --font-mono: ui-monospace, monospace; /* remapped to Spline Sans Mono on body */
 
@@ -104,7 +105,7 @@ body {
   border-right: 1px solid var(--border);
 }
 .ticker-label-pill {
-  background: var(--key);
+  background: var(--key-fill);
   color: #fff;
   font-family: var(--font-file);
   font-weight: 600;

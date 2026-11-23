@@ -2,15 +2,15 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { ImageResponse } from 'next/og';
 
-// Shared Open Graph card: the homepage's dark stage with paper type and the
-// key-blue accent. Colors mirror the COURT PAPER tokens in biq-theme.css.
+// Shared Open Graph card, in the site's dark palette: near-black page, bone
+// type, the key-blue accent. Colors mirror the tokens in biq-theme.css.
 export const OG_SIZE = { width: 1200, height: 630 };
 export const OG_CONTENT_TYPE = 'image/png';
 
 const STAGE = '#131210';
-const PAPER = '#faf9f6';
+const INK = '#f4f1e8';
 const FOG = '#a39d90';
-const KEY = '#2545cb';
+const KEY = '#6b8cff';
 const TRACK = '#2d2a25';
 
 // The site's display face (OFL, see assets/fonts/OFL.txt). Loaded once per
@@ -48,13 +48,13 @@ export async function ogCard({ eyebrow, title, meta, score }: OgCardProps) {
           justifyContent: 'space-between',
           padding: '64px 72px',
           background: STAGE,
-          color: PAPER,
+          color: INK,
           fontFamily: 'Bricolage Grotesque',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 24, letterSpacing: 4, color: FOG }}>
           <span>{eyebrow.toUpperCase()}</span>
-          <span style={{ color: PAPER, fontWeight: 700 }}>BIQ</span>
+          <span style={{ color: INK, fontWeight: 700 }}>BIQ</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 48 }}>

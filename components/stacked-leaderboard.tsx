@@ -18,10 +18,9 @@ function headshotUrl(id: number) {
   return `https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/${id}.png`;
 }
 
-// COURT PAPER: one accent. The chrome around the photo cards is light, so
-// every former tier color collapses to the key blue.
+// One accent: every former tier color collapses to the key blue.
 function tierColor(_score: number): string {
-  return '#2545cb';
+  return 'var(--key)';
 }
 
 // ─── StatPill ─────────────────────────────────────────────────────────────────
@@ -43,8 +42,8 @@ function StatPill({
         gap: 3,
         padding: '0.55rem 0.5rem',
         borderRadius: 'var(--r-sm)',
-        background: accent ? '#e9edfa' : '#fff',
-        border: `1px solid ${accent ? '#c8d3f2' : 'var(--border)'}`,
+        background: accent ? 'var(--key-tint)' : 'var(--card)',
+        border: `1px solid ${accent ? 'var(--key)' : 'var(--border)'}`,
       }}
     >
       <div
@@ -53,7 +52,7 @@ function StatPill({
           fontSize: '0.5rem',
           letterSpacing: '0.14em',
           textTransform: 'uppercase',
-          color: accent ? '#1b34a0' : 'var(--muted)',
+          color: accent ? 'var(--key-deep)' : 'var(--muted)',
         }}
       >
         {label}
@@ -64,7 +63,7 @@ function StatPill({
           fontWeight: 600,
           fontSize: '1.05rem',
           lineHeight: 1,
-          color: accent ? '#1b34a0' : 'var(--text)',
+          color: accent ? 'var(--key-deep)' : 'var(--text)',
           fontVariantNumeric: 'tabular-nums',
         }}
       >
@@ -97,8 +96,8 @@ function NeighborRow({
         textDecoration: 'none',
         color: 'var(--text)',
         borderRadius: 'var(--r-sm)',
-        border: `1px solid ${active ? '#c8d3f2' : 'var(--border)'}`,
-        background: active ? '#e9edfa' : '#fff',
+        border: `1px solid ${active ? 'var(--key)' : 'var(--border)'}`,
+        background: active ? 'var(--key-tint)' : 'var(--card)',
       }}
     >
       <div
@@ -293,7 +292,7 @@ export default function StackedLeaderboard({
   return (
     <div
       style={{
-        background: '#fff',
+        background: 'var(--card)',
         border: '1px solid var(--border)',
         borderRadius: 'var(--r-md)',
         overflow: 'hidden',
@@ -325,7 +324,7 @@ export default function StackedLeaderboard({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#fff',
+              background: 'var(--card)',
               border: '1px solid var(--border)',
               borderRadius: 999,
               color: activeIdx === 0 ? 'var(--faint)' : 'var(--text)',
@@ -373,7 +372,7 @@ export default function StackedLeaderboard({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#fff',
+              background: 'var(--card)',
               border: '1px solid var(--border)',
               borderRadius: 999,
               color: activeIdx === N - 1 ? 'var(--faint)' : 'var(--text)',
@@ -470,7 +469,7 @@ export default function StackedLeaderboard({
                   zIndex: isActive ? 10 : Math.max(1, 5 - absOff),
                   borderRadius: 'var(--r-md)',
                   outline: isActive
-                    ? '2px solid #2545cb'
+                    ? '2px solid var(--key)'
                     : '1px solid var(--border-strong)',
                 }}
               >
@@ -548,7 +547,7 @@ export default function StackedLeaderboard({
                       width: 8,
                       height: 8,
                       borderRadius: 999,
-                      background: '#2545cb',
+                      background: 'var(--key)',
                       border: '1px solid rgba(255,255,255,0.7)',
                     }}
                   />
@@ -667,7 +666,7 @@ export default function StackedLeaderboard({
                 height: 16,
                 borderRadius: 999,
                 background: tc,
-                border: '2px solid #fff',
+                border: '2px solid var(--ink)',
                 transition: 'background 0.4s ease',
                 pointerEvents: 'none',
               }}
@@ -713,7 +712,7 @@ export default function StackedLeaderboard({
       <div
         style={{
           borderTop: '1px solid var(--border)',
-          background: '#fff',
+          background: 'var(--card)',
           padding: '1.05rem 1.1rem 1.15rem',
         }}
       >
@@ -762,13 +761,13 @@ export default function StackedLeaderboard({
                       display: 'inline-block',
                       padding: '3px 10px',
                       borderRadius: 999,
-                      color: '#1b34a0',
+                      color: 'var(--key-deep)',
                       fontFamily: 'var(--font-file)',
                       fontSize: '0.55rem',
                       fontWeight: 600,
                       letterSpacing: '0.1em',
                       textTransform: 'uppercase',
-                      background: '#e9edfa',
+                      background: 'var(--key-tint)',
                     }}
                   >
                     {active.biqTier}
@@ -809,7 +808,7 @@ export default function StackedLeaderboard({
                   fontSize: '0.8rem',
                   fontWeight: 600,
                   color: '#fff',
-                  background: tc,
+                  background: 'var(--key-fill)',
                   borderRadius: 'var(--r-md)',
                   padding: '0.58rem 1.05rem',
                   textDecoration: 'none',

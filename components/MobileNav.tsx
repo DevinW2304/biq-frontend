@@ -4,6 +4,7 @@
 // panel under the header. Closes on navigation and on Escape.
 import { usePathname, useSearchParams } from 'next/navigation';
 import { NavLinks } from '@/components/NavLinks';
+import { NavSearch } from '@/components/NavSearch';
 import { useEffect, useId, useState } from 'react';
 
 export type NavLink = { href: string; label: string; external: boolean };
@@ -18,7 +19,10 @@ export function MobileNav({ links }: { links: NavLink[] }) {
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && setOpen(false);
+    // Escape inside the search closes its suggestions first (it marks the
+    // event handled); only a second Escape closes the menu.
+    const onKey = (event: KeyboardEvent) =>
+      event.key === 'Escape' && !event.defaultPrevented && setOpen(false);
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
@@ -39,9 +43,7 @@ export function MobileNav({ links }: { links: NavLink[] }) {
         <nav aria-label="Main">
           <NavLinks links={links} className="nav-panel-link" />
         </nav>
-        <form action="/players" method="get" className="nav-panel-search">
-          <input name="q" type="search" placeholder="Search players" aria-label="Search players" className="nav-search" />
-        </form>
+        <NavSearch className="nav-panel-search" />
       </div>
     </div>
   );

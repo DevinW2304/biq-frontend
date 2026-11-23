@@ -17,6 +17,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npx tsc --noEmit
+      - run: npm test
       # No backend in CI: pages that prerender must survive an unreachable API.
       - run: npm run build
         env:

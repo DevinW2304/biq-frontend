@@ -11,3 +11,6 @@ tsconfig.tsbuildinfo
 
 # Browser-check screenshots
 .playwright-mcp/
+
+# Local planning and mockup scratch
+.superpowers/

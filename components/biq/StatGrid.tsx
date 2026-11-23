@@ -20,7 +20,7 @@ export function RuleGrid({
       style={{
         display: 'grid',
         gridTemplateColumns: `repeat(auto-fit, minmax(${min}px, 1fr))`,
-        background: '#fff',
+        background: 'var(--card)',
         border: '1px solid var(--line)',
         borderRadius: 'var(--radius)',
         overflow: 'hidden',

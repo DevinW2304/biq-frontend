@@ -1,8 +1,8 @@
-# COURT PAPER kit
+# BIQ kit
 
-Primitives for the BIQ light design system. Tokens and classes live in
+Primitives for the BIQ dark design system. Tokens and classes live in
 `app/styles/biq-theme.css` (imported once in `app/layout.tsx`). Only
-`SubjectPhoto.tsx` (missing-headshot fallback) and `DarkNavSwitch.tsx` are client components;
+`SubjectPhoto.tsx` (missing-headshot fallback) is a client component;
 everything else here is plain, server-component safe React.
 
 ## BiqKit.tsx

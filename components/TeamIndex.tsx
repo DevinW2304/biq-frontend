@@ -41,7 +41,7 @@ export function TeamIndex({ teams }: { teams: TeamLeaderboardEntry[] }) {
           style={{
             flex: '1 1 260px',
             maxWidth: 460,
-            background: '#fff',
+            background: 'var(--card)',
             border: '1px solid var(--line-strong)',
             borderRadius: 'var(--radius)',
             color: 'var(--ink)',

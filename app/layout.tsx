@@ -2,7 +2,7 @@ import './globals.css';
 import './styles/biq-theme.css';
 import { Navbar } from '@/components/Navbar';
 import { SiteFooter } from '@/components/biq/SiteFooter';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 import { Bricolage_Grotesque, Instrument_Sans, Spline_Sans_Mono } from 'next/font/google';
 
@@ -24,6 +24,9 @@ const splineMono = Spline_Sans_Mono({
   variable: '--font-file',
   display: 'swap',
 });
+
+// Tints the browser's own chrome (mobile address bar) to the page.
+export const viewport: Viewport = { themeColor: '#131210' };
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

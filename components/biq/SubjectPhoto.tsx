@@ -19,27 +19,36 @@ function initials(name: string) {
   return (first + last).toUpperCase();
 }
 
+/** The NBA's headshots are 260 x 190 cutouts on a transparent background. */
+const CUTOUT_ASPECT = 260 / 190;
+
 export function SubjectPhoto({
   id,
   name,
   size,
+  cutout = false,
 }: {
   id: number;
   name: string;
+  /** Height in px; also the width, unless `cutout`. */
   size: number;
+  /** Show the cutout as it is, at its own proportions, with no frame. */
+  cutout?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
+  const framed = !cutout || failed;
+  const width = cutout ? Math.round(size * CUTOUT_ASPECT) : size;
 
   return (
     <div
       style={{
-        width: size,
+        width,
         height: size,
         overflow: 'hidden',
         flexShrink: 0,
-        border: '1px solid var(--line)',
-        borderRadius: 'var(--radius)',
-        background: 'var(--panel)',
+        border: framed ? '1px solid var(--line)' : 0,
+        borderRadius: framed ? 'var(--radius)' : 0,
+        background: framed ? 'var(--panel)' : 'transparent',
         display: 'grid',
         placeItems: 'center',
       }}
@@ -57,13 +66,17 @@ export function SubjectPhoto({
         <Image
           src={getPlayerHeadshotUrl(id)}
           alt={`${name} headshot`}
-          width={size}
+          width={width}
           height={size}
           onError={() => setFailed(true)}
+          // Fill the box inside its border. Sized to `size`, the reset's
+          // max-width squeezed it 2px narrower than tall, and next/image
+          // warned on every page with a headshot.
           style={{
-            width: size,
-            height: size,
-            objectFit: 'cover',
+            width: '100%',
+            height: '100%',
+            objectFit: cutout ? 'contain' : 'cover',
+            objectPosition: 'center bottom',
             display: 'block',
           }}
         />

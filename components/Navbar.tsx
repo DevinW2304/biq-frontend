@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { MobileNav, type NavLink } from '@/components/MobileNav';
 import { NavLinks } from '@/components/NavLinks';
+import { NavSearch } from '@/components/NavSearch';
 
 const navStyles = `
   .nav-link { color: var(--ink-2); font-size: 14px; font-weight: 500; transition: color 0.15s ease; }
@@ -17,7 +18,15 @@ const navStyles = `
   .nav-link-live:hover, .nav-link-live:focus-visible { color: var(--key-deep); }
   .nav-search::placeholder { color: var(--fog); }
   .nav-search:focus { border-color: var(--key); }
-  @media (max-width: 900px) { .nav-desktop .nav-search { display: none; } }
+  .nav-search-form { display: flex; }
+  .nav-search-form .nav-search {
+    width: 160px; background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+    color: var(--ink); font-size: 13px; padding: 7px 14px; outline: none;
+    transition: border-color 0.15s ease;
+  }
+  /* The box is narrow; let its suggestions open wider, toward the page. */
+  .nav-search-form .biq-typeahead { left: auto; width: 300px; }
+  @media (max-width: 900px) { .nav-desktop .nav-search-form { display: none; } }
   @media (max-width: 720px) { .nav-tagline { display: none; } }
 
   .nav-mobile { display: none; }
@@ -44,8 +53,8 @@ const navStyles = `
   .nav-panel-link[aria-current="page"] { color: var(--key); font-weight: 600; }
   .nav-panel-search { margin-top: 16px; }
   .nav-panel-search .nav-search {
-    width: 100%; background: #fff; border: 1px solid var(--line-strong); border-radius: var(--radius);
-    color: var(--ink); font-size: 16px; padding: 11px 14px;
+    width: 100%; background: var(--card); border: 1px solid var(--line-strong); border-radius: var(--radius);
+    color: var(--ink); font-size: 16px; padding: 11px 14px; outline: none;
   }
 `;
 
@@ -65,7 +74,7 @@ export function Navbar() {
         position: 'sticky',
         top: 0,
         zIndex: 200,
-        background: 'rgba(250, 249, 246, 0.94)',
+        background: 'rgba(19, 18, 16, 0.88)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         borderBottom: '1px solid var(--line)',
@@ -110,27 +119,7 @@ export function Navbar() {
             <NavLinks links={navLinks} className="nav-link" />
           </nav>
 
-          {/* Server-safe search: submits to the existing /players?q= flow */}
-          <form action="/players" method="get" style={{ display: 'flex' }}>
-            <input
-              name="q"
-              type="search"
-              placeholder="Search players"
-              aria-label="Search players"
-              className="nav-search"
-              style={{
-                width: 160,
-                background: '#fff',
-                border: '1px solid var(--line)',
-                borderRadius: 999,
-                color: 'var(--ink)',
-                fontSize: 13,
-                padding: '7px 14px',
-                outline: 'none',
-                transition: 'border-color 0.15s ease',
-              }}
-            />
-          </form>
+          <NavSearch className="nav-search-form" />
         </div>
 
         {/* useSearchParams needs a Suspense boundary to keep pages static. */}

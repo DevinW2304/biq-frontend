@@ -4,9 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { SearchPlayerResult } from '@/lib/types';
 import { joinMeta, knownPosition } from '@/lib/format';
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+import { PlayerTypeahead } from '@/components/PlayerTypeahead';
 
 type PickerSlot = 'a' | 'b';
 
@@ -40,10 +38,6 @@ export function ComparePlayerPicker({
   const [queryB, setQueryB] = useState('');
   const [selectedA, setSelectedA] = useState<SelectedPlayer | null>(null);
   const [selectedB, setSelectedB] = useState<SelectedPlayer | null>(null);
-  const [resultsA, setResultsA] = useState<SearchPlayerResult[]>([]);
-  const [resultsB, setResultsB] = useState<SearchPlayerResult[]>([]);
-  const [loadingA, setLoadingA] = useState(false);
-  const [loadingB, setLoadingB] = useState(false);
 
   // The URL is the source of truth: a quick-matchup link or back/forward
   // replaces both slots, and a slot only keeps its label when its id is
@@ -61,82 +55,6 @@ export function ComparePlayerPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialA, initialB, knownA, knownB]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function run() {
-      if (!queryA.trim()) {
-        setResultsA([]);
-        return;
-      }
-
-      try {
-        setLoadingA(true);
-        const res = await fetch(
-          `${API_BASE_URL.replace(/\/$/, '')}/api/players/search?q=${encodeURIComponent(queryA)}`,
-          { signal: controller.signal }
-        );
-
-        if (!res.ok) throw new Error(`Search failed: ${res.status}`);
-        const data: SearchPlayerResult[] = await res.json();
-        setResultsA(data);
-      } catch (error) {
-        if (!controller.signal.aborted) {
-          console.error('Compare search A failed', error);
-          setResultsA([]);
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoadingA(false);
-        }
-      }
-    }
-
-    const timeout = setTimeout(run, 250);
-    return () => {
-      controller.abort();
-      clearTimeout(timeout);
-    };
-  }, [queryA]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function run() {
-      if (!queryB.trim()) {
-        setResultsB([]);
-        return;
-      }
-
-      try {
-        setLoadingB(true);
-        const res = await fetch(
-          `${API_BASE_URL.replace(/\/$/, '')}/api/players/search?q=${encodeURIComponent(queryB)}`,
-          { signal: controller.signal }
-        );
-
-        if (!res.ok) throw new Error(`Search failed: ${res.status}`);
-        const data: SearchPlayerResult[] = await res.json();
-        setResultsB(data);
-      } catch (error) {
-        if (!controller.signal.aborted) {
-          console.error('Compare search B failed', error);
-          setResultsB([]);
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoadingB(false);
-        }
-      }
-    }
-
-    const timeout = setTimeout(run, 250);
-    return () => {
-      controller.abort();
-      clearTimeout(timeout);
-    };
-  }, [queryB]);
-
   const canCompare = useMemo(() => {
     return !!selectedA?.id && !!selectedB?.id && selectedA.id !== selectedB.id;
   }, [selectedA, selectedB]);
@@ -147,26 +65,22 @@ export function ComparePlayerPicker({
     if (slot === 'a') {
       setSelectedA({ id: String(player.id), label });
       setQueryA(player.name);
-      setResultsA([]);
       return;
     }
 
     setSelectedB({ id: String(player.id), label });
     setQueryB(player.name);
-    setResultsB([]);
   }
 
   function clearPlayer(slot: PickerSlot) {
     if (slot === 'a') {
       setSelectedA(null);
       setQueryA('');
-      setResultsA([]);
       return;
     }
 
     setSelectedB(null);
     setQueryB('');
-    setResultsB([]);
   }
 
   function submitCompare() {
@@ -239,8 +153,7 @@ export function ComparePlayerPicker({
                 query: queryA,
                 setQuery: setQueryA,
                 selected: selectedA,
-                results: resultsA,
-                loading: loadingA,
+                setSelected: setSelectedA,
               },
               {
                 slot: 'b' as const,
@@ -249,27 +162,25 @@ export function ComparePlayerPicker({
                 query: queryB,
                 setQuery: setQueryB,
                 selected: selectedB,
-                results: resultsB,
-                loading: loadingB,
+                setSelected: setSelectedB,
               },
             ]).map((side) => (
               <div key={side.slot}>
                 <p className="biq-mono" style={{ marginBottom: 10 }}>{side.label}</p>
 
-                <input
+                <PlayerTypeahead
                   value={side.query}
-                  onChange={(e) => side.setQuery(e.target.value)}
-                  placeholder={side.placeholder}
-                  style={{
-                    width: '100%',
-                    background: '#fff',
-                    border: '1px solid var(--line)',
-                    borderRadius: 'var(--radius)',
-                    padding: '11px 14px',
-                    fontSize: 14,
-                    color: 'var(--ink)',
-                    outline: 'none',
+                  onValueChange={(value) => {
+                    side.setQuery(value);
+                    // Typing again means picking someone else; the old pick
+                    // no longer matches the box.
+                    if (side.selected) side.setSelected(null);
                   }}
+                  onPick={(player) => choosePlayer(side.slot, player)}
+                  label={side.slot === 'a' ? 'Player A' : 'Player B'}
+                  placeholder={side.placeholder}
+                  inputClassName="biq-picker-input"
+                  pickFirstOnEnter
                 />
 
                 {side.selected && (
@@ -299,48 +210,6 @@ export function ComparePlayerPicker({
                   </div>
                 )}
 
-                {!side.selected && (side.loading || side.results.length > 0) && (
-                  <div
-                    data-native-scroll
-                    style={{
-                      background: '#fff',
-                      border: '1px solid var(--line)',
-                      borderRadius: 'var(--radius)',
-                      marginTop: 8,
-                      maxHeight: 260,
-                      overflowY: 'auto',
-                    }}
-                  >
-                    {side.loading ? (
-                      <p style={{ padding: '12px 14px', fontSize: 13, color: 'var(--fog)' }}>Searching…</p>
-                    ) : (
-                      side.results.map((player) => (
-                        <button
-                          key={player.id}
-                          type="button"
-                          onClick={() => choosePlayer(side.slot, player)}
-                          style={{
-                            display: 'block',
-                            width: '100%',
-                            textAlign: 'left',
-                            background: 'transparent',
-                            border: 0,
-                            borderBottom: '1px solid var(--line)',
-                            padding: '10px 14px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <span style={{ display: 'block', fontSize: 14, color: 'var(--ink)' }}>
-                            {player.name}
-                          </span>
-                          <span style={{ display: 'block', marginTop: 3, fontSize: 12, color: 'var(--fog)' }}>
-                            {joinMeta(player.team, knownPosition(player.position))}
-                          </span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
               </div>
             ))}
           </div>

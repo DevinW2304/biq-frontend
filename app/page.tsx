@@ -1,5 +1,6 @@
-// app/page.tsx — COURT PAPER homepage. Same data flow as before:
-// server component, fetchCachedJSON, revalidate 300.
+// app/page.tsx — the homepage: the headline and search beside BIQ's starting
+// five, then the top 20, the ticker, and a link to how BIQ works. Server
+// component, fetchCachedJSON, revalidate 300.
 
 export const revalidate = 300;
 
@@ -8,36 +9,13 @@ import type { Metadata } from 'next';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 import { PlayerSearchBar } from '@/components/PlayerSearchBar';
 import { BiqTicker } from '@/components/BiqTicker';
-import { fetchCachedJSON, fetchCurrentSeason } from '@/lib/api';
+import { fetchCachedJSON, fetchSeasonInfo } from '@/lib/api';
+import { formatShortDate } from '@/lib/format';
 import { BIQLeaderboardEntry } from '@/lib/types';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { MeterBar, SectionHeader } from '@/components/biq/BiqKit';
-import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
 import { JsonLd } from '@/components/JsonLd';
-import { DarkNavSwitch } from '@/components/biq/DarkNavSwitch';
-
-const METHOD_SECTIONS = [
-  {
-    title: 'Player dashboards',
-    description: 'Recent form, efficiency, usage, splits, and BIQ-driven analytical context.',
-  },
-  {
-    title: 'Deep statistical profiles',
-    description: 'Scoring, creation, workload, shot profile, and game logs: one file per player.',
-  },
-  {
-    title: 'BIQ rankings',
-    description: 'Players ranked by team usefulness rather than raw box-score totals.',
-  },
-];
-
-function getTopByMetric(
-  players: BIQLeaderboardEntry[],
-  metric: (player: BIQLeaderboardEntry) => number,
-): BIQLeaderboardEntry | null {
-  if (!players.length) return null;
-  return players.reduce((best, current) => (metric(current) > metric(best) ? current : best));
-}
+import { StartingFive } from '@/components/StartingFive';
+import { nextInLine, startingFive } from '@/lib/lineup';
 
 export const metadata: Metadata = {
   title: { absolute: 'BIQ // Basketball Intelligence' },
@@ -65,98 +43,85 @@ const WEBSITE_JSON_LD = {
   },
 };
 
-export default async function HomePage() {
-  const season = await fetchCurrentSeason();
-  let tickerPlayers: BIQLeaderboardEntry[] = [];
-
-  try {
-    // 25 is the backend's cap (26+ returns 422). The board shows the top 20;
-    // the component leaders below are picked from all 25.
-    tickerPlayers = await fetchCachedJSON<BIQLeaderboardEntry[]>(
-      '/api/players/biq-leaders?limit=25',
-      300,
-    );
-  } catch (error) {
-    console.error('Failed to load homepage BIQ data', error);
+/**
+ * Every player who meets the leaderboard bar, best first. The starting five is
+ * picked from all of them; a backend from before the cap went to 150 answers
+ * that with a 422, so fall back to the top 25 rather than an empty page.
+ */
+async function loadLeaders(): Promise<BIQLeaderboardEntry[]> {
+  for (const limit of [150, 25]) {
+    try {
+      return await fetchCachedJSON<BIQLeaderboardEntry[]>(`/api/players/biq-leaders?limit=${limit}`, 300);
+    } catch (error) {
+      console.error(`Failed to load the homepage leaders (limit ${limit})`, error);
+    }
   }
+  return [];
+}
 
-  const board = tickerPlayers.slice(0, 20);
+export default async function HomePage() {
+  const seasonInfo = await fetchSeasonInfo();
+  const season = seasonInfo?.season ?? null;
+  const dataThrough = formatShortDate(seasonInfo?.dataThrough);
+  const leaders = await loadLeaders();
+  const board = leaders.slice(0, 20);
+  const five = leaders.length ? startingFive(leaders) : null;
   // Open on the two players at the top right now, not a fixed pairing.
   const compareHref =
     board.length >= 2 ? `/compare?a=${board[0].id}&b=${board[1].id}` : '/compare?a=2544&b=201939';
 
-  const signals = [
-    { label: 'BEST ENGINE', player: getTopByMetric(tickerPlayers, (p) => p.engineScore), value: (p: BIQLeaderboardEntry) => p.engineScore },
-    { label: 'BEST CREATION', player: getTopByMetric(tickerPlayers, (p) => p.creationScore), value: (p: BIQLeaderboardEntry) => p.creationScore },
-    { label: 'BEST IMPACT', player: getTopByMetric(tickerPlayers, (p) => p.impactScore), value: (p: BIQLeaderboardEntry) => p.impactScore },
-  ];
-
   return (
     <main
-      className="biq-page biq-home"
+      className="biq-page"
       style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}
     >
       <JsonLd data={WEBSITE_JSON_LD} />
 
-      {/* ---------------- 1. HERO — the dark stage ---------------- */}
-      <section className="biq-hero-dark" style={{ padding: '44px 0 64px' }}>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
-            alignItems: 'end',
-            gap: 40,
-          }}
-        >
-          <div>
-            <p className="biq-mono">
-              Basketball Intelligence Quotient{season ? ` · ${season}` : ''}
+      {/* ---------------- 1. HERO: the pitch and search | the starting five ---------------- */}
+      <section className="biq-home-hero">
+        <div className="biq-home-pitch">
+          {season && (
+            <p className="biq-home-dateline">
+              <strong>The {season.replace('-', '–')} season</strong>
+              {dataThrough ? `, through games of ${dataThrough}` : ''}
             </p>
-            <h1
-              className="biq-display biq-hero-size"
-              style={{ marginTop: 16, maxWidth: '13ch' }}
-            >
-              One number for what a player is worth.
-            </h1>
+          )}
+          <h1 className="biq-display biq-home-headline">One number for what a player is worth.</h1>
+          <p className="biq-home-dek">
+            BIQ blends workload, creation, efficiency, impact and availability into one current-season
+            score, and shows its work.
+          </p>
+
+          <div style={{ maxWidth: 460, marginTop: 4 }}>
+            <PlayerSearchBar />
           </div>
 
-          <div>
-            <p
-              className="biq-hero-copy"
-              style={{ maxWidth: '46ch', fontSize: 16, lineHeight: 1.7, color: 'var(--ink-2)' }}
-            >
-              BIQ blends workload, creation, efficiency, impact, and availability into a single
-              current-season score, then shows its work.
-            </p>
-
-            <div style={{ maxWidth: 460, marginTop: 4 }}>
-              <PlayerSearchBar />
-            </div>
-
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 20 }}>
-              <Link href={compareHref} className="biq-btn">
-                Open a comparison
-              </Link>
-              <Link href="/players" className="biq-btn-ghost">
-                Browse all players
-              </Link>
-            </div>
-          </div>
+          <p className="biq-home-links">
+            <Link href={compareHref} className="biq-home-link">
+              Compare two players
+            </Link>
+            <Link href="/players" className="biq-home-link">
+              Browse every player
+            </Link>
+          </p>
         </div>
 
+        {five && (
+          <StartingFive slots={five.slots} runnersUp={nextInLine(leaders, five.slots)} dataThrough={dataThrough} />
+        )}
       </section>
 
-      {/* ---------------- 2. THE BOARD — top 20, still on the dark stage ----------------
+      {/* ---------------- 2. THE BOARD — top 20 ----------------
           Ordered by rank score (the leaderboard's order), so rank score is the
           headline number; BIQ alone would read out of order down the list. */}
       {board.length ? (
-        <section className="biq-hero-dark biq-dark-end" style={{ padding: '0 0 240px' }}>
+        <section style={{ padding: '0 0 72px' }}>
           <div className="biq-board-head">
-            <p id="biq-board-label" className="biq-mono">
-              Top {board.length} by rank score
-            </p>
-            <Link href="/leaderboard" className="biq-link" style={{ fontSize: 14 }}>
-              Full leaderboard →
+            <h2 id="biq-board-label" className="biq-display biq-board-title">
+              The top {board.length} by rank score
+            </h2>
+            <Link href="/leaderboard" className="biq-home-link">
+              Full leaderboard
             </Link>
           </div>
           <ol className="biq-board-rows" aria-labelledby="biq-board-label">
@@ -176,7 +141,7 @@ export default async function HomePage() {
           </ol>
         </section>
       ) : (
-        <section className="biq-hero-dark biq-dark-end" style={{ padding: '0 0 240px' }}>
+        <section style={{ padding: '0 0 72px' }}>
           <div className="biq-card" style={{ padding: 28 }}>
             <p className="biq-mono">The board</p>
             <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
@@ -186,83 +151,15 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ---------------- 3. COMPONENT LEADERS ------ */}
-      <section style={{ padding: '48px 0' }}>
-        <SectionHeader label="Leaders by component" title="Live signals" />
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: 16,
-            marginTop: 24,
-          }}
-        >
-          {signals.map((s) => (
-            <Link
-              key={s.label}
-              href={s.player ? `/players/${s.player.id}` : '/players'}
-              className="biq-card"
-              style={{ padding: 24, display: 'block' }}
-            >
-              <p className="biq-mono">{s.label}</p>
-              {s.player ? (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '16px 0 18px' }}>
-                    <SubjectPhoto id={s.player.id} name={s.player.name} size={48} />
-                    <div style={{ minWidth: 0 }}>
-                      <p className="biq-display" style={{ fontSize: 18, fontWeight: 600 }}>{s.player.name}</p>
-                      <p style={{ marginTop: 2, fontSize: 13, color: 'var(--fog)' }}>{s.player.team}</p>
-                    </div>
-                  </div>
-                  <span
-                    className="biq-num biq-signal"
-                    style={{ fontSize: 30, fontWeight: 600 }}
-                  >
-                    {s.value(s.player).toFixed(1)}
-                  </span>
-                  <div style={{ marginTop: 8 }}>
-                    <MeterBar value={s.value(s.player)} />
-                  </div>
-                </>
-              ) : (
-                <p style={{ marginTop: 16, fontSize: 14, color: 'var(--fog)' }}>No signal on record.</p>
-              )}
-            </Link>
-          ))}
-        </div>
-      </section>
+      <BiqTicker players={leaders.slice(0, 14)} />
 
-      <BiqTicker players={tickerPlayers.slice(0, 14)} />
+      {/* ---------------- 3. HOW IT WORKS ---------------- */}
+      <p style={{ padding: '40px 0 72px', fontSize: 15 }}>
+        <Link href="/model" className="biq-home-link">
+          How BIQ works
+        </Link>
+      </p>
 
-      {/* ---------------- 4. WHAT BIQ MEASURES --------------------------- */}
-      <section style={{ padding: '56px 0 72px' }}>
-        <SectionHeader label="How the score reads" title="What BIQ measures" />
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: 16,
-            marginTop: 24,
-          }}
-        >
-          {METHOD_SECTIONS.map((m) => (
-            <div
-              key={m.title}
-              className="biq-card"
-              style={{ padding: 24 }}
-            >
-              <h3 className="biq-display" style={{ fontSize: 19, fontWeight: 600 }}>
-                {m.title}
-              </h3>
-              <p style={{ marginTop: 10, color: 'var(--ink-2)', fontSize: 14, lineHeight: 1.7 }}>
-                {m.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <DarkNavSwitch />
       <SpeedInsights />
     </main>
   );

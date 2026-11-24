@@ -615,7 +615,7 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
 
 /* ---- starting five (homepage hero) ---------------------------------------
    Set like a newspaper graphic: a rule and a title, a court diagram with
-   numbered markers, a key, and a caption. Flat: no rings, glows or avatars.
+   numbered markers, and a key. Flat: no rings, glows or avatars.
    Blue marks the top score only.                                           */
 
 .biq-five { margin: 0; }
@@ -702,14 +702,6 @@ a.biq-card:hover, a.biq-card:focus-visible { border-color: var(--line-strong); }
 .biq-five-row.is-top .biq-five-score { color: var(--key); }
 a.biq-five-row:hover .biq-five-name,
 a.biq-five-row:focus-visible .biq-five-name { text-decoration: underline; text-underline-offset: 3px; }
-
-.biq-five-caption {
-  margin-top: 14px;
-  max-width: 62ch;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--fog);
-}
 
 @media (max-width: 640px) {
   .biq-five-court { max-width: 320px; }

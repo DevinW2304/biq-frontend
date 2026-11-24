@@ -75,20 +75,3 @@ export function startingFive(players: BIQLeaderboardEntry[]): {
   );
   return { slots, starId: star?.id ?? null };
 }
-
-/**
- * Who's next in line at each position: the best player listed there who
- * isn't in the lineup, in G, F, C order. A position nobody else can play is
- * left out.
- */
-export function nextInLine(
-  players: BIQLeaderboardEntry[],
-  slots: LineupSlot[],
-): { spot: Spot; player: BIQLeaderboardEntry }[] {
-  const inLineup = new Set(slots.flatMap((s) => (s.player ? [s.player.id] : [])));
-  const ranked = [...players].sort((a, b) => b.biqRankScore - a.biqRankScore);
-  return (['G', 'F', 'C'] as Spot[]).flatMap((spot) => {
-    const player = ranked.find((p) => !inLineup.has(p.id) && positionsOf(p.position).includes(spot));
-    return player ? [{ spot, player }] : [];
-  });
-}

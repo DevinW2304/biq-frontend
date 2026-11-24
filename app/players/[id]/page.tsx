@@ -135,10 +135,11 @@ export default async function PlayerPage({ params }: { params: { id: string } })
   const dataThrough = seasonInfo?.season === season ? formatShortDate(seasonInfo?.dataThrough) : null;
   const advanced = player.advanced ?? null;
 
-  // Each stat shows once, in the first section down the page that carries it:
-  // the API repeats TS%, PPG, APG, AST/TOV, eFG%, 3PA and FT rate across the
-  // topline, efficiency and analytics lists, and BIQ is already the cover's
-  // verdict. Order matters: call in render order.
+  // Each stat shows once: the API repeats TS%, PPG, APG, AST/TOV, eFG%, 3PA and
+  // FT rate across the topline, efficiency and analytics lists, and BIQ is
+  // already the cover's verdict. The richer cards (with a percentile and an
+  // explanation) win, so this runs topline, efficiency, analytics, even though
+  // Analytics now renders first: it keeps the stats only it carries.
   const keepNew = firstShowing(['BIQ']);
   const toplineStats = keepNew(player.stats ?? []);
   const efficiencyStats = advanced ? keepNew(advanced.efficiency) : [];
@@ -150,6 +151,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
   // will actually render are listed.
   const shotsShown = Boolean(advanced?.shotProfile.some((zone) => zone.attempts > 0));
   const jumpLinks = [
+    ...(analyticsBlocks.length ? [{ id: 'analytics', label: 'Analytics' }] : []),
     { id: 'topline', label: 'Topline' },
     { id: 'breakdown', label: 'Breakdown' },
     ...(advanced ? [{ id: 'per100', label: 'Per 100' }, { id: 'efficiency', label: 'Efficiency' }] : []),
@@ -157,7 +159,6 @@ export default async function PlayerPage({ params }: { params: { id: string } })
     ...(advanced?.onOff ? [{ id: 'onoff', label: 'On / off' }] : []),
     { id: 'trend', label: 'Trend' },
     { id: 'splits', label: 'Splits' },
-    ...(analyticsBlocks.length ? [{ id: 'analytics', label: 'Analytics' }] : []),
     { id: 'gamelog', label: 'Game log' },
   ];
 
@@ -288,6 +289,23 @@ export default async function PlayerPage({ params }: { params: { id: string } })
             </a>
           ))}
         </nav>
+
+        {/* ---------------- ANALYTICS — first, it's what people come for ---------------- */}
+        {analyticsBlocks.length ? (
+          <section id="analytics" className="biq-anchor" style={{ padding: '40px 0' }}>
+            <SectionHeader label="Shooting, workload and recent form" title="Analytics" />
+            {analyticsBlocks.map((block) => (
+              <div key={block.title} style={{ marginTop: 32 }}>
+                <p className="biq-mono biq-signal" style={{ marginBottom: 14 }}>{block.title}</p>
+                <RuleGrid>
+                  {block.stats.map((stat) => (
+                    <StatCell key={`${block.title}-${stat.label}`} {...stat} />
+                  ))}
+                </RuleGrid>
+              </div>
+            ))}
+          </section>
+        ) : null}
 
         {/* ---------------- TOPLINE ---------------- */}
         <section id="topline" className="biq-anchor" style={{ padding: '40px 0' }}>
@@ -425,23 +443,6 @@ export default async function PlayerPage({ params }: { params: { id: string } })
             </RuleGrid>
           </div>
         </section>
-
-        {/* ---------------- ANALYTICS BLOCKS ---------------- */}
-        {analyticsBlocks.length ? (
-          <section id="analytics" className="biq-anchor" style={{ padding: '40px 0' }}>
-            <SectionHeader label="Extended metrics" title="Analytics" />
-            {analyticsBlocks.map((block) => (
-              <div key={block.title} style={{ marginTop: 32 }}>
-                <p className="biq-mono biq-signal" style={{ marginBottom: 14 }}>{block.title}</p>
-                <RuleGrid>
-                  {block.stats.map((stat) => (
-                    <StatCell key={`${block.title}-${stat.label}`} {...stat} />
-                  ))}
-                </RuleGrid>
-              </div>
-            ))}
-          </section>
-        ) : null}
 
         {/* ---------------- GAME LOG ---------------- */}
         <section id="gamelog" className="biq-anchor" style={{ padding: '40px 0 88px' }}>

@@ -1,10 +1,9 @@
 // BIQ's starting five, set as a newspaper-style figure: a half court with
-// numbered markers at the five spots, a key that names them, and a caption
-// that says where they come from and who's next in line. Server component.
+// numbered markers at the five spots and a key that names them. Server
+// component.
 import Link from 'next/link';
 import { SubjectPhoto } from '@/components/biq/SubjectPhoto';
 import type { LineupSlot, Spot } from '@/lib/lineup';
-import type { BIQLeaderboardEntry } from '@/lib/types';
 import { teamNickname } from '@/lib/teams';
 
 const SPOT_NAME: Record<Spot, string> = { G: 'Guard', F: 'Forward', C: 'Center' };
@@ -41,18 +40,11 @@ function Court() {
   );
 }
 
-/** "A, B and C". */
-function listOf(parts: string[]) {
-  return parts.length < 2 ? parts.join('') : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
-}
-
 export function StartingFive({
   slots,
-  runnersUp,
   dataThrough,
 }: {
   slots: LineupSlot[];
-  runnersUp: { spot: Spot; player: BIQLeaderboardEntry }[];
   /** The latest game in the data, already formatted ("Nov 21"). */
   dataThrough: string | null;
 }) {
@@ -117,21 +109,6 @@ export function StartingFive({
         </ol>
       </div>
 
-      <figcaption className="biq-five-caption">
-        Two guards, two forwards and a center with the best combined rank score, from the players who meet
-        the leaderboard&rsquo;s games-and-minutes bar.
-        {runnersUp.length > 0 && (
-          <>
-            {' '}Next in line:{' '}
-            {listOf(
-              runnersUp.map(
-                (r) => `${r.player.name} at ${SPOT_NAME[r.spot].toLowerCase()} (${r.player.biqRankScore.toFixed(1)})`,
-              ),
-            )}
-            .
-          </>
-        )}
-      </figcaption>
     </figure>
   );
 }

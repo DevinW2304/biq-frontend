@@ -15,7 +15,7 @@ import { BIQLeaderboardEntry } from '@/lib/types';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { JsonLd } from '@/components/JsonLd';
 import { StartingFive } from '@/components/StartingFive';
-import { nextInLine, startingFive } from '@/lib/lineup';
+import { startingFive } from '@/lib/lineup';
 
 export const metadata: Metadata = {
   title: { absolute: 'BIQ // Basketball Intelligence' },
@@ -107,7 +107,7 @@ export default async function HomePage() {
         </div>
 
         {five && (
-          <StartingFive slots={five.slots} runnersUp={nextInLine(leaders, five.slots)} dataThrough={dataThrough} />
+          <StartingFive slots={five.slots} dataThrough={dataThrough} />
         )}
       </section>
 

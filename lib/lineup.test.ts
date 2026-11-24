@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nextInLine, positionsOf, startingFive } from './lineup';
+import { positionsOf, startingFive } from './lineup';
 import type { BIQLeaderboardEntry } from './types';
 
 let nextId = 1;
@@ -110,50 +110,5 @@ describe('startingFive', () => {
     const { slots, starId } = startingFive([]);
     expect(slots.map((s) => s.player)).toEqual([null, null, null, null, null]);
     expect(starId).toBeNull();
-  });
-});
-
-describe('nextInLine', () => {
-  const topTen = () => [
-    player('Luka Dončić', 'F-G', 97.1),
-    player('Alperen Sengun', 'C', 86.6),
-    player('Giannis Antetokounmpo', 'F', 86.5),
-    player('Tyrese Maxey', 'G', 84.6),
-    player('Victor Wembanyama', 'F-C', 84.1),
-    player('Jamal Murray', 'G', 82.5),
-    player('Shai Gilgeous-Alexander', 'G', 82.0),
-    player('Jayson Tatum', 'F-G', 79.6),
-    player('Nikola Jokić', 'C', 79.0),
-    player('Cooper Flagg', 'F', 78.8),
-  ];
-
-  it('names the best player left out at each position', () => {
-    const pool = topTen();
-    const { slots } = startingFive(pool);
-    expect(nextInLine(pool, slots).map((r) => [r.spot, r.player.name])).toEqual([
-      ['G', 'Jamal Murray'],
-      ['F', 'Jayson Tatum'],
-      ['C', 'Nikola Jokić'],
-    ]);
-  });
-
-  it('never names someone already in the lineup', () => {
-    const pool = topTen();
-    const { slots } = startingFive(pool);
-    const inLineup = new Set(slots.flatMap((s) => (s.player ? [s.player.id] : [])));
-    expect(nextInLine(pool, slots).some((r) => inLineup.has(r.player.id))).toBe(false);
-  });
-
-  it('leaves out a position nobody else can play', () => {
-    const pool = [
-      player('G1', 'G', 90),
-      player('G2', 'G', 85),
-      player('G3', 'G', 84),
-      player('F1', 'F', 80),
-      player('F2', 'F', 75),
-      player('C1', 'C', 70),
-    ];
-    const { slots } = startingFive(pool);
-    expect(nextInLine(pool, slots).map((r) => [r.spot, r.player.name])).toEqual([['G', 'G3']]);
   });
 });
